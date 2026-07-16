@@ -1,0 +1,37 @@
+🚀 CHAOS CRAWLER V2: DOM Interaction Engaged
+Logging in as Teacher lazizbekq...
+✅ Auth mapping fired successfully
+
+============================
+Fuzzing URL Measure: http://localhost:8000/teacher/groups/6/edit?tab=students
+✅ Loaded http://localhost:8000/teacher/groups/6/edit?tab=students cleanly in ⚡ 6654ms with status HTTP 200
+🤖 Initiating UI Click Triggers...
+   👉 Clicked DOM element [1/3]
+✅ DOM Resilience Confirmed
+
+============================
+Fuzzing URL Measure: http://localhost:8000/teacher/groups/6/syllabus
+✅ Loaded http://localhost:8000/teacher/groups/6/syllabus cleanly in ⚡ 3192ms with status HTTP 200
+🤖 Initiating UI Click Triggers...
+   👉 Clicked DOM element [1/3]
+✅ DOM Resilience Confirmed
+
+============================
+Fuzzing URL Measure: http://localhost:8000/teacher/groups/6/edit?tab=teaching-plans
+✅ Loaded http://localhost:8000/teacher/groups/6/edit?tab=teaching-plans cleanly in ⚡ 7914ms with status HTTP 200
+🤖 Initiating UI Click Triggers...
+   👉 Clicked DOM element [1/3]
+✅ DOM Resilience Confirmed
+
+============================
+Fuzzing URL Measure: http://localhost:8000/teacher/groups/6/edit?tab=schedule
+✅ Loaded http://localhost:8000/teacher/groups/6/edit?tab=schedule cleanly in ⚡ 6704ms with status HTTP 200
+🤖 Initiating UI Click Triggers...
+   👉 Clicked DOM element [1/3]
+✅ DOM Resilience Confirmed
+
+============================
+Fuzzing URL Measure: http://localhost:8000/teacher/groups/6/lessons/5087
+❌ CRITICAL FAILURE HTTP 500 on http://localhost:8000/teacher/groups/6/lessons/5087 in 6227ms
+
+Chaos Crawler UI evaluation finished successfully.
