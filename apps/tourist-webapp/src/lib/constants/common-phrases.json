@@ -1,0 +1,82 @@
+[
+  {
+    "category": "Greetings & Politeness",
+    "phrases": [
+      {
+        "en": "Hello",
+        "uz": "Assalomu alaykum",
+        "ru": "Здравствуйте"
+      },
+      {
+        "en": "Thank you",
+        "uz": "Rahmat",
+        "ru": "Спасибо"
+      },
+      {
+        "en": "Please",
+        "uz": "Iltimos",
+        "ru": "Пожалуйста"
+      }
+    ]
+  },
+  {
+    "category": "Dietary Restrictions",
+    "phrases": [
+      {
+        "en": "I am a vegetarian",
+        "uz": "Men go'sht yemayman (vegetarianman)",
+        "ru": "Я вегетарианец / вегетарианка"
+      },
+      {
+        "en": "No meat please",
+        "uz": "Iltimos, go'shtsiz",
+        "ru": "Без мяса, пожалуйста"
+      },
+      {
+        "en": "I have a nut allergy",
+        "uz": "Menda yong'oqqa allergiya bor",
+        "ru": "У меня аллергия на орехи"
+      }
+    ]
+  },
+  {
+    "category": "Navigation & Transport",
+    "phrases": [
+      {
+        "en": "Where is the toilet?",
+        "uz": "Hojatxona qayerda?",
+        "ru": "Где туалет?"
+      },
+      {
+        "en": "How much does it cost?",
+        "uz": "Bu qancha turadi?",
+        "ru": "Сколько это стоит?"
+      },
+      {
+        "en": "Please take me to this address",
+        "uz": "Iltimos, meni shu manzilga olib boring",
+        "ru": "Отвезите меня по этому адресу, пожалуйста"
+      }
+    ]
+  },
+  {
+    "category": "Emergency",
+    "phrases": [
+      {
+        "en": "I need help",
+        "uz": "Menga yordam kerak",
+        "ru": "Мне нужна помощь"
+      },
+      {
+        "en": "Call the police",
+        "uz": "Politsiyani chaqiring",
+        "ru": "Вызовите полицию"
+      },
+      {
+        "en": "I need a doctor",
+        "uz": "Menga shifokor kerak",
+        "ru": "Мне нужен врач"
+      }
+    ]
+  }
+]

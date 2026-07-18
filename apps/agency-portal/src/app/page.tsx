@@ -1,4 +1,5 @@
 import { Button, Card } from "@repo/ui";
+import Link from "next/link";
 
 export default function Page() {
   return (
@@ -7,8 +8,12 @@ export default function Page() {
         <h1 className="text-3xl font-bold text-primary mb-4">Welcome to agency-portal</h1>
         <p className="text-gray-600 mb-6">Digital Tourism Ecosystem</p>
         <div className="flex gap-4">
-          <Button>Get Started</Button>
-          <Button variant="secondary">Learn More</Button>
+          <Link href="/login">
+            <Button>Get Started</Button>
+          </Link>
+          <Link href="/dashboard">
+            <Button variant="secondary">Dashboard</Button>
+          </Link>
         </div>
       </Card>
     </main>

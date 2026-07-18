@@ -55,11 +55,13 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(false);
 
       if (currentSession) {
-        document.cookie = `sb-access-token=${currentSession.access_token}; path=/; max-age=${currentSession.expires_in}; SameSite=Lax; Secure`;
-        document.cookie = `sb-refresh-token=${currentSession.refresh_token}; path=/; max-age=604800; SameSite=Lax; Secure`;
+        const secureFlag = window.location.protocol === 'https:' ? '; Secure' : '';
+        document.cookie = `sb-access-token=${currentSession.access_token}; path=/; max-age=${currentSession.expires_in}; SameSite=Lax${secureFlag}`;
+        document.cookie = `sb-refresh-token=${currentSession.refresh_token}; path=/; max-age=604800; SameSite=Lax${secureFlag}`;
       } else {
-        document.cookie = "sb-access-token=; path=/; max-age=0; SameSite=Lax; Secure";
-        document.cookie = "sb-refresh-token=; path=/; max-age=0; SameSite=Lax; Secure";
+        const secureFlag = window.location.protocol === 'https:' ? '; Secure' : '';
+        document.cookie = `sb-access-token=; path=/; max-age=0; SameSite=Lax${secureFlag}`;
+        document.cookie = `sb-refresh-token=; path=/; max-age=0; SameSite=Lax${secureFlag}`;
       }
     });
 
@@ -70,8 +72,13 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithEmail = async (email: string, password: string) => {
     const supabase = getSupabase();
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
+    if (data.session) {
+      const secureFlag = window.location.protocol === 'https:' ? '; Secure' : '';
+      document.cookie = `sb-access-token=${data.session.access_token}; path=/; max-age=${data.session.expires_in}; SameSite=Lax${secureFlag}`;
+      document.cookie = `sb-refresh-token=${data.session.refresh_token}; path=/; max-age=604800; SameSite=Lax${secureFlag}`;
+    }
   };
 
   const signInWithOtp = async (phone: string) => {

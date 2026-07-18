@@ -21,51 +21,78 @@ function parseJwt(token: string) {
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  const isPublicRoute =
-    pathname === "/" ||
-    pathname.startsWith("/login") ||
-    pathname.startsWith("/auth") ||
-    pathname.startsWith("/map") ||
+  // 1. Define Route Scopes
+  const isPublicAsset = 
     pathname.startsWith("/_next") ||
     pathname.includes("favicon.ico") ||
     pathname.startsWith("/icon-") ||
     pathname.startsWith("/sw.js");
 
-  const accessToken = request.cookies.get("sb-access-token")?.value;
+  if (isPublicAsset) {
+    return NextResponse.next();
+  }
 
+  const isPublicLanding = pathname === "/";
+  const isAuthRoute = pathname.startsWith("/auth");
+  
+  // F-T01 and F-T04 can be public if needed, but the prompt says:
+  // "Enforce server-side protection for all routes except / and /auth/*."
+  // So /map and /translator become protected.
+  const isPublicRoute = isPublicLanding || isAuthRoute;
+
+  // 2. Extract Token and Role
+  const accessToken = request.cookies.get("sb-access-token")?.value;
   let userRole: string | null = null;
+  
   if (accessToken) {
     const payload = parseJwt(accessToken);
     if (payload) {
-      userRole = payload.app_metadata?.role || payload.user_metadata?.role || null;
+      userRole = payload.app_metadata?.role || payload.user_metadata?.role || "tourist"; // fallback to tourist if logged in but role undefined
     }
   }
 
-  if (!isPublicRoute) {
-    if (!accessToken) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/login";
-      url.searchParams.set("next", pathname);
-      return NextResponse.redirect(url);
+  // 3. Unauthenticated User attempting to access Private Routes -> Redirect to Login
+  if (!isPublicRoute && !accessToken) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/auth/login";
+    url.searchParams.set("next", pathname);
+    return NextResponse.redirect(url);
+  }
+
+  // 4. Role-Based Redirection Matrix (Cross-Domain for other roles)
+  if (accessToken && userRole) {
+    // If they hit the public landing page or auth routes while logged in, redirect them to their dashboard
+    if (isPublicRoute) {
+      switch (userRole) {
+        case "tourist":
+          return NextResponse.redirect(new URL("/dashboard", request.url));
+        case "provider":
+          return NextResponse.redirect("http://localhost:3002/dashboard");
+        case "agency":
+          return NextResponse.redirect("http://localhost:3000/dashboard");
+        case "admin":
+          return NextResponse.redirect("http://localhost:3001/dashboard");
+      }
     }
 
-    if (userRole && userRole !== "tourist" && userRole !== "agency") {
-      const url = request.nextUrl.clone();
-      url.pathname = "/login";
-      url.searchParams.set("error", "invalid_portal");
-      
-      const response = NextResponse.redirect(url);
-      response.cookies.delete("sb-access-token");
-      response.cookies.delete("sb-refresh-token");
-      return response;
+    if (!isPublicRoute && userRole !== "tourist") {
+      switch (userRole) {
+        case "provider":
+          return NextResponse.redirect("http://localhost:3002/dashboard");
+        case "agency":
+          return NextResponse.redirect("http://localhost:3000/dashboard");
+        case "admin":
+          return NextResponse.redirect("http://localhost:3001/dashboard");
+      }
     }
   }
 
   const response = NextResponse.next();
   
+  // CSP Headers
   const cspHeader = `
     default-src 'self';
-    script-src 'self' 'unsafe-eval' https://api.mapbox.com;
+    script-src 'self' 'unsafe-eval' 'unsafe-inline' https://api.mapbox.com;
     style-src 'self' 'unsafe-inline' https://api.mapbox.com;
     img-src 'self' data: blob: https://*.supabase.co https://api.mapbox.com;
     connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.mapbox.com https://api.openai.com;
