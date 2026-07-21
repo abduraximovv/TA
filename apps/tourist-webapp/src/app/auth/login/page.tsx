@@ -21,7 +21,7 @@ export default function LoginPage() {
     try {
       await signInWithEmail(email, password);
       // Let the middleware handle the role-based redirection from here on out
-      window.location.href = "/dashboard";
+      window.location.href = "/profile";
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
       if (message.includes("Invalid login credentials") || message.includes("invalid_credentials")) {

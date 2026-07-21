@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { updateSession } from "@/utils/supabase/middleware";
 
 function parseJwt(token: string) {
   try {
@@ -18,8 +19,11 @@ function parseJwt(token: string) {
   }
 }
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  
+  // Keep the Supabase session active
+  let response = await updateSession(request);
 
   // 1. Define Route Scopes
   const isPublicAsset = 
@@ -61,17 +65,19 @@ export function middleware(request: NextRequest) {
 
   // 4. Role-Based Redirection Matrix (Cross-Domain for other roles)
   if (accessToken && userRole) {
-    // If they hit the public landing page or auth routes while logged in, redirect them to their dashboard
+    // If they hit the public landing page or auth routes while logged in
     if (isPublicRoute) {
-      switch (userRole) {
-        case "tourist":
-          return NextResponse.redirect(new URL("/dashboard", request.url));
-        case "provider":
-          return NextResponse.redirect("http://localhost:3002/dashboard");
-        case "agency":
-          return NextResponse.redirect("http://localhost:3000/dashboard");
-        case "admin":
-          return NextResponse.redirect("http://localhost:3001/dashboard");
+      if (isAuthRoute && userRole === "tourist") {
+        return NextResponse.redirect(new URL("/dashboard", request.url));
+      }
+      if (userRole === "provider") {
+        return NextResponse.redirect("http://localhost:3001/dashboard"); // Assuming provider was bumped down
+      }
+      if (userRole === "agency") {
+        return NextResponse.redirect("http://localhost:3002/dashboard");
+      }
+      if (userRole === "admin") {
+        return NextResponse.redirect("http://localhost:3003/dashboard");
       }
     }
 
@@ -87,8 +93,6 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  const response = NextResponse.next();
-  
   // CSP Headers
   const cspHeader = `
     default-src 'self';
