@@ -12,6 +12,7 @@ export interface AuthContextType {
   role: UserRole | null;
   isLoading: boolean;
   signInWithEmail: (email: string, password: string) => Promise<void>;
+  signUpWithEmail: (email: string, password: string, role?: UserRole) => Promise<void>;
   signInWithOtp: (phone: string) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
@@ -81,6 +82,23 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const signUpWithEmail = async (email: string, password: string, assignedRole: UserRole = "tourist") => {
+    const supabase = getSupabase();
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { role: assignedRole },
+      },
+    });
+    if (error) throw error;
+    if (data.session) {
+      const secureFlag = window.location.protocol === 'https:' ? '; Secure' : '';
+      document.cookie = `sb-access-token=${data.session.access_token}; path=/; max-age=${data.session.expires_in}; SameSite=Lax${secureFlag}`;
+      document.cookie = `sb-refresh-token=${data.session.refresh_token}; path=/; max-age=604800; SameSite=Lax${secureFlag}`;
+    }
+  };
+
   const signInWithOtp = async (phone: string) => {
     const supabase = getSupabase();
     const { error } = await supabase.auth.signInWithOtp({ phone });
@@ -112,6 +130,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         role,
         isLoading,
         signInWithEmail,
+        signUpWithEmail,
         signInWithOtp,
         signInWithGoogle,
         signOut,

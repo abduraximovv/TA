@@ -28,7 +28,7 @@ export const fetchLocationsInRadius = async (
     p_lat: lat,
     p_lng: lng,
     p_radius_meters: radiusMeters,
-  });
+  } as any);
 
   if (error) {
     console.error("Error fetching locations:", error);

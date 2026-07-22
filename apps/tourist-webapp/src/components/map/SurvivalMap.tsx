@@ -99,6 +99,7 @@ export function SurvivalMap({ mapboxAccessToken }: SurvivalMapProps) {
                 <div 
                   className="w-10 h-10 rounded-full bg-[#1E6F8A] text-white flex items-center justify-center font-bold shadow-lg cursor-pointer border-2 border-white ring-2 ring-black/5"
                   onClick={() => {
+                    if (!supercluster) return;
                     const expansionZoom = Math.min(
                       supercluster.getClusterExpansionZoom(cluster.id as number),
                       20

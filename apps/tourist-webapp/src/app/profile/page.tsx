@@ -65,7 +65,6 @@ export default function ProfilePage() {
           </div>
         </Card>
 
-        {/* Actions List */}
         <div className="space-y-3">
           <Link href="/" className="block">
             <Card className="p-4 bg-white border border-gray-100 shadow-sm rounded-xl flex items-center justify-between hover:bg-gray-50 transition-colors cursor-pointer">
@@ -74,8 +73,8 @@ export default function ProfilePage() {
                   <Home className="w-5 h-5 text-[#1E6F8A]" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900">Back to Landing Page</h3>
-                  <p className="text-xs text-gray-500">Return to the main discovery view</p>
+                  <h3 className="font-semibold text-gray-900">Back to Main Page</h3>
+                  <p className="text-xs text-gray-500">Return to the landing view</p>
                 </div>
               </div>
             </Card>

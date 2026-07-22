@@ -13,7 +13,7 @@ interface AuthModalProps {
 }
 
 export function AuthModal({ isOpen, onOpenChange, defaultMode = "login" }: AuthModalProps) {
-  const { signInWithEmail, signInWithGoogle } = useAuth();
+  const { signInWithEmail, signUpWithEmail, signInWithGoogle } = useAuth();
   const [mode, setMode] = useState<"login" | "register">(defaultMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -29,8 +29,7 @@ export function AuthModal({ isOpen, onOpenChange, defaultMode = "login" }: AuthM
       if (mode === "login") {
         await signInWithEmail(email, password);
       } else {
-        // Simple placeholder for register if not explicitly built in useAuth
-        await signInWithEmail(email, password);
+        await signUpWithEmail(email, password, "tourist");
       }
       onOpenChange(false);
     } catch (err: any) {
@@ -126,9 +125,9 @@ export function AuthModal({ isOpen, onOpenChange, defaultMode = "login" }: AuthM
           <div className="mt-6">
             <Button
               type="button"
-              variant="outline"
+              variant="secondary"
               onClick={handleGoogleSignIn}
-              className="w-full h-12 bg-white border-gray-200 hover:bg-gray-50 text-gray-700 font-medium rounded-xl flex items-center justify-center gap-3"
+              className="w-full h-12 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-medium rounded-xl flex items-center justify-center gap-3"
             >
               <Chrome className="w-5 h-5" /> Google
             </Button>

@@ -9,7 +9,7 @@ export function BottomNav() {
   const pathname = usePathname();
 
   const navItems = [
-    { label: "Home", href: "/", icon: Compass },
+    { label: "Home", href: "/dashboard", icon: Compass },
     { label: "Map", href: "/map", icon: Map },
     { label: "Translate", href: "/translator", icon: MessageSquare },
     { label: "Profile", href: "/profile", icon: User },

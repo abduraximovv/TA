@@ -1,10 +1,12 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@repo/auth";
 import { AuthCard, Button, Input, LoadingPulse } from "@repo/ui";
 
 export default function LoginPage() {
+  const router = useRouter();
   const { signInWithEmail } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -18,6 +20,7 @@ export default function LoginPage() {
 
     try {
       await signInWithEmail(email, password);
+      router.push("/dashboard");
     } catch (err: unknown) {
       setError("Invalid admin credentials.");
     } finally {

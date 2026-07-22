@@ -8,11 +8,12 @@ export const revalidate = 3600;
 
 export default async function ServiceDetailPage({ params }: { params: { id: string } }) {
   const supabase = getSupabase();
-  const { data: service, error } = await supabase
+  const { data, error } = await supabase
     .from("services")
     .select("*")
     .eq("id", params.id)
     .single();
+  const service = data as any;
 
   if (error || !service) {
     return (
