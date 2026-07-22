@@ -10,6 +10,7 @@ export interface AuthContextType {
   session: Session | null;
   user: User | null;
   role: UserRole | null;
+  isVerified: boolean;
   isLoading: boolean;
   signInWithEmail: (email: string, password: string) => Promise<void>;
   signUpWithEmail: (email: string, password: string, role?: UserRole) => Promise<void>;
@@ -24,7 +25,11 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [role, setRole] = useState<UserRole | null>(null);
+  const [isVerified, setIsVerified] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+
+  const getIsVerifiedFromSession = (currSession: Session | null): boolean =>
+    Boolean(currSession?.user?.app_metadata?.is_verified);
 
   const getRoleFromSession = (currSession: Session | null): UserRole | null => {
     if (!currSession?.user) return null;
@@ -46,6 +51,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       setSession(initialSession);
       setUser(initialSession?.user ?? null);
       setRole(getRoleFromSession(initialSession));
+      setIsVerified(getIsVerifiedFromSession(initialSession));
       setIsLoading(false);
     });
 
@@ -53,6 +59,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
       setRole(getRoleFromSession(currentSession));
+      setIsVerified(getIsVerifiedFromSession(currentSession));
       setIsLoading(false);
 
       if (currentSession) {
@@ -128,6 +135,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         session,
         user,
         role,
+        isVerified,
         isLoading,
         signInWithEmail,
         signUpWithEmail,

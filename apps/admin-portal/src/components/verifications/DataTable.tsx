@@ -2,7 +2,7 @@
 
 import React from "react";
 import { format } from "date-fns";
-import { ProviderVerification } from "../../app/verifications/types";
+import { ProviderVerification } from "../../app/verification-hub/types";
 
 interface DataTableProps {
   data: ProviderVerification[];
@@ -12,7 +12,7 @@ interface DataTableProps {
 
 export function DataTable({ data, selectedId, onSelect }: DataTableProps) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col h-full">
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col h-full min-w-0">
       <div className="p-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
         <h2 className="text-sm font-bold tracking-tight text-gray-900">Verification Requests</h2>
         <span className="text-xs font-semibold px-2.5 py-1 bg-white border border-gray-200 rounded-full shadow-sm text-gray-600">
@@ -48,7 +48,7 @@ export function DataTable({ data, selectedId, onSelect }: DataTableProps) {
                       : "hover:bg-gray-50"
                   }`}
                 >
-                  <td className="px-6 py-4 font-medium text-gray-900">{item.business_name || "Unknown Business"}</td>
+                  <td className="px-6 py-4 font-medium text-gray-900 max-w-[240px] truncate" title={item.business_name}>{item.business_name || "Unknown Business"}</td>
                   <td className="px-6 py-4">
                     <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 capitalize">
                       {item.role}

@@ -8,11 +8,11 @@ export default function Page() {
         <h1 className="text-3xl font-bold text-primary mb-4">Welcome to provider-app</h1>
         <p className="text-gray-600 mb-6">Digital Tourism Ecosystem</p>
         <div className="flex gap-4">
-          <Link href="/login">
+          <Link href="/auth/login">
             <Button>Get Started</Button>
           </Link>
-          <Link href="/dashboard">
-            <Button variant="secondary">Dashboard</Button>
+          <Link href="/auth/register">
+            <Button variant="secondary">Apply as Provider</Button>
           </Link>
         </div>
       </Card>

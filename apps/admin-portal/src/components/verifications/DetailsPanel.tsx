@@ -1,17 +1,25 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { CheckCircle2, XCircle, FileText, User, Mail, Calendar, ExternalLink, Loader2 } from "lucide-react";
 import { format } from "date-fns";
-import { ProviderVerification } from "../../app/verifications/types";
+import { ProviderVerification } from "../../app/verification-hub/types";
 
 interface DetailsPanelProps {
   selectedRequest: ProviderVerification | null;
-  onUpdateStatus: (id: string, newStatus: 'approved' | 'rejected') => Promise<void>;
+  onApprove: (id: string) => Promise<void>;
+  onReject: (id: string, reason: string) => Promise<void>;
 }
 
-export function DetailsPanel({ selectedRequest, onUpdateStatus }: DetailsPanelProps) {
+export function DetailsPanel({ selectedRequest, onApprove, onReject }: DetailsPanelProps) {
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isRejecting, setIsRejecting] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
+
+  useEffect(() => {
+    setIsRejecting(false);
+    setRejectReason("");
+  }, [selectedRequest?.id]);
 
   if (!selectedRequest) {
     return (
@@ -25,10 +33,21 @@ export function DetailsPanel({ selectedRequest, onUpdateStatus }: DetailsPanelPr
     );
   }
 
-  const handleAction = async (status: 'approved' | 'rejected') => {
+  const handleApprove = async () => {
     setIsUpdating(true);
     try {
-      await onUpdateStatus(selectedRequest.id, status);
+      await onApprove(selectedRequest.id);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleConfirmReject = async () => {
+    setIsUpdating(true);
+    try {
+      await onReject(selectedRequest.id, rejectReason.trim());
+      setIsRejecting(false);
+      setRejectReason("");
     } finally {
       setIsUpdating(false);
     }
@@ -60,19 +79,21 @@ export function DetailsPanel({ selectedRequest, onUpdateStatus }: DetailsPanelPr
           <h3 className="text-[11px] font-bold tracking-widest text-gray-400 uppercase mb-3">Profile Information</h3>
           <div className="bg-gray-50 rounded-lg p-4 space-y-3">
             <div className="flex items-start">
-              <User className="w-4 h-4 text-gray-400 mt-0.5 mr-3 shrink-0" />
-              <div>
-                <p className="text-xs font-medium text-gray-500 mb-0.5">Applicant Name</p>
-                <p className="text-sm font-semibold text-gray-900">Pending Setup</p>
-              </div>
-            </div>
-            <div className="flex items-start">
               <Mail className="w-4 h-4 text-gray-400 mt-0.5 mr-3 shrink-0" />
               <div>
                 <p className="text-xs font-medium text-gray-500 mb-0.5">Email Address</p>
                 <p className="text-sm font-semibold text-gray-900">{selectedRequest.email || "No email linked"}</p>
               </div>
             </div>
+            {selectedRequest.phone && (
+              <div className="flex items-start">
+                <User className="w-4 h-4 text-gray-400 mt-0.5 mr-3 shrink-0" />
+                <div>
+                  <p className="text-xs font-medium text-gray-500 mb-0.5">Phone</p>
+                  <p className="text-sm font-semibold text-gray-900">{selectedRequest.phone}</p>
+                </div>
+              </div>
+            )}
             <div className="flex items-start">
               <Calendar className="w-4 h-4 text-gray-400 mt-0.5 mr-3 shrink-0" />
               <div>
@@ -115,24 +136,55 @@ export function DetailsPanel({ selectedRequest, onUpdateStatus }: DetailsPanelPr
       {/* Actions */}
       <div className="p-5 border-t border-gray-100 bg-gray-50/50">
         {selectedRequest.status === 'pending' ? (
-          <div className="flex space-x-3">
-            <button
-              onClick={() => handleAction('rejected')}
-              disabled={isUpdating}
-              className="flex-1 bg-white border border-[#C93B3B]/20 text-[#C93B3B] hover:bg-[#C93B3B]/5 font-semibold py-2.5 px-4 rounded-lg text-sm transition-colors flex items-center justify-center disabled:opacity-50"
-            >
-              {isUpdating ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <XCircle className="w-4 h-4 mr-2" />}
-              Reject
-            </button>
-            <button
-              onClick={() => handleAction('approved')}
-              disabled={isUpdating}
-              className="flex-1 bg-[#2D8A4E] hover:bg-[#236b3d] text-white font-semibold py-2.5 px-4 rounded-lg text-sm shadow-sm transition-colors flex items-center justify-center disabled:opacity-50"
-            >
-              {isUpdating ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
-              Approve
-            </button>
-          </div>
+          isRejecting ? (
+            <div className="space-y-3">
+              <textarea
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                placeholder="Reason for rejection (visible to the applicant)"
+                rows={3}
+                className="w-full rounded-lg border border-gray-300 p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                disabled={isUpdating}
+                autoFocus
+              />
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => setIsRejecting(false)}
+                  disabled={isUpdating}
+                  className="flex-1 bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 font-semibold py-2.5 px-4 rounded-lg text-sm transition-colors disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirmReject}
+                  disabled={isUpdating || rejectReason.trim().length === 0}
+                  className="flex-1 bg-[#C93B3B] hover:bg-[#a92f2f] text-white font-semibold py-2.5 px-4 rounded-lg text-sm shadow-sm transition-colors flex items-center justify-center disabled:opacity-50"
+                >
+                  {isUpdating ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <XCircle className="w-4 h-4 mr-2" />}
+                  Confirm Reject
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex space-x-3">
+              <button
+                onClick={() => setIsRejecting(true)}
+                disabled={isUpdating}
+                className="flex-1 bg-white border border-[#C93B3B]/20 text-[#C93B3B] hover:bg-[#C93B3B]/5 font-semibold py-2.5 px-4 rounded-lg text-sm transition-colors flex items-center justify-center disabled:opacity-50"
+              >
+                <XCircle className="w-4 h-4 mr-2" />
+                Reject
+              </button>
+              <button
+                onClick={handleApprove}
+                disabled={isUpdating}
+                className="flex-1 bg-[#2D8A4E] hover:bg-[#236b3d] text-white font-semibold py-2.5 px-4 rounded-lg text-sm shadow-sm transition-colors flex items-center justify-center disabled:opacity-50"
+              >
+                {isUpdating ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
+                Approve
+              </button>
+            </div>
+          )
         ) : (
           <div className={`p-3 rounded-lg border flex items-center justify-center ${
             selectedRequest.status === 'approved' 

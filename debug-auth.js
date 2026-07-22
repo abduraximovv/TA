@@ -1,6 +1,22 @@
-const SUPABASE_URL = 'https://foatmzdgdidvtzryqrsv.supabase.co';
-const SUPABASE_SERVICE_ROLE_KEY = 'sb_secret_fBMQImv_BzaGIibJF73Quw_XvxKTe2X';
-const SUPABASE_ANON_KEY = 'sb_publishable_fCMl9bW5Qy7nnR0RzQP3cw_a2F8yApG';
+const fs = require('fs');
+const path = require('path');
+
+const envPath = path.resolve(__dirname, '.env');
+const envContent = fs.readFileSync(envPath, 'utf8');
+const env = {};
+envContent.split(/\r?\n/).forEach(line => {
+  const match = line.match(/^([^=]+)=(.*)$/);
+  if (match) env[match[1]] = match[2].trim();
+});
+
+const SUPABASE_URL = env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_SERVICE_ROLE_KEY = env.SUPABASE_SERVICE_ROLE_KEY;
+const SUPABASE_ANON_KEY = env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !SUPABASE_ANON_KEY) {
+  console.error("Missing NEXT_PUBLIC_SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY / NEXT_PUBLIC_SUPABASE_ANON_KEY in .env");
+  process.exit(1);
+}
 
 const users = [
   { email: 'tourist@uzb.test', role: 'tourist' },
@@ -9,7 +25,7 @@ const users = [
   { email: 'admin@uzb.test', role: 'admin' },
 ];
 
-const password = 'Abdurohman2007@';
+const password = process.env.SEED_TEST_PASSWORD || 'ChangeMe123!';
 
 async function runAuthDebug() {
   console.log("==========================================");
@@ -36,9 +52,9 @@ async function runAuthDebug() {
           email_confirm: true
         })
       });
-      
+
       const data = await res.json();
-      
+
       if (!res.ok) {
         if (data.msg?.includes("already exists") || data.message?.includes("already exists")) {
           console.log(`✅ User ${u.email} already exists. Skipping creation.`);
@@ -56,7 +72,7 @@ async function runAuthDebug() {
   // STEP 2: TEST LOGIN FLOW
   console.log("\n--- STEP 2: TESTING LOGIN FLOW ---");
   console.log(`Attempting to sign in as ${users[0].email}...`);
-  
+
   try {
     const loginRes = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
       method: 'POST',

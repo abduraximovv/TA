@@ -1,22 +1,20 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { evaluateVerificationGuard } from "@repo/auth";
 
-export async function middleware(request: NextRequest) {
-  const token = request.cookies.get('sb-access-token')?.value;
+export function middleware(request: NextRequest) {
+  const decision = evaluateVerificationGuard({
+    pathname: request.nextUrl.pathname,
+    accessToken: request.cookies.get("sb-access-token")?.value,
+    appRole: "agency",
+  });
 
-  const isAuthPage = request.nextUrl.pathname.startsWith('/login');
-  
-  if (!token && !isAuthPage && request.nextUrl.pathname !== '/') {
-    return NextResponse.redirect(new URL('/login', request.url));
+  if (decision.action === "redirect") {
+    return NextResponse.redirect(new URL(decision.to, request.url));
   }
-  
-  if (token && isAuthPage) {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
-  }
-
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/inventory/:path*', '/login'],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|icon-).*)"],
 };

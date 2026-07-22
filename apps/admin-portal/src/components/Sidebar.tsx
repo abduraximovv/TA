@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { 
   LayoutDashboard, 
   CheckSquare, 
@@ -15,11 +15,18 @@ import { useAuth } from "@repo/auth";
 
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const { signOut, user } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+    router.push("/login");
+    router.refresh();
+  };
 
   const navItems = [
     { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-    { label: "Verifications", href: "/verifications", icon: CheckSquare },
+    { label: "Verification Hub", href: "/verification-hub", icon: CheckSquare },
     { label: "Users", href: "/users", icon: Users },
     { label: "Settings", href: "/settings", icon: Settings },
   ];
@@ -66,8 +73,8 @@ export function Sidebar() {
             <p className="text-xs text-blue-200">Super Admin</p>
           </div>
         </div>
-        <button 
-          onClick={() => signOut()}
+        <button
+          onClick={handleSignOut}
           className="flex items-center space-x-3 w-full px-3 py-2.5 rounded-lg hover:bg-white/10 text-blue-100 hover:text-white transition-colors"
         >
           <LogOut className="w-5 h-5" />

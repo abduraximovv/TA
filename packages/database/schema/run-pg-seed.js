@@ -2,7 +2,16 @@ const { Client } = require('pg');
 const fs = require('fs');
 const path = require('path');
 
-const connectionString = 'postgresql://postgres:Abdurohman2007@@db.foatmzdgdidvtzryqrsv.supabase.co:5432/postgres';
+const envPath = path.resolve(__dirname, '../../../.env');
+const envContent = fs.readFileSync(envPath, 'utf8');
+const env = {};
+envContent.split(/\r?\n/).forEach(line => {
+  const match = line.match(/^([^=]+)=(.*)$/);
+  if (match) env[match[1]] = match[2].trim();
+});
+
+const projectRef = new URL(env.NEXT_PUBLIC_SUPABASE_URL).hostname.split('.')[0];
+const connectionString = `postgresql://postgres:${encodeURIComponent(env.DATABASE_PASSWORD)}@db.${projectRef}.supabase.co:5432/postgres`;
 
 async function runSeed() {
   const client = new Client({ connectionString });

@@ -15,12 +15,12 @@ export default function AgencyLandingPage() {
             </span>
           </div>
           <div className="flex items-center space-x-4">
-            <Link href="/login">
+            <Link href="/auth/login">
               <Button className="rounded-full px-6 bg-white/20 hover:bg-white/30 text-white border border-white/30 backdrop-blur-sm transition-all">
                 Login
               </Button>
             </Link>
-            <Link href="/register">
+            <Link href="/auth/register">
               <Button className="rounded-full px-6 bg-[#1E6F8A] hover:bg-[#155368] text-white transition-all shadow-lg shadow-[#1E6F8A]/30">
                 Register Agency
               </Button>
@@ -51,12 +51,12 @@ export default function AgencyLandingPage() {
             Join the premier digital tourism ecosystem of Uzbekistan. Showcase your services to thousands of verified global travelers.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link href="/register">
+            <Link href="/auth/register">
               <Button size="lg" className="rounded-full bg-[#1E6F8A] hover:bg-[#155368] text-white text-lg h-14 px-10 shadow-xl shadow-[#1E6F8A]/40 transition-transform hover:-translate-y-1">
                 Register Your Agency
               </Button>
             </Link>
-            <Link href="/login">
+            <Link href="/auth/login">
               <Button size="lg" className="rounded-full bg-white/10 hover:bg-white/20 text-white border border-white/30 backdrop-blur-sm text-lg h-14 px-10 transition-transform hover:-translate-y-1">
                 Sign In
               </Button>
