@@ -1,25 +1,31 @@
 import React from "react";
-import { createClient } from "@/utils/supabase/server";
-import { cookies } from "next/headers";
 import { LandingClient } from "@/components/landing/LandingClient";
+import {
+  getTopDestinations,
+  getFeaturedExperiences,
+  getUpcomingEvents,
+} from "@repo/database";
 
-// 1 hour cache validation for high performance
-export const revalidate = 3600;
+// Revalidate data every hour
+export const revalidate = 3600; 
 
 export default async function LandingPage() {
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
-  
-  // Fetch only the top 3 services for the landing page
-  const { data: services, error } = await supabase
-    .from("services")
-    .select("id, title, price, image_url, avg_rating")
-    .order("avg_rating", { ascending: false })
-    .limit(3);
+  // 1. Server-side data fetching directly from Supabase via Database Package
+  // Using Promise.all to fetch everything in parallel for maximum performance
+  const [destinations, experiences, events] = await Promise.all([
+    getTopDestinations(8),
+    getFeaturedExperiences(8),
+    getUpcomingEvents(6),
+  ]);
 
-  if (error) {
-    console.error("Error fetching landing page services:", error);
-  }
-
-  return <LandingClient initialServices={services || []} />;
+  // 2. Pass data to client orchestrator
+  return (
+    <div className="w-full flex flex-col min-h-screen">
+      <LandingClient
+        destinations={destinations}
+        experiences={experiences}
+        events={events}
+      />
+    </div>
+  );
 }

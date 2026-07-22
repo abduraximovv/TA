@@ -14,7 +14,9 @@ export type LocationCategory =
   | 'pharmacy'
   | 'atm'
   | 'wifi'
-  | 'water';
+  | 'water'
+  | 'food'
+  | 'stay';
 
 export type UserRole = 'tourist' | 'provider' | 'agency' | 'admin';
 
@@ -28,6 +30,54 @@ export interface Location {
   lat: number;
   lng: number;
   distance_meters?: number;
+}
+
+// Landing Page types
+export interface Destination {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  region: string | null;
+  image_url: string | null;
+  hero_image_url: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  service_count: number;
+  is_featured: boolean;
+  display_order: number;
+}
+
+export interface Service {
+  id: string;
+  provider_id: string | null;
+  title: string;
+  description: string | null;
+  category: string;
+  price: number;
+  currency: string;
+  image_url: string | null;
+  avg_rating: number;
+  reviews_count: number;
+  location: string | null;
+  is_rural_provider: boolean;
+  provider_name: string | null;
+  duration_display: string | null;
+  is_featured: boolean;
+}
+
+export interface Event {
+  id: string;
+  title: string;
+  description: string | null;
+  location: string | null;
+  destination_id: string | null;
+  image_url: string | null;
+  start_date: string;
+  end_date: string | null;
+  event_type: string;
+  is_featured: boolean;
+  ticket_url: string | null;
 }
 
 export interface Database {
@@ -112,7 +162,7 @@ export interface Database {
           name: string;
           description: string | null;
           category: LocationCategory;
-          coordinates: unknown; // geography(Point, 4326)
+          coordinates: unknown;
           created_at: string;
           updated_at: string;
         };
@@ -135,21 +185,11 @@ export interface Database {
           updated_at?: string;
         };
       };
+      destinations: {
+        Row: Destination;
+      };
       services: {
-        Row: {
-          id: string;
-          provider_id: string | null;
-          title: string;
-          description: string | null;
-          category: string;
-          price: number;
-          currency: string;
-          image_url: string | null;
-          avg_rating: number;
-          reviews_count: number;
-          created_at: string;
-          updated_at: string;
-        };
+        Row: Service;
         Insert: {
           id?: string;
           provider_id?: string | null;
@@ -179,9 +219,12 @@ export interface Database {
           updated_at?: string;
         };
       };
+      events: {
+        Row: Event;
+      };
     };
     Views: Record<string, unknown>;
-    Functions: {
+    Functions: { 
       get_locations_in_radius: {
         Args: {
           p_lat: number;

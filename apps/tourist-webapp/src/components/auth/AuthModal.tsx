@@ -50,59 +50,61 @@ export function AuthModal({ isOpen, onOpenChange, defaultMode = "login" }: AuthM
   return (
     <Dialog.Root open={isOpen} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 transition-opacity" />
-        <Dialog.Content className="fixed left-[50%] top-[50%] z-50 w-full max-w-md translate-x-[-50%] translate-y-[-50%] p-6 bg-white rounded-2xl shadow-2xl focus:outline-none overflow-hidden">
-          {/* Decorative Pattern Header */}
-          <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-[#1E6F8A] to-[#D4A843]" />
+        {/* Blurred glass overlay */}
+        <Dialog.Overlay className="fixed inset-0 bg-dark-forest/40 backdrop-blur-md z-50 transition-opacity" />
+        <Dialog.Content className="fixed left-[50%] top-[50%] z-50 w-full max-w-md translate-x-[-50%] translate-y-[-50%] p-8 bg-white rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.15)] focus:outline-none overflow-hidden border border-white/20">
+          {/* Decorative Gradient Line */}
+          <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-primary via-secondary to-primary" />
           
-          <div className="flex justify-between items-center mb-6">
-            <Dialog.Title className="text-2xl font-bold text-gray-900 tracking-tight">
-              {mode === "login" ? "Welcome Back" : "Join the Journey"}
-            </Dialog.Title>
+          <div className="flex justify-between items-start mb-8 mt-2">
+            <div>
+              <Dialog.Title className="text-3xl font-serif font-bold text-dark-graphite tracking-tight mb-2">
+                {mode === "login" ? "Welcome Back" : "Begin Your Journey"}
+              </Dialog.Title>
+              <Dialog.Description className="text-gray-500 text-sm font-medium">
+                {mode === "login" 
+                  ? "Sign in to access your saved itineraries."
+                  : "Create an account to start your authentic experience."}
+              </Dialog.Description>
+            </div>
             <Dialog.Close asChild>
-              <button className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors focus:outline-none">
+              <button className="p-2 text-gray-400 hover:text-dark-graphite rounded-full hover:bg-gray-50 transition-colors focus:outline-none -mr-2">
                 <X className="w-5 h-5" />
               </button>
             </Dialog.Close>
           </div>
 
-          <Dialog.Description className="text-gray-500 mb-6 text-sm">
-            {mode === "login" 
-              ? "Sign in to access your saved itineraries and bookings."
-              : "Create an account to start your authentic Uzbekistan experience."}
-          </Dialog.Description>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-5">
             {error && (
-              <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-100">
+              <div className="p-3 bg-red-50 text-error text-sm rounded-lg border border-red-100 font-medium">
                 {error}
               </div>
             )}
             
             <div className="space-y-2">
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <Input
                   type="email"
                   placeholder="Email address"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="pl-10 h-12 bg-gray-50 border-gray-200 focus:border-[#1E6F8A] focus:ring-[#1E6F8A]"
+                  className="pl-12 h-14 bg-gray-50/50 border-gray-200 focus:border-primary focus:ring-primary rounded-xl"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
               <div className="relative">
-                <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Key className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <Input
                   type="password"
                   placeholder="Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="pl-10 h-12 bg-gray-50 border-gray-200 focus:border-[#1E6F8A] focus:ring-[#1E6F8A]"
+                  className="pl-12 h-14 bg-gray-50/50 border-gray-200 focus:border-primary focus:ring-primary rounded-xl"
                 />
               </div>
             </div>
@@ -110,36 +112,36 @@ export function AuthModal({ isOpen, onOpenChange, defaultMode = "login" }: AuthM
             <Button
               type="submit"
               disabled={isLoading}
-              className="w-full h-12 text-base font-medium bg-[#1E6F8A] hover:bg-[#155368] transition-colors rounded-xl"
+              className="w-full h-14 text-base font-bold bg-primary hover:bg-primary-dark transition-colors rounded-xl shadow-md hover:shadow-lg"
             >
-              {isLoading ? "Please wait..." : (mode === "login" ? "Sign In" : "Register")}
+              {isLoading ? "Please wait..." : (mode === "login" ? "Sign In" : "Create Account")}
             </Button>
           </form>
 
-          <div className="mt-6 flex items-center justify-center space-x-4">
+          <div className="mt-8 flex items-center justify-center space-x-4">
             <div className="h-px bg-gray-200 flex-1" />
-            <span className="text-xs text-gray-400 font-medium uppercase tracking-wider">Or continue with</span>
+            <span className="text-xs text-gray-400 font-bold uppercase tracking-wider">Or continue with</span>
             <div className="h-px bg-gray-200 flex-1" />
           </div>
 
-          <div className="mt-6">
+          <div className="mt-8">
             <Button
               type="button"
               variant="secondary"
               onClick={handleGoogleSignIn}
-              className="w-full h-12 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-medium rounded-xl flex items-center justify-center gap-3"
+              className="w-full h-14 bg-white border-2 border-gray-100 hover:border-gray-200 hover:bg-gray-50 text-dark-graphite font-semibold rounded-xl flex items-center justify-center gap-3 transition-all"
             >
-              <Chrome className="w-5 h-5" /> Google
+              <Chrome className="w-5 h-5 text-blue-500" /> Google
             </Button>
           </div>
 
-          <div className="mt-8 text-center">
-            <p className="text-sm text-gray-500">
+          <div className="mt-8 text-center pt-6 border-t border-gray-100">
+            <p className="text-sm text-gray-500 font-medium">
               {mode === "login" ? "Don't have an account?" : "Already have an account?"}{" "}
               <button
                 type="button"
                 onClick={() => setMode(mode === "login" ? "register" : "login")}
-                className="text-[#1E6F8A] font-semibold hover:underline focus:outline-none"
+                className="text-primary font-bold hover:text-primary-dark transition-colors focus:outline-none"
               >
                 {mode === "login" ? "Sign up" : "Sign in"}
               </button>
