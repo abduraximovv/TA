@@ -57,13 +57,26 @@ export interface Service {
   price: number;
   currency: string;
   image_url: string | null;
-  avg_rating: number;
-  reviews_count: number;
-  location: string | null;
-  is_rural_provider: boolean;
-  provider_name: string | null;
-  duration_display: string | null;
+  duration_minutes: number | null;
+  max_guests: number | null;
+  is_available: boolean;
+  city: string | null;
+  region: string | null;
+  rating_avg: number;
+  rating_count: number;
   is_featured: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Format duration_minutes into a human-readable string */
+export function formatDuration(minutes: number | null): string | null {
+  if (minutes == null || minutes <= 0) return null;
+  if (minutes < 60) return `${minutes} min`;
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  if (m === 0) return `${h} hr${h > 1 ? "s" : ""}`;
+  return `${h} hr${h > 1 ? "s" : ""} ${m} min`;
 }
 
 export interface Event {

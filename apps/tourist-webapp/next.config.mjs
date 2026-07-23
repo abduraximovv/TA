@@ -2,7 +2,7 @@ import withPWAInit from "@ducanh2912/next-pwa";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  transpilePackages: ["@repo/ui"],
+  transpilePackages: ["@repo/ui", "@repo/database", "@repo/types"],
   images: {
     remotePatterns: [
       {
