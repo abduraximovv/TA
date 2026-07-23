@@ -6,27 +6,35 @@ import type { Booking } from "@repo/types";
 import { Card, Badge } from "@repo/ui";
 import { Calendar, Package, MapPin } from "lucide-react";
 import { useAuth } from "@repo/auth";
+import { ReviewModal } from "./ReviewModal";
 
 export function MyBookingsList() {
   const { user } = useAuth();
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [reviews, setReviews] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (!user) return;
     
-    const fetchBookings = async () => {
+    const fetchData = async () => {
       try {
-        const data = await getMyBookings(user.id, 'tourist');
-        setBookings(data);
+        const [bookingsData, reviewsData] = await Promise.all([
+          getMyBookings(user.id, 'tourist'),
+          // Use fetch for reviews since we added the API route, 
+          // but we can also use getMyReviews from @repo/database which we just added
+          import("@repo/database").then(m => m.getMyReviews(user.id))
+        ]);
+        setBookings(bookingsData);
+        setReviews(reviewsData);
       } catch (err) {
-        console.error("Failed to fetch bookings:", err);
+        console.error("Failed to fetch data:", err);
       } finally {
         setIsLoading(false);
       }
     };
     
-    fetchBookings();
+    fetchData();
   }, [user]);
 
   if (isLoading) {
@@ -83,6 +91,20 @@ export function MyBookingsList() {
                 : "TBD"}
             </span>
           </div>
+          
+          {booking.status === "completed" && !reviews.some(r => r.booking_id === booking.id) && (
+            <div className="mt-4 pt-4 border-t border-gray-100 text-right">
+              <ReviewModal 
+                bookingId={booking.id} 
+                serviceId={booking.service_id} 
+                itineraryId={booking.itinerary_id}
+                onSuccess={() => {
+                  // Re-fetch reviews to hide the button
+                  import("@repo/database").then(m => m.getMyReviews(user!.id).then(setReviews));
+                }}
+              />
+            </div>
+          )}
         </Card>
       ))}
     </div>

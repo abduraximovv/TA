@@ -5,6 +5,7 @@ import { SessionProvider } from "@repo/auth";
 import { InstallPrompt } from "@repo/ui";
 import { BottomNav } from "@/components/BottomNav";
 import { Navbar } from "@/components/navigation/Navbar";
+import { RealtimeNotifications } from "@/components/providers/RealtimeNotifications";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -46,9 +47,14 @@ export default function RootLayout({
     <html lang="en" className={`${inter.variable} ${dancingScript.variable}`}>
       <body className={`${inter.className} bg-white antialiased`}>
         <SessionProvider>
+          <RealtimeNotifications />
           <Navbar />
           {/* Main content — full width, no constraints */}
           <main className="min-h-screen">{children}</main>
+          {/* Mobile-only bottom navigation */}
+          <div className="md:hidden">
+            <BottomNav />
+          </div>
           <InstallPrompt />
         </SessionProvider>
       </body>

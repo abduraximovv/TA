@@ -149,16 +149,6 @@ export default async function ServiceDetailPage({
                   {review.comment && (
                     <p className="text-gray-600 text-sm">{review.comment}</p>
                   )}
-                  {review.response && (
-                    <div className="mt-3 pl-4 border-l-2 border-primary/20">
-                      <p className="text-xs font-semibold text-primary mb-1">
-                        Business Reply
-                      </p>
-                      <p className="text-gray-600 text-sm">
-                        {review.response}
-                      </p>
-                    </div>
-                  )}
                 </div>
               ))}
             </div>

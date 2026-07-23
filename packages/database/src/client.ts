@@ -245,6 +245,16 @@ export const getReviewsForItinerary = async (itineraryId: string): Promise<Revie
   }));
 };
 
+export const getMyReviews = async (touristId: string): Promise<Review[]> => {
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from("reviews")
+    .select("*")
+    .eq("tourist_id", touristId);
+  if (error) throw new Error(error.message);
+  return (data ?? []) as unknown as Review[];
+};
+
 // ─── Bookings ───────────────────────────────────────────────
 
 export type BookingInput = Omit<Booking, 'id' | 'created_at' | 'updated_at' | 'provider_id'>;
