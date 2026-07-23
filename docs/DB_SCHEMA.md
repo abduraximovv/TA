@@ -261,14 +261,14 @@ Offerings created by Local Providers (yurt stays, masterclasses, camel rides, et
 | Column | Type | Constraints | Description |
 |---|---|---|---|
 | `id` | `uuid` | PK, default `gen_random_uuid()` | Service ID |
-| `provider_id` | `uuid` | FK → `users.id`, NOT NULL | Provider who created this service |
+| `provider_id` | `uuid` | NULLABLE | Provider who created this service (No FK in production) |
 | `title` | `text` | NOT NULL | Service name (AI-translated) |
 | `title_uz` | `text` | | Original Uzbek title |
 | `title_ru` | `text` | | Russian title |
 | `description` | `text` | NOT NULL | Service description |
 | `description_uz` | `text` | | Original Uzbek description |
 | `description_ru` | `text` | | Russian description |
-| `category` | `service_category` | NOT NULL | Enum: see custom types |
+| `category` | `text` | NOT NULL | Free text category |
 | `price` | `decimal(10,2)` | NOT NULL | Price per person |
 | `currency` | `text` | DEFAULT `'UZS'` | Currency code |
 | `duration_minutes` | `integer` | | Duration of the experience |
@@ -305,16 +305,18 @@ The central transaction table connecting tourists, services, and agencies.
 |---|---|---|---|
 | `id` | `uuid` | PK, default `gen_random_uuid()` | Booking ID |
 | `tourist_id` | `uuid` | FK → `users.id`, NOT NULL | The tourist making the booking |
-| `service_id` | `uuid` | FK → `services.id`, NOT NULL | The booked service |
-| `agency_id` | `uuid` | FK → `users.id`, NULLABLE | Agency facilitating (null for direct bookings) |
+| `service_id` | `uuid` | FK → `services.id`, NULLABLE | The booked service |
+| `itinerary_id` | `uuid` | FK → `itineraries.id`, NULLABLE | The booked itinerary (package) |
+| `provider_id` | `uuid` | FK → `users.id`, NULLABLE | The user (provider/agency) owning this booking |
 | `status` | `booking_status` | DEFAULT `'pending'` | Current booking state |
 | `booking_date` | `date` | NOT NULL | Date of the experience |
-| `guest_count` | `integer` | NOT NULL, DEFAULT `1` | Number of guests |
-| `total_price` | `decimal(12,2)` | NOT NULL | Total calculated price |
+| `guest_count` | `integer` | DEFAULT `1` | Number of guests |
+| `special_requests` | `text` | | Tourist's special requests |
+| `passenger_manifest` | `jsonb` | | JSON containing passenger details |
+| `dietary_preferences` | `text` | | Dietary restrictions |
+| `pickup_location` | `text` | | Where to pick up |
+| `total_price` | `numeric(12,2)` | | Total calculated price |
 | `currency` | `text` | DEFAULT `'UZS'` | Currency code |
-| `notes` | `text` | | Special requests |
-| `cancellation_reason` | `text` | | Reason if cancelled |
-| `payment_status` | `payment_status` | DEFAULT `'unpaid'` | Payment tracking |
 | `created_at` | `timestamptz` | DEFAULT `now()` | |
 | `updated_at` | `timestamptz` | DEFAULT `now()` | |
 
@@ -364,10 +366,13 @@ Tourist reviews of completed services.
 |---|---|---|---|
 | `id` | `uuid` | PK, default `gen_random_uuid()` | Review ID |
 | `tourist_id` | `uuid` | FK → `users.id`, NOT NULL | Reviewing tourist |
-| `service_id` | `uuid` | FK → `services.id`, NOT NULL | Reviewed service |
-| `booking_id` | `uuid` | FK → `bookings.id`, UNIQUE | One review per booking |
+| `service_id` | `uuid` | FK → `services.id`, NULLABLE | Reviewed service |
+| `itinerary_id` | `uuid` | FK → `itineraries.id`, NULLABLE | Reviewed itinerary (package) |
+| `booking_id` | `uuid` | FK → `bookings.id`, UNIQUE, NOT NULL | One review per booking |
 | `rating` | `integer` | NOT NULL, CHECK `1-5` | Star rating |
 | `comment` | `text` | | Review text |
+| `response` | `text` | | Business reply |
+| `response_at` | `timestamptz` | | When the business replied |
 | `created_at` | `timestamptz` | DEFAULT `now()` | |
 
 ### 3.9 `itineraries`
@@ -383,8 +388,8 @@ Trip plans created by agencies for tourists.
 | `description` | `text` | | Trip overview |
 | `start_date` | `date` | | Trip start |
 | `end_date` | `date` | | Trip end |
-| `status` | `itinerary_status` | DEFAULT `'draft'` | Enum: `draft`, `proposed`, `accepted`, `active`, `completed` |
-| `total_estimated_cost` | `decimal(12,2)` | | Sum of all itinerary items |
+| `status` | `itinerary_status` | DEFAULT `'draft'` | Enum: `draft`, `active`, `completed` |
+| `total_price` | `numeric(12,2)` | DEFAULT `0` | Sum of all itinerary items |
 | `currency` | `text` | DEFAULT `'UZS'` | Currency code |
 | `created_at` | `timestamptz` | DEFAULT `now()` | |
 | `updated_at` | `timestamptz` | DEFAULT `now()` | |
@@ -472,37 +477,16 @@ Platform event log for admin analytics dashboard.
 -- User roles
 CREATE TYPE user_role AS ENUM ('tourist', 'provider', 'agency', 'admin');
 
--- Service categories
-CREATE TYPE service_category AS ENUM (
-  'masterclass',      -- Tandir baking, ceramic making, etc.
-  'accommodation',    -- Yurt stays, B&Bs, guesthouses
-  'adventure',        -- Camel riding, hiking, horse riding
-  'food_experience',  -- Traditional cooking, choyxona visits
-  'cultural_tour',    -- Historical site guides, craft workshops
-  'transport',        -- Local drivers, horse carts
-  'other'
-);
-
 -- Booking status workflow
 CREATE TYPE booking_status AS ENUM (
   'pending',          -- Tourist submitted, waiting for provider
   'accepted',         -- Provider accepted
   'declined',         -- Provider declined
-  'confirmed',        -- Payment confirmed (if applicable)
-  'in_progress',      -- Experience is happening
   'completed',        -- Experience finished
-  'cancelled',        -- Cancelled by tourist or agency
-  'no_show'           -- Tourist didn't show up
+  'cancelled'         -- Cancelled by tourist or agency
 );
 
--- Payment status
-CREATE TYPE payment_status AS ENUM (
-  'unpaid',
-  'pending',
-  'paid',
-  'refunded',
-  'failed'
-);
+-- Payment status removed (No payments in Stage 2 scope)
 
 -- Location types for Survival Map
 CREATE TYPE location_type AS ENUM (
@@ -524,19 +508,13 @@ CREATE TYPE notification_type AS ENUM (
   'booking_request',       -- New booking for provider
   'booking_accepted',      -- Provider accepted booking
   'booking_declined',      -- Provider declined booking
-  'booking_cancelled',     -- Booking cancelled
-  'booking_reminder',      -- Upcoming booking reminder
-  'weather_alert',         -- Contextual weather notification
-  'cultural_tip',          -- Cultural advice notification
-  'verification_update',   -- Provider verification status change
+  'review_received',       -- Tourist left a review
   'system'                 -- System announcements
 );
 
 -- Itinerary status
 CREATE TYPE itinerary_status AS ENUM (
   'draft',       -- Agency is building it
-  'proposed',    -- Sent to tourist for review
-  'accepted',    -- Tourist approved
   'active',      -- Trip is in progress
   'completed'    -- Trip finished
 );

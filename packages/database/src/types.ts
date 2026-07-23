@@ -222,6 +222,12 @@ export interface Database {
       events: {
         Row: Event;
       };
+      itineraries: any;
+      itinerary_items: any;
+      bookings: any;
+      booking_status_history: any;
+      reviews: any;
+      notifications: any;
     };
     Views: Record<string, unknown>;
     Functions: { 
