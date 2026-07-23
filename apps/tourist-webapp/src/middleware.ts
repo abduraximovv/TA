@@ -68,7 +68,8 @@ export async function middleware(request: NextRequest) {
     // If they hit the public landing page or auth routes while logged in
     if (isPublicRoute) {
       if (isAuthRoute && userRole === "tourist") {
-        return NextResponse.redirect(new URL("/dashboard", request.url));
+        const nextParam = request.nextUrl.searchParams.get("next");
+        return NextResponse.redirect(new URL(nextParam || "/profile", request.url));
       }
       if (userRole === "provider") {
         return NextResponse.redirect("http://localhost:3001/dashboard"); // Assuming provider was bumped down

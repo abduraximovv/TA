@@ -23,7 +23,9 @@ export default function LoginPage() {
 
     try {
       await signInWithEmail(email, password);
-      window.location.href = "/profile";
+      const searchParams = new URLSearchParams(window.location.search);
+      const nextParam = searchParams.get("next");
+      window.location.href = nextParam || "/profile";
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
       if (message.includes("Invalid login credentials") || message.includes("invalid_credentials")) {

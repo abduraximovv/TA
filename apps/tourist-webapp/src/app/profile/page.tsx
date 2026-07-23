@@ -7,6 +7,7 @@ import { Card } from "@repo/ui";
 import { LogOut, Home, User as UserIcon, Settings, Shield, Bell, HelpCircle } from "lucide-react";
 import Link from "next/link";
 import { BottomNav } from "../../components/BottomNav";
+import { MyBookingsList } from "@/components/booking/MyBookingsList";
 
 export default function ProfilePage() {
   const { user, signOut, isLoading } = useAuth();
@@ -76,7 +77,10 @@ export default function ProfilePage() {
           </div>
         </Card>
 
-        <div className="space-y-3">
+        <MyBookingsList />
+
+        <div className="space-y-3 mt-8">
+          <h3 className="font-bold text-dark-graphite text-lg mb-2">Account Options</h3>
           <Link href="/" className="block">
             <Card className="p-4 md:p-5 bg-white border border-gray-100 shadow-sm rounded-xl flex items-center justify-between hover:bg-gray-50 transition-colors cursor-pointer group">
               <div className="flex items-center">

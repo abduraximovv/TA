@@ -15,7 +15,7 @@ export function MapTeaser() {
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true, margin: "-50px" }}
-            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] as const }}
             className="flex-1 text-center lg:text-left"
           >
             <p className="text-primary text-[11px] font-semibold uppercase tracking-[3px] mb-3">
@@ -42,7 +42,7 @@ export function MapTeaser() {
             initial={{ opacity: 0, x: 30 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true, margin: "-50px" }}
-            transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] as const }}
             className="flex-1 w-full max-w-lg lg:max-w-none relative"
           >
             {/* Abstract Map Representation */}
