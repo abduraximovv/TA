@@ -173,24 +173,27 @@ export default function ServicesPage() {
         </div>
       )}
 
-      <ServiceFormModal
-        open={modalOpen}
-        onOpenChange={setModalOpen}
-        title={editingService ? "Edit Service" : "Add Service"}
-        initialValues={
-          editingService
-            ? {
-                title: editingService.title,
-                description: editingService.description ?? "",
-                category: editingService.category,
-                price: String(editingService.price),
-                currency: editingService.currency,
-                image_url: editingService.image_url ?? "",
-              }
-            : undefined
-        }
-        onSubmit={handleSubmit}
-      />
+      {session?.user?.id && (
+        <ServiceFormModal
+          open={modalOpen}
+          onOpenChange={setModalOpen}
+          title={editingService ? "Edit Service" : "Add Service"}
+          ownerId={session.user.id}
+          initialValues={
+            editingService
+              ? {
+                  title: editingService.title,
+                  description: editingService.description ?? "",
+                  category: editingService.category,
+                  price: String(editingService.price),
+                  currency: editingService.currency,
+                  image_url: editingService.image_url ?? "",
+                }
+              : undefined
+          }
+          onSubmit={handleSubmit}
+        />
+      )}
 
       <Toast message={toastMessage ?? ""} isVisible={toastMessage !== null} onClose={() => setToastMessage(null)} />
     </div>

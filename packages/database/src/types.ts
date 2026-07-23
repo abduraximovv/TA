@@ -1,3 +1,14 @@
+import type {
+  Booking,
+  BookingStatus,
+  Itinerary,
+  ItineraryItem,
+  ItineraryStatus,
+  Notification,
+  NotificationType,
+  Review,
+} from "@repo/types";
+
 export type Json =
   | string
   | number
@@ -65,6 +76,7 @@ export interface Service {
   rating_avg: number;
   rating_count: number;
   is_featured: boolean;
+  is_available: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -214,6 +226,7 @@ export interface Database {
           image_url?: string | null;
           avg_rating?: number;
           reviews_count?: number;
+          is_available?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -228,6 +241,7 @@ export interface Database {
           image_url?: string | null;
           avg_rating?: number;
           reviews_count?: number;
+          is_available?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -235,12 +249,174 @@ export interface Database {
       events: {
         Row: Event;
       };
-      itineraries: any;
-      itinerary_items: any;
-      bookings: any;
-      booking_status_history: any;
-      reviews: any;
-      notifications: any;
+      itineraries: {
+        Row: Itinerary;
+        Insert: {
+          id?: string;
+          agency_id?: string | null;
+          title: string;
+          description?: string | null;
+          start_date?: string | null;
+          end_date?: string | null;
+          status?: ItineraryStatus;
+          total_price?: number;
+          currency?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          agency_id?: string | null;
+          title?: string;
+          description?: string | null;
+          start_date?: string | null;
+          end_date?: string | null;
+          status?: ItineraryStatus;
+          total_price?: number;
+          currency?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      itinerary_items: {
+        Row: ItineraryItem;
+        Insert: {
+          id?: string;
+          itinerary_id?: string | null;
+          service_id?: string | null;
+          title?: string | null;
+          price?: number | null;
+          sort_order?: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          itinerary_id?: string | null;
+          service_id?: string | null;
+          title?: string | null;
+          price?: number | null;
+          sort_order?: number;
+          created_at?: string;
+        };
+      };
+      bookings: {
+        Row: Booking;
+        Insert: {
+          id?: string;
+          tourist_id: string;
+          service_id?: string | null;
+          itinerary_id?: string | null;
+          provider_id?: string | null;
+          status?: BookingStatus;
+          booking_date: string;
+          guest_count?: number;
+          special_requests?: string | null;
+          passenger_manifest?: Json | null;
+          dietary_preferences?: string | null;
+          pickup_location?: string | null;
+          total_price?: number | null;
+          currency?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          tourist_id?: string;
+          service_id?: string | null;
+          itinerary_id?: string | null;
+          provider_id?: string | null;
+          status?: BookingStatus;
+          booking_date?: string;
+          guest_count?: number;
+          special_requests?: string | null;
+          passenger_manifest?: Json | null;
+          dietary_preferences?: string | null;
+          pickup_location?: string | null;
+          total_price?: number | null;
+          currency?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      booking_status_history: {
+        Row: {
+          id: string;
+          booking_id: string;
+          old_status: BookingStatus | null;
+          new_status: BookingStatus;
+          changed_by: string | null;
+          notes: string | null;
+          changed_at: string;
+        };
+        Insert: {
+          id?: string;
+          booking_id: string;
+          old_status?: BookingStatus | null;
+          new_status: BookingStatus;
+          changed_by?: string | null;
+          notes?: string | null;
+          changed_at?: string;
+        };
+        Update: {
+          id?: string;
+          booking_id?: string;
+          old_status?: BookingStatus | null;
+          new_status?: BookingStatus;
+          changed_by?: string | null;
+          notes?: string | null;
+          changed_at?: string;
+        };
+      };
+      reviews: {
+        Row: Review;
+        Insert: {
+          id?: string;
+          tourist_id: string;
+          service_id?: string | null;
+          itinerary_id?: string | null;
+          booking_id: string;
+          rating: number;
+          comment?: string | null;
+          response?: string | null;
+          response_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          tourist_id?: string;
+          service_id?: string | null;
+          itinerary_id?: string | null;
+          booking_id?: string;
+          rating?: number;
+          comment?: string | null;
+          response?: string | null;
+          response_at?: string | null;
+          created_at?: string;
+        };
+      };
+      notifications: {
+        Row: Notification;
+        Insert: {
+          id?: string;
+          user_id: string;
+          title: string;
+          body: string;
+          type: NotificationType;
+          action_url?: string | null;
+          is_read?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          title?: string;
+          body?: string;
+          type?: NotificationType;
+          action_url?: string | null;
+          is_read?: boolean;
+          created_at?: string;
+        };
+      };
     };
     Views: Record<string, unknown>;
     Functions: { 

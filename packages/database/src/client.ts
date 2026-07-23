@@ -316,7 +316,34 @@ export const createReview = async (input: ReviewInput): Promise<Review> => {
 
 // ─── Realtime ───────────────────────────────────────────────
 
-export const subscribeToBookingUpdates = (userId: string, role: 'tourist' | 'provider' | 'agency', onChange: (payload: any) => void) => {
+export const getReviewsForServices = async (serviceIds: string[]): Promise<Review[]> => {
+  if (!serviceIds.length) return [];
+  const supabase = getSupabase();
+  const { data, error } = await (supabase as any).from('reviews').select('*').in('service_id', serviceIds);
+  if (error) throw new Error(error.message);
+  return data as any as Review[];
+};
+
+export const getReviewsForItineraries = async (itineraryIds: string[]): Promise<Review[]> => {
+  if (!itineraryIds.length) return [];
+  const supabase = getSupabase();
+  const { data, error } = await (supabase as any).from('reviews').select('*').in('itinerary_id', itineraryIds);
+  if (error) throw new Error(error.message);
+  return data as any as Review[];
+};
+
+export const updateReviewResponse = async (reviewId: string, response: string): Promise<Review> => {
+  const supabase = getSupabase();
+  const { data, error } = await (supabase as any).from('reviews').update({
+    response,
+    response_at: new Date().toISOString()
+  }).eq('id', reviewId).select().single();
+  if (error) throw new Error(error.message);
+  return data as any as Review;
+};
+
+export const subscribeToBookingUpdates = (
+userId: string, role: 'tourist' | 'provider' | 'agency', onChange: (payload: any) => void) => {
   const supabase = getSupabase();
   const filterColumn = role === 'tourist' ? 'tourist_id' : 'provider_id';
 
