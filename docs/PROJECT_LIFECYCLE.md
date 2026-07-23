@@ -96,11 +96,11 @@ We will build the portals in the following order to ensure a logical flow of UI 
 - [x] **Workflow States Built:**
   - **Verification Hub:** UI showing pending agency/supplier registration requests. Detailed view of uploaded documents and Approve/Reject controls.
   - **Oversight:** Empty state for the heatmap and analytics graphs.
-- [ ] **Real Data Integration:** Fetch list of users, providers, and agencies from the real database.
+- [ ] **Real Data Integration:** Fetch list of users, providers, and agencies from the real database. It shoudl cashe it so it would not send new requests every time it reloads.
 
 ### 3.3 Agency Portal
 **Strategy:** Desktop-First, Power-User focused.
-- [x] **Workflow States Built:**
+- [ ] **Workflow States Built:**
   - Agency Registration flow (including "Awaiting Admin Approval" holding screen).
   - Inventory Dashboard: Grid/List views of available suppliers and packages.
   - Itinerary Canvas: Layout for the drag-and-drop calendar (UI only, logic deferred).
@@ -117,14 +117,18 @@ We will build the portals in the following order to ensure a logical flow of UI 
 
 ### 3.5 [NEW] The Identity & Verification Bridge
 **Goal:** Connect Auth states to the Admin Hub to remove the "placeholder" feel.
-- [ ] **State-Aware Middleware:** Implement routing logic that checks `user.is_verified` before allowing access to B2B dashboards.
-- [ ] **B2B Onboarding UI:** Build the high-fidelity registration forms for Agencies (License upload) and Providers (Service type selection).
-- [ ] **The "Holding" Experience:** Create the premium `/auth/pending` page that users see while waiting for Aziz (Admin) to approve them.
+- [x] **State-Aware Middleware:** Implement routing logic that checks `user.is_verified` before allowing access to B2B dashboards.
+- [x] **B2B Onboarding UI:** Build the high-fidelity registration forms for Agencies (License upload) and Providers (Service type selection).
+- [x] **The "Holding" Experience:** Create the premium `/auth/pending` page that users see while waiting for Aziz (Admin) to approve them.
 - [ ] **Real-Time Verification:** Ensure the "Approve" button in the Admin Portal updates the `users.is_verified` boolean in Supabase, instantly granting the user access via a Realtime subscription.
 
 ### 3.6 Stage 1 Backend Foundations
 - [x] **Comprehensive Seed Strategy:** Develop `seed.sql` and node scripts that populate the database with realistic, high-quality data (matching the "Visit Saudi" aesthetic requirements: high-res image URLs, real destination descriptions, dummy user accounts for every role).
 - [x] **Real Connections:** No mock APIs. Use Supabase client for all data fetching.
+
+### 3.7 Core Authentication & Approvals
+- [x] **Authentication Flow:** Connected Supabase Auth, enforced JWT routing protection and role-based redirects.
+- [x] **Approval Workflows:** Connected the Admin Portal's Approve/Reject buttons to update user roles/statuses in the database, triggering access for Agencies/Suppliers.
 
 ---
 
@@ -134,12 +138,17 @@ We will build the portals in the following order to ensure a logical flow of UI 
 > **Goal:** Wire up the heavy functional logic behind the beautiful interfaces created in Stage 1.
 
 ### Deliverables Checklist
-- [ ] **Authentication Flow:** Connect Supabase Auth. Enforce JWT routing protection and role-based redirects.
-- [ ] **Approval Workflows:** Connect the Admin Portal's Approve/Reject buttons to update user roles/statuses in the database, triggering access for Agencies/Suppliers.
-- [ ] **The Booking Engine:** 
-  - Connect Tourist booking requests to Provider push notifications.
-  - Implement Provider Accept/Decline state mutations.
-  - Real-time status updates via Supabase Realtime subscriptions.
+- [ ] **Tourist WebApp Integration:** Display real listings and offerings directly from providers and agencies.
+- [ ] **Review & Rating System:** 
+  - Enable tourists to leave a post-booking review (comment, star rating, and experience sharing).
+- [ ] **Offerings & Inventory Management:** 
+  - **Providers:** Upload and list specific services like hiking and local activities.
+  - **Agencies:** Upload and list comprehensive travel packages.
+- [ ] **Comprehensive Booking Flow (Real-time):** 
+  - Provide a detailed view for both Providers and Agencies to see who booked, when, and all related booking information.
+  - Track booking status (Accepted/Declined).
+  - Integrate **Supabase Realtime** for instant updates and push notifications for booking state changes.
+- [ ] **Review Management:** Allow Providers and Agencies to see their reviews and post replies/answers.
 - [ ] **Agency CRM:** Make the Kanban board fully functional (drag and drop triggers DB updates).
 
 ---
@@ -178,8 +187,8 @@ We will build the portals in the following order to ensure a logical flow of UI 
 | Stage | Status | Progress | Focus |
 |---|---|---|---|
 | Stage 0: Setup | 🟢 Complete | 100% | Infrastructure |
-| Stage 1: Premium UI & Core DB | 🟡 In Progress | 45% | Tourist App done, Admin/Agency forms started |
-| Stage 2: Business Workflows | ⬜ Not Started | 0% | Booking Engine, Auth, Approvals |
+| Stage 1: Premium UI & Core DB | 🟡 In Progress | 85% | UI, DB, Authentication, Approvals completed |
+| Stage 2: Business Workflows | ⬜ Not Started | 0% | Offerings, Real-time Bookings, Reviews |
 | Stage 3: Advanced Features | ⬜ Not Started | 0% | AI Scanners, Itineraries |
 | Stage 4: Compliance & Launch | ⬜ Not Started | 0% | E-Mehmon, Payments, Scale |
 
