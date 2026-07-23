@@ -46,14 +46,9 @@ export default function RootLayout({
     <html lang="en" className={`${inter.variable} ${dancingScript.variable}`}>
       <body className={`${inter.className} bg-white antialiased`}>
         <SessionProvider>
-          {/* Desktop/Tablet Navbar — hidden on mobile via CSS */}
           <Navbar />
           {/* Main content — full width, no constraints */}
           <main className="min-h-screen">{children}</main>
-          {/* Mobile-only bottom navigation */}
-          <div className="md:hidden">
-            <BottomNav />
-          </div>
           <InstallPrompt />
         </SessionProvider>
       </body>

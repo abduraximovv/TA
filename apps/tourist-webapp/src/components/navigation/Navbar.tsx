@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Search, User, Heart, Menu, X, Plane, ShieldCheck, HeadphonesIcon } from "lucide-react";
+import { Search, User, Heart, Menu, X, Plane, ShieldCheck, HeadphonesIcon, Map } from "lucide-react";
 import { useAuth } from "@repo/auth";
 import { AuthModal } from "@/components/auth/AuthModal";
 
@@ -88,13 +88,17 @@ export function Navbar() {
               ))}
             </nav>
 
-            {/* Right Utilities */}
-            <div className="flex items-center gap-4">
-              <button className="text-dark-graphite hover:text-primary transition-colors hidden sm:block">
+            {/* Right Utilities (Icons moved from bottom nav) */}
+            <div className="flex items-center gap-3 md:gap-4">
+              <Link href="/map" className="text-dark-graphite hover:text-primary transition-colors">
+                <Map className="w-5 h-5" />
+              </Link>
+              
+              <button className="text-dark-graphite hover:text-primary transition-colors">
                 <Search className="w-5 h-5" />
               </button>
               
-              <button className="text-dark-graphite hover:text-primary transition-colors hidden sm:block">
+              <button className="text-dark-graphite hover:text-primary transition-colors">
                 <Heart className="w-5 h-5" />
               </button>
 
@@ -126,7 +130,7 @@ export function Navbar() {
                 Book Now
               </Link>
               
-              <button className="xl:hidden text-dark-graphite hover:text-primary transition-colors">
+              <button className="xl:hidden text-dark-graphite hover:text-primary transition-colors ml-2">
                 <Menu className="w-6 h-6" />
               </button>
             </div>

@@ -129,8 +129,6 @@ export default function ProfilePage() {
         </div>
 
       </div>
-
-      <BottomNav />
     </main>
   );
 }
