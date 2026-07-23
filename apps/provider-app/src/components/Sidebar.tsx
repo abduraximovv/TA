@@ -3,18 +3,46 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Package, LogOut, Compass, ShieldCheck } from "lucide-react";
+import { LayoutDashboard, Package, CalendarCheck, LogOut, Compass, ShieldCheck, MessageSquare } from "lucide-react";
 import { useAuth } from "@repo/auth";
 
 const navItems = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Services", href: "/services", icon: Package },
+  { label: "Bookings", href: "/bookings", icon: CalendarCheck },
+  { label: "Reviews", href: "/reviews", icon: MessageSquare },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { signOut, user, isVerified } = useAuth();
+  const [pendingCount, setPendingCount] = React.useState(0);
+
+  React.useEffect(() => {
+    if (!user) return;
+
+    import("@repo/database").then(({ getMyBookings, subscribeToBookingUpdates }) => {
+      const fetchBookings = async () => {
+        try {
+          const bookings = await getMyBookings(user.id, "provider");
+          setPendingCount(bookings.filter((b) => b.status === "pending").length);
+        } catch (e) {
+          console.error("Failed to fetch pending bookings", e);
+        }
+      };
+
+      fetchBookings();
+
+      const channel = subscribeToBookingUpdates(user.id, "provider", () => {
+        fetchBookings();
+      });
+
+      return () => {
+        channel.unsubscribe();
+      };
+    });
+  }, [user]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -44,7 +72,12 @@ export function Sidebar() {
               }`}
             >
               <Icon className="w-5 h-5" />
-              <span>{item.label}</span>
+              <span className="flex-1">{item.label}</span>
+              {item.label === "Bookings" && pendingCount > 0 && (
+                <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                  {pendingCount}
+                </span>
+              )}
             </Link>
           );
         })}

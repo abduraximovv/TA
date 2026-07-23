@@ -1,7 +1,9 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Modal, Button, Input, Select, Textarea, LoadingPulse } from "@repo/ui";
+import { uploadServicePhoto } from "@repo/database";
+import { ImageOff, Upload } from "lucide-react";
 
 export interface ServiceFormValues {
   title: string;
@@ -20,6 +22,7 @@ interface ServiceFormModalProps {
   initialValues?: ServiceFormValues;
   onSubmit: (values: ServiceFormValues) => Promise<void>;
   title: string;
+  ownerId: string;
 }
 
 const emptyValues: ServiceFormValues = {
@@ -31,10 +34,12 @@ const emptyValues: ServiceFormValues = {
   image_url: "",
 };
 
-export function ServiceFormModal({ open, onOpenChange, initialValues, onSubmit, title }: ServiceFormModalProps) {
+export function ServiceFormModal({ open, onOpenChange, initialValues, onSubmit, title, ownerId }: ServiceFormModalProps) {
   const [values, setValues] = useState<ServiceFormValues>(initialValues ?? emptyValues);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (open) {
@@ -42,6 +47,22 @@ export function ServiceFormModal({ open, onOpenChange, initialValues, onSubmit, 
       setError(null);
     }
   }, [open, initialValues]);
+
+  const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploading(true);
+    setError(null);
+    try {
+      const url = await uploadServicePhoto(file, ownerId);
+      setValues((prev) => ({ ...prev, image_url: url }));
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to upload photo.");
+    } finally {
+      setIsUploading(false);
+      e.target.value = "";
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,6 +86,40 @@ export function ServiceFormModal({ open, onOpenChange, initialValues, onSubmit, 
             {error}
           </div>
         )}
+
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-semibold text-gray-700">Photo</label>
+          <div className="flex items-center gap-4">
+            <div className="w-20 h-20 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden shrink-0">
+              {isUploading ? (
+                <LoadingPulse className="scale-50 text-primary" />
+              ) : values.image_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={values.image_url} alt="Preview" className="w-full h-full object-cover" />
+              ) : (
+                <ImageOff className="w-6 h-6 text-gray-300" />
+              )}
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handlePhotoSelect}
+              disabled={isUploading || isSaving}
+            />
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading || isSaving}
+              className="flex items-center gap-2"
+            >
+              <Upload className="w-4 h-4" />
+              {values.image_url ? "Change Photo" : "Upload Photo"}
+            </Button>
+          </div>
+        </div>
 
         <Input
           label="Title"
@@ -121,19 +176,11 @@ export function ServiceFormModal({ open, onOpenChange, initialValues, onSubmit, 
           disabled={isSaving}
         />
 
-        <Input
-          label="Image URL"
-          placeholder="https://..."
-          value={values.image_url}
-          onChange={(e) => setValues({ ...values, image_url: e.target.value })}
-          disabled={isSaving}
-        />
-
         <div className="flex justify-end gap-3 mt-2">
           <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} disabled={isSaving}>
             Cancel
           </Button>
-          <Button type="submit" disabled={isSaving} className="flex items-center gap-2">
+          <Button type="submit" disabled={isSaving || isUploading} className="flex items-center gap-2">
             {isSaving && <LoadingPulse className="scale-50 h-5 w-5 text-white" />}
             {isSaving ? "Saving..." : "Save Listing"}
           </Button>
