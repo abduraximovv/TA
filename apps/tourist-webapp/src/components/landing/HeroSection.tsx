@@ -1,120 +1,316 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Image from "next/image";
-import { motion } from "framer-motion";
-import { ArrowRight, Star } from "lucide-react";
-import { SearchWidget } from "./SearchWidget";
-
-const fadeUp = {
-  hidden: { opacity: 0, y: 30 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] as const },
-  },
-};
-
-const stagger = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.15, delayChildren: 0.1 },
-  },
-};
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export function HeroSection() {
+  const [region, setRegion] = useState("Samarkand & Bukhara");
+  const [dates, setDates] = useState("14 – 21 Sep");
+  const router = useRouter();
+
   return (
-    <section className="relative w-full overflow-hidden bg-sand-50 pb-20 md:pb-32 lg:pb-16 pt-6">
-      <div className="section-container relative">
-        <div className="relative w-full h-[600px] rounded-3xl overflow-hidden">
-          {/* Background Image */}
-          <Image
-            src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=2070"
-            alt="Beautiful Mountains Landscape"
-            fill
-            priority
-            className="object-cover"
-            quality={85}
-            sizes="100vw"
-          />
-          {/* Overlay gradient for text readability */}
-          <div className="absolute inset-0 bg-gradient-to-r from-black/40 to-transparent" />
+    <section
+      style={{
+        position: "relative",
+        width: "100%",
+        height: "92vh",
+        minHeight: 680,
+        overflow: "hidden",
+      }}
+    >
+      {/* Background Image */}
+      <div style={{ position: "absolute", inset: 0 }}>
+        <Image
+          src="/images/registan_4k.png"
+          alt="Registan Square, Samarkand, Uzbekistan"
+          fill
+          priority
+          unoptimized
+          className="object-cover"
+          quality={100}
+          sizes="100vw"
+        />
+      </div>
 
-          {/* Hero Content */}
-          <motion.div
-            variants={stagger}
-            initial="hidden"
-            animate="visible"
-            className="absolute inset-0 z-10 flex flex-col justify-center p-8 md:p-16 max-w-3xl"
-          >
-            {/* Main Heading */}
-            <motion.h1
-              variants={fadeUp}
-              className="text-[40px] md:text-[64px] font-bold text-white leading-[1.1] tracking-tight mb-4"
-            >
-              Explore the World <br />
-              Create <span className="font-cursive text-secondary text-[56px] md:text-[80px] leading-[0.8] ml-2">Memories</span>
-            </motion.h1>
+      {/* Gradient overlay — matches design exactly */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background:
+            "linear-gradient(180deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.3) 30%, rgba(0,0,0,0.4) 55%, rgba(0,0,0,0.75) 100%)",
+          pointerEvents: "none",
+          zIndex: 1,
+        }}
+      />
 
-            {/* Subtitle */}
-            <motion.p
-              variants={fadeUp}
-              className="text-white/90 text-lg font-medium max-w-md leading-relaxed mb-8"
-            >
-              Discover amazing places at exclusive prices and unforgettable experiences.
-            </motion.p>
-
-            {/* CTA Buttons */}
-            <motion.div
-              variants={fadeUp}
-              className="flex flex-col sm:flex-row gap-4 mb-10"
-            >
-              <a
-                href="#destinations"
-                className="bg-primary hover:bg-primary-dark text-white rounded-full px-6 py-3.5 font-bold flex items-center justify-center gap-2 transition-colors"
-              >
-                Explore Destinations <ArrowRight className="w-4 h-4" />
-              </a>
-              <a
-                href="/packages"
-                className="bg-white text-dark-graphite hover:bg-gray-100 rounded-full px-8 py-3.5 font-bold transition-colors text-center"
-              >
-                View Packages
-              </a>
-            </motion.div>
-
-            {/* Trusted By */}
-            <motion.div variants={fadeUp} className="flex items-center gap-4">
-              <div className="flex -space-x-3">
-                <img src="https://i.pravatar.cc/100?img=1" className="w-10 h-10 rounded-full border-2 border-white" alt="User 1" />
-                <img src="https://i.pravatar.cc/100?img=2" className="w-10 h-10 rounded-full border-2 border-white" alt="User 2" />
-                <img src="https://i.pravatar.cc/100?img=3" className="w-10 h-10 rounded-full border-2 border-white" alt="User 3" />
-                <img src="https://i.pravatar.cc/100?img=4" className="w-10 h-10 rounded-full border-2 border-white" alt="User 4" />
-              </div>
-              <p className="text-white text-sm font-medium">Trusted by 250,000+ happy travelers</p>
-            </motion.div>
-          </motion.div>
-
-          {/* Floating Special Offer Badge */}
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.8, x: 20 }}
-            animate={{ opacity: 1, scale: 1, x: 0 }}
-            transition={{ delay: 0.8, duration: 0.5, type: "spring" }}
-            className="hidden md:flex absolute top-16 right-16 bg-white rounded-2xl p-4 shadow-2xl flex-col items-center gap-1 z-20"
-          >
-            <div className="flex items-center gap-1 text-accent font-bold text-sm">
-              <Star className="w-4 h-4 fill-accent" /> Special Offer
-            </div>
-            <p className="text-dark-graphite text-xs font-semibold">Get up to</p>
-            <p className="text-3xl font-black text-primary leading-none my-1">30% OFF</p>
-            <p className="text-gray-500 text-xs font-medium">On all bookings</p>
-          </motion.div>
+      {/* Hero text content — left aligned */}
+      <div
+        style={{
+          position: "absolute",
+          left: 0,
+          top: 150,
+          zIndex: 2,
+          maxWidth: "38%",
+          padding: "0 56px",
+        }}
+      >
+        {/* Eyebrow label */}
+        <div
+          style={{
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: 12,
+            letterSpacing: "0.14em",
+            textTransform: "uppercase",
+            color: "#C5A880",
+            marginBottom: 18,
+          }}
+        >
+          Republic of Uzbekistan · Official Tourism Platform
         </div>
 
-        {/* Search Widget Positioned Overlapping */}
-        <div className="relative z-30 -mt-20 md:-mt-16 px-4 md:px-12">
-          <SearchWidget />
+        {/* Main heading */}
+        <h1
+          style={{
+            fontFamily: "'Playfair Display', serif",
+            fontWeight: 600,
+            fontSize: 44,
+            lineHeight: 1.15,
+            color: "#FFFFFF",
+            margin: "0 0 18px",
+          }}
+        >
+          Four Thousand Years of the Silk Road, One Journey.
+        </h1>
+
+        {/* Subtitle */}
+        <p
+          style={{
+            fontSize: 16,
+            lineHeight: 1.6,
+            color: "rgba(255,255,255,0.85)",
+            margin: "0 0 30px",
+          }}
+        >
+          From the turquoise domes of Samarkand to the mountain trails of
+          Chimgan — plan, translate, and book with verified local providers.
+        </p>
+
+        {/* CTA Buttons */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 14,
+            marginBottom: 34,
+          }}
+        >
+          <Link
+            href="/discover"
+            style={{
+              fontFamily: "'Inter', sans-serif",
+              fontWeight: 600,
+              fontSize: 14,
+              padding: "14px 26px",
+              background: "#F9F8F5",
+              color: "#0A2320",
+              border: "none",
+              borderRadius: 3,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              whiteSpace: "nowrap",
+              flexShrink: 0,
+              textDecoration: "none",
+              transition: "background 0.2s",
+            }}
+          >
+            Plan My Journey <span>→</span>
+          </Link>
+          <Link
+            href="/map"
+            style={{
+              fontFamily: "'Inter', sans-serif",
+              fontWeight: 600,
+              fontSize: 14,
+              padding: "13px 24px",
+              background: "rgba(255,255,255,0.1)",
+              backdropFilter: "blur(12px)",
+              color: "#FFFFFF",
+              border: "1px solid rgba(255,255,255,0.4)",
+              borderRadius: 3,
+              cursor: "pointer",
+              whiteSpace: "nowrap",
+              flexShrink: 0,
+              textDecoration: "none",
+              transition: "background 0.2s",
+            }}
+          >
+            Open Survival Map
+          </Link>
+        </div>
+
+        {/* Quick Search Bar */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 4,
+            background: "rgba(255,255,255,0.12)",
+            backdropFilter: "blur(18px)",
+            WebkitBackdropFilter: "blur(18px)",
+            border: "1px solid rgba(255,255,255,0.25)",
+            borderRadius: 6,
+            padding: 6,
+          }}
+        >
+          {/* Region Field */}
+          <div
+            style={{
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              padding: "8px 16px",
+              borderRight: "1px solid rgba(255,255,255,0.2)",
+            }}
+          >
+            <div
+              style={{
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: 10,
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+                color: "rgba(255,255,255,0.6)",
+                marginBottom: 2,
+              }}
+            >
+              Region
+            </div>
+            <input
+              type="text"
+              value={region}
+              onChange={(e) => setRegion(e.target.value)}
+              style={{
+                fontSize: 13,
+                color: "#FFFFFF",
+                background: "transparent",
+                border: "none",
+                outline: "none",
+                fontFamily: "'Inter', sans-serif",
+                width: "100%",
+              }}
+            />
+          </div>
+
+          {/* Dates Field */}
+          <div
+            style={{
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              padding: "8px 16px",
+            }}
+          >
+            <div
+              style={{
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: 10,
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+                color: "rgba(255,255,255,0.6)",
+                marginBottom: 2,
+              }}
+            >
+              Dates
+            </div>
+            <input
+              type="text"
+              value={dates}
+              onChange={(e) => setDates(e.target.value)}
+              style={{
+                fontSize: 13,
+                color: "#FFFFFF",
+                background: "transparent",
+                border: "none",
+                outline: "none",
+                fontFamily: "'Inter', sans-serif",
+                width: "100%",
+              }}
+            />
+          </div>
+
+          {/* Search Button */}
+          <button
+            onClick={() =>
+              router.push(`/discover?region=${encodeURIComponent(region)}`)
+            }
+            style={{
+              fontFamily: "'Inter', sans-serif",
+              fontWeight: 600,
+              fontSize: 13,
+              padding: "11px 18px",
+              background: "#006B70",
+              color: "#FFFFFF",
+              border: "none",
+              borderRadius: 4,
+              cursor: "pointer",
+              whiteSpace: "nowrap",
+              transition: "background 0.2s",
+            }}
+          >
+            Search
+          </button>
+        </div>
+      </div>
+
+      {/* Scroll indicator */}
+      <div
+        style={{
+          position: "absolute",
+          bottom: 28,
+          left: "50%",
+          transform: "translateX(-50%)",
+          zIndex: 2,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: 6,
+        }}
+      >
+        <div
+          style={{
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: 10,
+            letterSpacing: "0.14em",
+            textTransform: "uppercase",
+            color: "rgba(255,255,255,0.75)",
+          }}
+        >
+          Scroll
+        </div>
+        <div
+          style={{
+            width: 1,
+            height: 34,
+            background: "rgba(255,255,255,0.4)",
+            position: "relative",
+            overflow: "hidden",
+          }}
+        >
+          <div
+            style={{
+              width: 1,
+              height: 12,
+              background: "#FFFFFF",
+              position: "absolute",
+              top: 0,
+              left: 0,
+              animation: "scrollBob 1.8s ease-in-out infinite",
+            }}
+          />
         </div>
       </div>
     </section>

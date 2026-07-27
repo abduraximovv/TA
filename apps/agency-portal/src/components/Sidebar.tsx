@@ -3,113 +3,135 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Package, Layers, CalendarCheck, LogOut, Compass, ShieldCheck, MessageSquare } from "lucide-react";
 import { useAuth } from "@repo/auth";
-
-const navItems = [
-  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Inventory", href: "/inventory", icon: Package },
-  { label: "Packages", href: "/packages", icon: Layers },
-  { label: "Bookings", href: "/bookings", icon: CalendarCheck },
-  { label: "Reviews", href: "/reviews", icon: MessageSquare },
-];
+import { LogOut } from "lucide-react";
 
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { signOut, user, isVerified } = useAuth();
-  const [pendingCount, setPendingCount] = React.useState(0);
-
-  React.useEffect(() => {
-    if (!user) return;
-
-    import("@repo/database").then(({ getMyBookings, subscribeToBookingUpdates }) => {
-      const fetchBookings = async () => {
-        try {
-          const bookings = await getMyBookings(user.id, "agency");
-          setPendingCount(bookings.filter((b) => b.status === "pending").length);
-        } catch (e) {
-          console.error("Failed to fetch pending bookings", e);
-        }
-      };
-
-      fetchBookings();
-
-      const channel = subscribeToBookingUpdates(user.id, "agency", () => {
-        fetchBookings();
-      });
-
-      return () => {
-        channel.unsubscribe();
-      };
-    });
-  }, [user]);
+  const { signOut, user } = useAuth();
 
   const handleSignOut = async () => {
     await signOut();
-    router.push("/auth/login");
+    router.push("/login");
     router.refresh();
   };
 
+  const navItems = [
+    { label: "Dashboard", href: "/dashboard" },
+    { label: "Verifications", href: "/verifications" },
+    { label: "Itineraries", href: "/inventory" },
+    { label: "Settings", href: "/settings" },
+  ];
+
   return (
-    <aside className="w-[240px] h-screen bg-primary text-white flex flex-col fixed left-0 top-0 z-50">
-      <div className="p-6 flex items-center space-x-3">
-        <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center">
-          <Compass className="w-5 h-5 text-primary" />
+    <aside 
+      style={{ 
+        width: 250, 
+        flexShrink: 0, 
+        background: "#0A2320", 
+        display: "flex", 
+        flexDirection: "column", 
+        padding: "28px 0",
+        height: "100vh",
+        position: "fixed",
+        left: 0,
+        top: 0,
+        zIndex: 50
+      }}
+    >
+      <div style={{ padding: "0 24px 28px", marginBottom: 12, borderBottom: "1px solid rgba(249,248,245,0.1)" }}>
+        <div style={{ fontFamily: "'Playfair Display', serif", fontWeight: 600, fontSize: 19, color: "#F9F8F5" }}>
+          Silk&nbsp;Road
         </div>
-        <span className="text-xl font-bold tracking-tight text-white">UzTour Agency</span>
+        <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10.5, letterSpacing: "0.1em", textTransform: "uppercase", color: "#C5A880", marginTop: 4 }}>
+          Agency Portal
+        </div>
       </div>
 
-      <nav className="flex-1 px-4 mt-6 space-y-1">
+      <div style={{ display: "flex", flexDirection: "column", gap: 2, padding: "0 14px" }}>
         {navItems.map((item) => {
           const isActive = pathname.startsWith(item.href);
-          const Icon = item.icon;
           return (
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors ${
-                isActive ? "bg-white/20 font-semibold" : "hover:bg-white/10 text-blue-100 hover:text-white"
-              }`}
+              style={{ textDecoration: "none" }}
             >
-              <Icon className="w-5 h-5" />
-              <span className="flex-1">{item.label}</span>
-              {item.label === "Bookings" && pendingCount > 0 && (
-                <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                  {pendingCount}
-                </span>
-              )}
+              <div 
+                style={{ 
+                  display: "flex", 
+                  alignItems: "center", 
+                  gap: 12, 
+                  padding: "11px 12px", 
+                  borderRadius: 5, 
+                  cursor: "pointer", 
+                  background: isActive ? "rgba(197,168,128,0.14)" : "transparent",
+                  transition: "background 0.2s"
+                }}
+                className="agency-nav-item"
+              >
+                <div 
+                  style={{ 
+                    width: 7, 
+                    height: 7, 
+                    borderRadius: 2, 
+                    flexShrink: 0, 
+                    background: isActive ? "#C5A880" : "rgba(249,248,245,0.4)" 
+                  }}
+                />
+                <div 
+                  style={{ 
+                    fontSize: 14, 
+                    fontWeight: isActive ? 600 : 500, 
+                    color: isActive ? "#C5A880" : "rgba(249,248,245,0.75)",
+                    fontFamily: "'Inter', sans-serif"
+                  }}
+                >
+                  {item.label}
+                </div>
+              </div>
             </Link>
           );
         })}
-      </nav>
+      </div>
 
-      <div className="p-4 mt-auto border-t border-white/20">
-        <div className="flex items-center space-x-3 mb-4 px-2">
-          <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
-            <span className="text-sm font-bold">{user?.email?.charAt(0).toUpperCase() || "A"}</span>
+      <div style={{ marginTop: "auto", padding: "16px 24px 0", borderTop: "1px solid rgba(249,248,245,0.1)" }}>
+        
+        {/* User Info & Logout */}
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+          <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(249,248,245,0.1)", display: "flex", alignItems: "center", justifyContent: "center", color: "#F9F8F5", fontWeight: 600, fontSize: 13, flexShrink: 0 }}>
+             {user?.email?.charAt(0).toUpperCase() || "A"}
           </div>
-          <div className="flex-1 overflow-hidden">
-            <p className="text-sm font-medium truncate">{user?.email || "Agency"}</p>
-            <p className="text-xs text-blue-200 flex items-center gap-1">
-              {isVerified ? (
-                <>
-                  <ShieldCheck className="w-3 h-3" /> Verified Agency
-                </>
-              ) : (
-                "Pending verification"
-              )}
-            </p>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "#F9F8F5", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
+              {user?.email || "Agency Admin"}
+            </div>
+            <div style={{ fontSize: 11, color: "rgba(249,248,245,0.5)", marginTop: 2 }}>
+              Agency Admin
+            </div>
+          </div>
+          <button 
+            onClick={handleSignOut}
+            style={{ background: "transparent", border: "none", color: "rgba(249,248,245,0.5)", cursor: "pointer", padding: 4 }}
+            title="Sign Out"
+          >
+            <LogOut size={16} />
+          </button>
+        </div>
+
+        {/* System Status */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, paddingTop: 16, borderTop: "1px solid rgba(249,248,245,0.1)" }}>
+          <div style={{ width: 8, height: 8, borderRadius: 100, background: "#4ADE80", flexShrink: 0 }}></div>
+          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11.5, color: "rgba(249,248,245,0.6)" }}>
+            System Operational
           </div>
         </div>
-        <button
-          onClick={handleSignOut}
-          className="flex items-center space-x-3 w-full px-3 py-2.5 rounded-lg hover:bg-white/10 text-blue-100 hover:text-white transition-colors"
-        >
-          <LogOut className="w-5 h-5" />
-          <span>Sign Out</span>
-        </button>
       </div>
+
+      <style>{`
+        .agency-nav-item:hover { background: rgba(197,168,128,0.08) !important; }
+      `}</style>
     </aside>
   );
 }

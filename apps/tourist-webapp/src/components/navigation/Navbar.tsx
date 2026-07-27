@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Search, User, Heart, Menu, X, Plane, ShieldCheck, HeadphonesIcon, Map } from "lucide-react";
+import { Map, Globe } from "lucide-react";
 import { useAuth } from "@repo/auth";
 import { AuthModal } from "@/components/auth/AuthModal";
 
@@ -11,9 +11,9 @@ const NAV_LINKS = [
   { label: "Home", href: "/" },
   { label: "Destinations", href: "/discover" },
   { label: "Packages", href: "/packages" },
+  { label: "Experiences", href: "/service" },
   { label: "Hotels", href: "/hotels" },
-  { label: "Flights", href: "/flights" },
-  { label: "About Us", href: "/about" },
+  { label: "About", href: "/about" },
   { label: "Contact", href: "/contact" },
 ];
 
@@ -23,6 +23,8 @@ export function Navbar() {
   const { user, isLoading } = useAuth();
   const pathname = usePathname();
 
+  const isHome = pathname === "/";
+
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
@@ -31,117 +33,178 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  const isTransparent = isHome && !isScrolled;
+
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-50 transition-all duration-300">
-        {/* Top Bar - Only visible on desktop when not scrolled down far */}
-        <div className={`hidden lg:block bg-primary text-white text-[13px] font-medium transition-all duration-300 ${isScrolled ? 'h-0 overflow-hidden' : 'h-10'}`}>
-          <div className="section-container h-full flex items-center justify-center gap-10">
-            <div className="flex items-center gap-2">
-              <Plane className="w-4 h-4" />
-              <span>Free cancellation</span>
+      <header
+        className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
+        style={{
+          background: isTransparent ? "transparent" : "rgba(10, 35, 32, 0.96)",
+          backdropFilter: isTransparent ? "none" : "blur(12px)",
+        }}
+      >
+        <div
+          style={{
+            maxWidth: 1280,
+            margin: "0 auto",
+            padding: "24px 56px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 20,
+          }}
+        >
+          {/* Logo */}
+          <Link href="/" style={{ textDecoration: "none" }}>
+            <div
+              style={{
+                fontFamily: "'Playfair Display', serif",
+                fontWeight: 600,
+                fontSize: 19,
+                color: "#FFFFFF",
+                whiteSpace: "nowrap",
+                letterSpacing: "0.01em",
+              }}
+            >
+              Silk&nbsp;Road
             </div>
-            <div className="flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4" />
-              <span>Best price guarantee</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4" />
-              <span>Secure booking</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <HeadphonesIcon className="w-4 h-4" />
-              <span>24/7 Customer support</span>
-            </div>
-          </div>
-        </div>
+          </Link>
 
-        {/* Main Navbar */}
-        <div className="bg-white shadow-sm h-[72px]">
-          <div className="section-container h-full flex items-center justify-between">
-            {/* Logo */}
-            <Link href="/" className="flex items-center gap-2 group">
-              <div className="bg-primary/10 p-2 rounded-full text-primary group-hover:bg-primary group-hover:text-white transition-colors">
-                <Plane className="w-6 h-6 -rotate-45" />
-              </div>
-              <div className="flex flex-col">
-                <span className="font-bold text-xl text-dark-forest leading-tight tracking-tight">Travelora</span>
-                <span className="text-[10px] text-gray-500 font-medium">Explore More. Worry Less.</span>
-              </div>
+          {/* Center Nav */}
+          <nav
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 18,
+              flexWrap: "nowrap",
+            }}
+          >
+            {NAV_LINKS.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                style={{
+                  fontSize: 13.5,
+                  fontWeight: pathname === link.href ? 700 : 500,
+                  color:
+                    pathname === link.href ? "#FFFFFF" : "rgba(255,255,255,0.75)",
+                  textDecoration: "none",
+                  whiteSpace: "nowrap",
+                  transition: "color 0.2s",
+                  fontFamily: "'Inter', sans-serif",
+                }}
+                className="nav-link-hover"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+
+          {/* Right Icons + Sign In */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              flexShrink: 0,
+            }}
+          >
+            {/* Survival Map icon */}
+            <Link
+              href="/map"
+              title="Survival Map"
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: "50%",
+                border: "1.5px solid rgba(255,255,255,0.35)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                flexShrink: 0,
+                color: "#FFFFFF",
+                textDecoration: "none",
+              }}
+            >
+              <Map style={{ width: 14, height: 14 }} />
             </Link>
 
-            {/* Center Navigation */}
-            <nav className="hidden xl:flex items-center gap-6">
-              {NAV_LINKS.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={`text-[14px] font-semibold transition-all duration-300 relative group text-dark-graphite hover:text-primary ${pathname === link.href ? "text-primary" : ""}`}
-                >
-                  {link.label}
-                  <span
-                    className={`absolute -bottom-1.5 left-0 h-[2px] rounded-full transition-all duration-300 ${
-                      pathname === link.href ? "w-full bg-primary" : "w-0 group-hover:w-full bg-primary"
-                    }`}
-                  />
-                </Link>
-              ))}
-            </nav>
+            {/* Translator icon */}
+            <Link
+              href="/translator"
+              title="Contextual Translator"
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: "50%",
+                border: "1.5px solid rgba(255,255,255,0.35)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                flexShrink: 0,
+                color: "#FFFFFF",
+                textDecoration: "none",
+              }}
+            >
+              <Globe style={{ width: 14, height: 14 }} />
+            </Link>
 
-            {/* Right Utilities (Icons moved from bottom nav) */}
-            <div className="flex items-center gap-3 md:gap-4">
-              <Link href="/map" className="text-dark-graphite hover:text-primary transition-colors">
-                <Map className="w-5 h-5" />
-              </Link>
-              
-              <button className="text-dark-graphite hover:text-primary transition-colors">
-                <Search className="w-5 h-5" />
-              </button>
-              
-              <button className="text-dark-graphite hover:text-primary transition-colors">
-                <Heart className="w-5 h-5" />
-              </button>
-
-              {!isLoading && (
-                <>
-                  {user ? (
-                    <Link
-                      href="/profile"
-                      className="text-dark-graphite hover:text-primary transition-colors"
-                    >
-                      <User className="w-5 h-5" />
-                    </Link>
-                  ) : (
+            {!isLoading && (
+              <>
+                {user ? (
+                  <Link href="/profile" style={{ textDecoration: "none" }}>
                     <button
-                      onClick={() => setIsAuthOpen(true)}
-                      className="text-dark-graphite hover:text-primary transition-colors"
+                      style={{
+                        fontFamily: "'Inter', sans-serif",
+                        fontWeight: 600,
+                        fontSize: 13,
+                        padding: "9px 16px",
+                        background: "transparent",
+                        color: "#FFFFFF",
+                        border: "1px solid #FFFFFF",
+                        borderRadius: 100,
+                        cursor: "pointer",
+                        flexShrink: 0,
+                        whiteSpace: "nowrap",
+                      }}
                     >
-                      <User className="w-5 h-5" />
+                      Profile
                     </button>
-                  )}
-                </>
-              )}
-
-              <Link
-                href="/discover"
-                className="hidden sm:inline-flex bg-primary text-white hover:bg-primary-dark rounded-full text-sm font-semibold px-6 py-2.5 items-center gap-2 transition-colors"
-              >
-                <Plane className="w-4 h-4" />
-                Book Now
-              </Link>
-              
-              <button className="xl:hidden text-dark-graphite hover:text-primary transition-colors ml-2">
-                <Menu className="w-6 h-6" />
-              </button>
-            </div>
+                  </Link>
+                ) : (
+                  <button
+                    onClick={() => setIsAuthOpen(true)}
+                    style={{
+                      fontFamily: "'Inter', sans-serif",
+                      fontWeight: 600,
+                      fontSize: 13,
+                      padding: "9px 16px",
+                      background: "transparent",
+                      color: "#FFFFFF",
+                      border: "1px solid #FFFFFF",
+                      borderRadius: 100,
+                      cursor: "pointer",
+                      flexShrink: 0,
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    Sign In
+                  </button>
+                )}
+              </>
+            )}
           </div>
         </div>
       </header>
 
-      {/* Spacer to prevent content from going under fixed header */}
-      <div className={`transition-all duration-300 ${isScrolled ? 'h-[72px]' : 'h-[112px]'}`} />
-
       <AuthModal isOpen={isAuthOpen} onOpenChange={setIsAuthOpen} />
+
+      <style>{`
+        .nav-link-hover:hover { color: #FFFFFF !important; }
+      `}</style>
     </>
   );
 }

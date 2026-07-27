@@ -6,17 +6,17 @@ import { Sidebar } from "./Sidebar";
 
 export function SidebarWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isChromeless = pathname === "/" || pathname.startsWith("/auth");
+  const isLoginPage = pathname === "/login" || pathname === "/" || pathname.startsWith("/auth/login"); 
 
-  if (isChromeless) {
+  if (isLoginPage) {
     return <>{children}</>;
   }
 
   return (
-    <div className="min-h-screen bg-[#F9FAFB]">
+    <div style={{ display: "flex", width: "100%", minHeight: "100vh", fontFamily: "'Inter', sans-serif", background: "#F9F8F5" }}>
       <Sidebar />
-      <div className="pl-[240px]">
-        <main className="w-full min-h-screen">{children}</main>
+      <div style={{ paddingLeft: 250, flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
+        {children}
       </div>
     </div>
   );

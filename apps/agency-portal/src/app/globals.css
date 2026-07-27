@@ -1,3 +1,37 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@layer base {
+  :root {
+    --color-primary: #006B70;
+    --color-primary-dark: #00565a;
+    --color-secondary: #C5A880;
+    --color-sand: #F9F8F5;
+    --color-dark: #0A2320;
+    --color-dark-forest: #0A2320;
+    --color-dark-graphite: #0A2320;
+    --color-text: #0A2320;
+    --color-text-muted: rgba(10, 35, 32, 0.5);
+    --color-border: #EFEDE7;
+    --color-accent: #C5A880;
+
+    --font-serif: 'Playfair Display', serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    margin: 0;
+    color: var(--color-text);
+    background-color: #F9F8F5;
+    font-family: 'Inter', sans-serif;
+  }
+}

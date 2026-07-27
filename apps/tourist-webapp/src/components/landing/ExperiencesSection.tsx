@@ -1,147 +1,261 @@
 "use client";
 
-import React from "react";
+import React, { useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Star, Plane, ArrowRight } from "lucide-react";
 import type { Service } from "@repo/database";
 
 interface Props {
   experiences: Service[];
 }
 
-export function ExperiencesSection({ experiences }: Props) {
-  if (!experiences.length) return null;
+// Fallback package data matching the design
+const PACKAGES = [
+  {
+    id: "pkg-1",
+    name: "Classic Silk Road, 7 Days",
+    desc: "Tashkent, Samarkand, Bukhara, Khiva in one seamless route.",
+    duration: "7 DAYS",
+    price: "$890",
+    image:
+      "https://images.unsplash.com/photo-1556109153-a5e59e012b4a?q=80&w=640",
+  },
+  {
+    id: "pkg-2",
+    name: "Mountains & Monasteries, 5 Days",
+    desc: "Chimgan trekking paired with Silk Road heritage stops.",
+    duration: "5 DAYS",
+    price: "$620",
+    image:
+      "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=640",
+  },
+  {
+    id: "pkg-3",
+    name: "Culinary Uzbekistan, 4 Days",
+    desc: "Plov masterclasses, bazaars, and family dining rooms.",
+    duration: "4 DAYS",
+    price: "$450",
+    image:
+      "https://images.unsplash.com/photo-1578662996442-48f60103fc96?q=80&w=640",
+  },
+  {
+    id: "pkg-4",
+    name: "Desert & Caravanserais, 6 Days",
+    desc: "Kyzylkum crossings and ancient trade-route stopovers.",
+    duration: "6 DAYS",
+    price: "$710",
+    image:
+      "https://images.unsplash.com/photo-1549558549-415fe4c37b60?q=80&w=640",
+  },
+];
 
-  // We'll use the first experience as the "Top Deal" and the rest as normal cards
-  const topDeal = experiences[0];
-  const otherDeals = experiences.slice(1, 4); // Take next 3
+export function ExperiencesSection({ experiences }: Props) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const cards =
+    experiences.length >= 4
+      ? experiences.slice(0, 4).map((e, i) => ({
+          id: e.id,
+          name: e.title,
+          desc: e.description || PACKAGES[i % PACKAGES.length].desc,
+          duration: `${Math.floor(Math.random() * 5) + 4} DAYS`,
+          price: e.price ? `$${e.price}` : PACKAGES[i % PACKAGES.length].price,
+          image: e.image_url || PACKAGES[i % PACKAGES.length].image,
+          href: `/service/${e.id}`,
+        }))
+      : PACKAGES.map((p) => ({ ...p, href: "/packages" }));
 
   return (
-    <section className="py-16 md:py-24 bg-white">
-      <div className="section-container">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          
-          {/* Top Deal Card (Spans 1 col on mobile/tablet, 1 col on desktop but distinct styling) */}
-          <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            className="lg:col-span-1"
-          >
-            <div className="bg-[#0F5AC2] rounded-3xl p-8 h-full text-white flex flex-col justify-between relative overflow-hidden group cursor-pointer">
-              {/* Globe/Plane decorative background */}
-              <div className="absolute -bottom-10 -right-10 w-64 h-64 opacity-50 group-hover:scale-110 transition-transform duration-700">
-                <Image src="https://images.unsplash.com/photo-1524661135-423995f22d0b?q=80&w=400" alt="Globe" fill className="object-cover rounded-full mix-blend-overlay" />
-              </div>
-              <div className="absolute right-4 top-1/2 transform -translate-y-1/2 opacity-30">
-                <Plane className="w-24 h-24" />
-              </div>
-
-              <div className="relative z-10">
-                <h2 className="text-3xl font-black leading-tight mb-2">
-                  Top Deals<br />This Week
-                </h2>
-                <p className="text-white/80 text-sm mb-6">
-                  Limited time offers<br />Don&apos;t miss out!
-                </p>
-                <Link
-                  href={`/service/${topDeal.id}`}
-                  className="bg-white text-dark-graphite font-bold rounded-full px-5 py-2.5 inline-flex items-center gap-2 text-sm hover:bg-gray-50 transition-colors"
-                >
-                  Grab Deals <ArrowRight className="w-4 h-4" />
-                </Link>
-              </div>
+    <section
+      style={{ padding: "0 0 88px", background: "#FFFFFF" }}
+    >
+      {/* Header */}
+      <div style={{ padding: "88px 56px 40px" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "flex-end",
+            justifyContent: "space-between",
+            marginBottom: 4,
+          }}
+        >
+          <div>
+            <div
+              style={{
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: 12,
+                letterSpacing: "0.1em",
+                textTransform: "uppercase",
+                color: "#006B70",
+                marginBottom: 12,
+              }}
+            >
+              By Verified Travel Agencies
             </div>
-          </motion.div>
-
-          {/* Other Deals Grid (Spans 3 cols on desktop) */}
-          <div className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-            {otherDeals.map((exp, i) => (
-              <DealCard key={exp.id} experience={exp} index={i} />
-            ))}
+            <div
+              style={{
+                fontFamily: "'Playfair Display', serif",
+                fontSize: 36,
+                fontWeight: 600,
+                color: "#0A2320",
+              }}
+            >
+              Curated Packages
+            </div>
           </div>
-
+          <Link
+            href="/packages"
+            style={{
+              fontSize: 14,
+              fontWeight: 600,
+              color: "#006B70",
+              cursor: "pointer",
+              textDecoration: "none",
+              fontFamily: "'Inter', sans-serif",
+            }}
+          >
+            Browse all packages →
+          </Link>
         </div>
       </div>
-    </section>
-  );
-}
 
-function DealCard({
-  experience,
-  index,
-}: {
-  experience: Service;
-  index: number;
-}) {
-  const badges = [
-    { text: "Best Seller", color: "bg-primary" },
-    { text: "Hot Deal", color: "bg-secondary" },
-    { text: "New Offer", color: "bg-purple-500" },
-  ];
-  const badge = badges[index % badges.length];
-  
-  // Mock duration and old price
-  const duration = "5 Days / 4 Nights";
-  const currentPrice = experience.price || 629;
-  const oldPrice = Math.round(currentPrice * 1.4);
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-50px" }}
-      transition={{ duration: 0.5, delay: index * 0.1 }}
-    >
-      <Link
-        href={`/service/${experience.id}`}
-        className="block group h-full"
+      {/* Horizontal scroll carousel */}
+      <div
+        ref={scrollRef}
+        style={{
+          display: "flex",
+          gap: 24,
+          padding: "0 56px",
+          overflowX: "auto",
+          scrollbarWidth: "none",
+        }}
+        className="scrollbar-hide"
       >
-        <div className="bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-card transition-all duration-300 h-full flex flex-col p-3">
-          {/* Image */}
-          <div className="relative aspect-[4/3] rounded-2xl overflow-hidden mb-4">
-            <Image
-              src={
-                experience.image_url ||
-                "https://images.unsplash.com/photo-1596484552834-6a58f850e0a1?w=600&q=80"
-              }
-              alt={experience.title}
-              fill
-              className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-              sizes="(max-width: 768px) 100vw, 33vw"
-            />
+        {cards.map((card, i) => (
+          <motion.div
+            key={card.id}
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-40px" }}
+            transition={{ duration: 0.5, delay: i * 0.08 }}
+            style={{ flexShrink: 0 }}
+          >
+            <Link
+              href={card.href}
+              style={{ textDecoration: "none", display: "block" }}
+            >
+              <div
+                style={{
+                  width: 320,
+                  borderRadius: 8,
+                  overflow: "hidden",
+                  border: "1px solid #EFEDE7",
+                  boxShadow: "0 4px 16px rgba(10,35,32,0.05)",
+                  background: "#FFFFFF",
+                  cursor: "pointer",
+                  transition: "box-shadow 0.3s",
+                }}
+                className="pkg-card"
+              >
+                {/* Image */}
+                <div style={{ height: 200, position: "relative" }}>
+                  <Image
+                    src={card.image}
+                    alt={card.name}
+                    fill
+                    className="object-cover pkg-card-img"
+                    sizes="320px"
+                  />
+                  {/* Duration badge */}
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: 14,
+                      left: 14,
+                      padding: "6px 12px",
+                      background: "rgba(10,35,32,0.7)",
+                      backdropFilter: "blur(8px)",
+                      borderRadius: 100,
+                      fontFamily: "'JetBrains Mono', monospace",
+                      fontSize: 11,
+                      color: "#F9F8F5",
+                    }}
+                  >
+                    {card.duration}
+                  </div>
+                </div>
 
-            {/* Top Left Badge */}
-            <div className={`absolute top-3 left-3 text-white px-2.5 py-1 rounded-full text-[10px] font-bold shadow-sm ${badge.color}`}>
-              {badge.text}
-            </div>
-          </div>
-
-          {/* Content */}
-          <div className="px-2 pb-2 flex flex-col flex-1">
-            <h3 className="text-dark-graphite font-bold text-lg leading-snug tracking-tight mb-1 truncate">
-              {experience.title}
-            </h3>
-            
-            <p className="text-xs text-gray-500 font-medium mb-4">
-              {duration}
-            </p>
-
-            <div className="flex items-center justify-between mt-auto pt-2 border-t border-gray-50">
-              <div className="flex items-center gap-2">
-                <span className="text-gray-400 text-sm line-through font-semibold">${oldPrice}</span>
-                <span className="text-dark-graphite font-black text-lg">${currentPrice}</span>
+                {/* Card body */}
+                <div style={{ padding: 20 }}>
+                  <div
+                    style={{
+                      fontFamily: "'Playfair Display', serif",
+                      fontSize: 18,
+                      fontWeight: 600,
+                      color: "#0A2320",
+                      marginBottom: 8,
+                    }}
+                  >
+                    {card.name}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 13,
+                      color: "rgba(10,35,32,0.55)",
+                      lineHeight: 1.5,
+                      marginBottom: 16,
+                      fontFamily: "'Inter', sans-serif",
+                    }}
+                  >
+                    {card.desc}
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontFamily: "'JetBrains Mono', monospace",
+                        fontSize: 14,
+                        color: "#006B70",
+                      }}
+                    >
+                      {card.price}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: 12,
+                        fontWeight: 600,
+                        color: "#0A2320",
+                        border: "1px solid rgba(10,35,32,0.2)",
+                        borderRadius: 100,
+                        padding: "6px 14px",
+                        cursor: "pointer",
+                        fontFamily: "'Inter', sans-serif",
+                        transition: "background 0.2s",
+                      }}
+                      className="pkg-details-btn"
+                    >
+                      Details
+                    </div>
+                  </div>
+                </div>
               </div>
-              
-              <span className="text-primary text-xs font-bold hover:underline">
-                View Details
-              </span>
-            </div>
-          </div>
-        </div>
-      </Link>
-    </motion.div>
+            </Link>
+          </motion.div>
+        ))}
+      </div>
+
+      <style>{`
+        .pkg-card-img { transition: transform 0.7s ease-out; }
+        .pkg-card:hover .pkg-card-img { transform: scale(1.05); }
+        .pkg-card:hover { box-shadow: 0 12px 32px rgba(10,35,32,0.12) !important; }
+        .pkg-details-btn:hover { background: #F9F8F5; }
+      `}</style>
+    </section>
   );
 }

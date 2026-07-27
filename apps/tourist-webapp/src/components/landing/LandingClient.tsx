@@ -4,9 +4,7 @@ import React, { useEffect } from "react";
 import { HeroSection } from "./HeroSection";
 import { DestinationsSection } from "./DestinationsSection";
 import { ExperiencesSection } from "./ExperiencesSection";
-import { FeaturesRow } from "./FeaturesRow";
-import { TestimonialsSection } from "./TestimonialsSection";
-import { NewsletterSection } from "./NewsletterSection";
+import { RegionalExperiencesSection } from "./RegionalExperiencesSection";
 import { Footer } from "./Footer";
 import type { Destination, Service, Event } from "@repo/database";
 
@@ -21,30 +19,24 @@ export function LandingClient({
   experiences,
   events,
 }: LandingClientProps) {
-  // Pre-load critical assets if needed
   useEffect(() => {
     // any client-side initialization
   }, []);
 
   return (
-    <div className="bg-sand-50">
+    <div style={{ fontFamily: "'Inter', sans-serif", background: "#F9F8F5", color: "#0A2320" }}>
+      {/* Hero — full viewport, navbar overlays as transparent header */}
       <HeroSection />
-      
-      {/* Popular Destinations */}
+
+      {/* Hidden Uzbekistan — 4-column curated gems grid */}
       <DestinationsSection destinations={destinations} />
-      
-      {/* Top Deals This Week */}
+
+      {/* Curated Packages — horizontal scroll carousel on white bg */}
       <ExperiencesSection experiences={experiences} />
-      
-      {/* Trust Features Row */}
-      <FeaturesRow />
-      
-      {/* What Our Travelers Say */}
-      <TestimonialsSection />
-      
-      {/* Newsletter */}
-      <NewsletterSection />
-      
+
+      {/* Regional Experiences — 4-column grid on sand bg */}
+      <RegionalExperiencesSection />
+
       {/* Footer */}
       <Footer />
     </div>
