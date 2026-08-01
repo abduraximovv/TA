@@ -1,8 +1,14 @@
 import React from 'react';
 import { SurvivalMap } from '../../../components/map/SurvivalMap';
 
-export default function MapPage() {
+export default function MapPage({
+  searchParams,
+}: {
+  searchParams: { lat?: string; lng?: string };
+}) {
   const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || '';
+  const initialLat = searchParams.lat ? Number(searchParams.lat) : undefined;
+  const initialLng = searchParams.lng ? Number(searchParams.lng) : undefined;
 
   if (!mapboxToken) {
     return (
@@ -24,10 +30,14 @@ export default function MapPage() {
         <input 
           type="text" 
           placeholder="Search places..." 
-          className="flex-1 h-12 px-4 rounded-full shadow-md bg-white text-gray-900 border-none outline-none focus:ring-2 focus:ring-[#1E6F8A]"
+          className="flex-1 h-12 px-4 rounded-full shadow-md bg-white text-gray-900 border-none outline-none focus:ring-2 focus:ring-[#006B70]"
         />
       </div>
-      <SurvivalMap mapboxAccessToken={mapboxToken} />
+      <SurvivalMap
+        mapboxAccessToken={mapboxToken}
+        initialLatitude={Number.isFinite(initialLat) ? initialLat : undefined}
+        initialLongitude={Number.isFinite(initialLng) ? initialLng : undefined}
+      />
     </main>
   );
 }

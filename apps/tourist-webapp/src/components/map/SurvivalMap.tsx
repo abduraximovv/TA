@@ -10,16 +10,18 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 
 interface SurvivalMapProps {
   mapboxAccessToken: string;
+  initialLatitude?: number;
+  initialLongitude?: number;
 }
 
-export function SurvivalMap({ mapboxAccessToken }: SurvivalMapProps) {
+export function SurvivalMap({ mapboxAccessToken, initialLatitude, initialLongitude }: SurvivalMapProps) {
   const mapRef = useRef<any>(null);
-  
-  // Initial viewport (Tashkent center for example)
+
+  // Initial viewport: deep-linked lat/lng (e.g. /map?lat=..&lng=..) if provided, else Tashkent center
   const [viewState, setViewState] = useState({
-    longitude: 69.2401,
-    latitude: 41.2995,
-    zoom: 12
+    longitude: initialLongitude ?? 69.2401,
+    latitude: initialLatitude ?? 41.2995,
+    zoom: initialLatitude !== undefined && initialLongitude !== undefined ? 13 : 12
   });
 
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
@@ -97,7 +99,7 @@ export function SurvivalMap({ mapboxAccessToken }: SurvivalMapProps) {
                 anchor="center"
               >
                 <div 
-                  className="w-10 h-10 rounded-full bg-[#1E6F8A] text-white flex items-center justify-center font-bold shadow-lg cursor-pointer border-2 border-white ring-2 ring-black/5"
+                  className="w-10 h-10 rounded-full bg-[#006B70] text-white flex items-center justify-center font-bold shadow-lg cursor-pointer border-2 border-white ring-2 ring-black/5"
                   onClick={() => {
                     if (!supercluster) return;
                     const expansionZoom = Math.min(

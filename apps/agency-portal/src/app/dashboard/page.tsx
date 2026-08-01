@@ -15,12 +15,13 @@ interface Stats {
   activeListings: number;
   avgRating: number;
   totalReviews: number;
+  pendingBookings: number;
 }
 
 export default function Dashboard() {
   const { session, isVerified } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [stats, setStats] = useState<Stats>({ activeListings: 0, avgRating: 0, totalReviews: 0 });
+  const [stats, setStats] = useState<Stats>({ activeListings: 0, avgRating: 0, totalReviews: 0, pendingBookings: 0 });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -38,21 +39,40 @@ export default function Dashboard() {
         .single();
       if (profileData) setProfile(profileData as UserProfile);
 
-      const { data: listings } = await supabase
-        .from("services")
-        .select("avg_rating, reviews_count")
-        .eq("provider_id", session.user.id)
-        .returns<{ avg_rating: number; reviews_count: number }[]>();
+      const { data: itineraries } = await supabase
+        .from("itineraries")
+        .select("id")
+        .eq("agency_id", session.user.id)
+        .returns<{ id: string }[]>();
 
-      if (listings && listings.length > 0) {
-        const totalReviews = listings.reduce((sum, s) => sum + (s.reviews_count ?? 0), 0);
-        const weightedRating = listings.reduce((sum, s) => sum + (s.avg_rating ?? 0) * (s.reviews_count ?? 0), 0);
-        setStats({
-          activeListings: listings.length,
-          avgRating: totalReviews > 0 ? Number((weightedRating / totalReviews).toFixed(1)) : 0,
-          totalReviews,
-        });
+      const itineraryIds = (itineraries ?? []).map((i) => i.id);
+
+      let avgRating = 0;
+      let totalReviews = 0;
+      if (itineraryIds.length > 0) {
+        const { data: reviews } = await supabase
+          .from("reviews")
+          .select("rating")
+          .in("itinerary_id", itineraryIds)
+          .returns<{ rating: number }[]>();
+        if (reviews && reviews.length > 0) {
+          totalReviews = reviews.length;
+          avgRating = Number((reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1));
+        }
       }
+
+      const { count: pendingCount } = await supabase
+        .from("bookings")
+        .select("id", { count: "exact", head: true })
+        .eq("provider_id", session.user.id)
+        .eq("status", "pending");
+
+      setStats({
+        activeListings: itineraryIds.length,
+        avgRating,
+        totalReviews,
+        pendingBookings: pendingCount ?? 0,
+      });
       setLoading(false);
     }
     load();
@@ -61,7 +81,7 @@ export default function Dashboard() {
   const statCards = [
     { label: 'Active Itineraries / Packages', value: stats.activeListings.toString(), delta: '+1 this week' },
     { label: 'Average Provider Rating', value: stats.avgRating > 0 ? stats.avgRating.toString() : '—', delta: `${stats.totalReviews} total reviews` },
-    { label: 'Pending Bookings', value: '0', delta: 'All clear' },
+    { label: 'Pending Bookings', value: stats.pendingBookings.toString(), delta: stats.pendingBookings > 0 ? 'Needs attention' : 'All clear' },
   ];
 
   const firstName = profile?.full_name ? profile.full_name.split(' ')[0] : 'Agency';

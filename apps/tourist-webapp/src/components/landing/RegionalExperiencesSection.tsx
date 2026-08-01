@@ -4,8 +4,21 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import type { Service } from "@repo/database";
 
-const EXPERIENCES = [
+interface Props {
+  experiences: Service[];
+}
+
+// Manual thousands-separator instead of Intl.NumberFormat("uz-UZ"): Node's server-side ICU and
+// the browser's ICU format that locale differently (space vs comma grouping), which caused a
+// hydration text mismatch since this renders during SSR.
+function formatPrice(amount: number): string {
+  return Math.round(amount).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+}
+
+// Static fallback, used only when fewer than 4 real services are marked featured yet
+const FALLBACK_EXPERIENCES = [
   {
     id: "exp-1",
     name: "Yurt Stay Under the Stars",
@@ -44,7 +57,19 @@ const EXPERIENCES = [
   },
 ];
 
-export function RegionalExperiencesSection() {
+export function RegionalExperiencesSection({ experiences }: Props) {
+  const cards =
+    experiences.length >= 4
+      ? experiences.slice(0, 4).map((e, i) => ({
+          id: e.id,
+          name: e.title,
+          region: [e.city, e.region].filter(Boolean).join(", ") || FALLBACK_EXPERIENCES[i % FALLBACK_EXPERIENCES.length].region,
+          price: `from ${formatPrice(e.price)} ${e.currency}`,
+          image: e.image_url || FALLBACK_EXPERIENCES[i % FALLBACK_EXPERIENCES.length].image,
+          href: `/service/${e.id}`,
+        }))
+      : FALLBACK_EXPERIENCES;
+
   return (
     <section
       style={{ padding: "88px 56px 100px", background: "#F9F8F5" }}
@@ -105,7 +130,7 @@ export function RegionalExperiencesSection() {
           gap: 24,
         }}
       >
-        {EXPERIENCES.map((exp, i) => (
+        {cards.map((exp, i) => (
           <motion.div
             key={exp.id}
             initial={{ opacity: 0, y: 24 }}

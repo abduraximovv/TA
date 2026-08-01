@@ -136,20 +136,39 @@ We will build the portals in the following order to ensure a logical flow of UI 
 
 > **Duration:** 4 weeks  
 > **Goal:** Wire up the heavy functional logic behind the beautiful interfaces created in Stage 1.
+> **Verified:** 2026-08-01, full code-level audit against this checklist (booking/review flows traced end-to-end, all 4 apps checked for hardcoded/mock data).
 
 ### Deliverables Checklist
-- [ ] **Tourist WebApp Integration:** Display real listings and offerings directly from providers and agencies.
-- [ ] **Review & Rating System:** 
-  - Enable tourists to leave a post-booking review (comment, star rating, and experience sharing).
-- [ ] **Offerings & Inventory Management:** 
-  - **Providers:** Upload and list specific services like hiking and local activities.
-  - **Agencies:** Upload and list comprehensive travel packages.
-- [ ] **Comprehensive Booking Flow (Real-time):** 
-  - Provide a detailed view for both Providers and Agencies to see who booked, when, and all related booking information.
-  - Track booking status (Accepted/Declined).
-  - Integrate **Supabase Realtime** for instant updates and push notifications for booking state changes.
-- [ ] **Review Management:** Allow Providers and Agencies to see their reviews and post replies/answers.
-- [ ] **Agency CRM:** Make the Kanban board fully functional (drag and drop triggers DB updates).
+- [x] **Tourist WebApp Integration:** Display real listings and offerings directly from providers and agencies. Confirmed live Supabase-backed across landing, discovery, and profile pages.
+- [x] **Review & Rating System:**
+  - Tourists can leave a post-booking review (comment, star rating). `POST /api/v1/reviews` now also enforces server-side that the associated booking is `completed` before accepting a review (previously client-side only).
+- [x] **Offerings & Inventory Management:**
+  - **Providers:** Real create/update/delete against `services`, including photo upload to Supabase Storage.
+  - **Agencies:** Real create/update/delete against `itineraries`/`itinerary_items` via a form-based Packages page.
+- [x] **Comprehensive Booking Flow (Real-time):**
+  - Provider/Agency booking detail views, Accept/Decline, and full `booking_status_history` audit trail — all real DB writes.
+  - Supabase Realtime confirmed wired on both sides (tourist gets notified on accept/decline; provider/agency gets notified on new bookings).
+- [x] **Review Management:** Providers and Agencies fetch real reviews (`getReviewsForServices`/`getReviewsForItineraries`) and replies persist via `updateReviewResponse`.
+- [x] ~~**Agency CRM:** Make the Kanban board fully functional~~ — **Descoped 2026-08-01.** No drag-and-drop Kanban was built; Accept/Decline buttons on a sortable data table cover the same status-transition functionality with real DB persistence. Revisit as a UX upgrade only if a future audit shows the button-driven flow is a workflow bottleneck.
+- [x] ~~**Itinerary Canvas** (drag-and-drop calendar, mentioned in Stage 1 §3.3)~~ — **Descoped 2026-08-01.** Replaced by the simpler form-based Packages CRUD page above; itinerary/itinerary_items persistence is real, just not drag-and-drop.
+
+### Admin Portal follow-up (found during the 2026-08-01 audit, now fixed)
+Stage 1's "UI-first" build left several Admin Portal surfaces with hardcoded placeholder numbers
+that were never wired to real queries. All fixed as part of Stage 2 close-out:
+- Dashboard KPIs (active tourists, pending verifications, total bookings, GMV) and the revenue
+  chart now use real Supabase aggregate queries (`apps/admin-portal/src/app/actions/dashboardActions.ts`).
+- Analytics page (previously a one-line placeholder) now shows real bookings-by-status,
+  users-by-role, top services, and review-quality breakdowns.
+- Users page (previously a static "Stage 2" stub) now lists real accounts with role/status filtering.
+- Verification Hub's secondary KPI cards (Active Tourists, GMV, Verified Providers) were hardcoded;
+  now real. Its "Live Tourist Density" panel was falsely labeled "LIVE" for a decorative
+  placeholder — relabeled "PREVIEW" pending the actual Mapbox/PostGIS integration (Stage 3).
+- Verification queue was silently rendering "No ID · No License" for every request —
+  `company_registration_number`/`license_number` were displayed but never collected by the
+  registration flow or present in the schema. Now shows real submitted data (email/phone/role) instead.
+- Agency Dashboard's "Pending Bookings" stat was hardcoded to `0`; its "Active Listings" stat was
+  also silently always-zero (queried the `services` table, which agencies never own rows in —
+  should have queried `itineraries`). Both now query real, correct data.
 
 ---
 
@@ -188,7 +207,7 @@ We will build the portals in the following order to ensure a logical flow of UI 
 |---|---|---|---|
 | Stage 0: Setup | 🟢 Complete | 100% | Infrastructure |
 | Stage 1: Premium UI & Core DB | 🟡 In Progress | 85% | UI, DB, Authentication, Approvals completed |
-| Stage 2: Business Workflows | ⬜ Not Started | 0% | Offerings, Real-time Bookings, Reviews |
+| Stage 2: Business Workflows | 🟢 Complete | 100% | Offerings, real-time bookings, and reviews verified end-to-end 2026-08-01; Kanban/Itinerary Canvas formally descoped in favor of the simpler CRUD UI already shipped |
 | Stage 3: Advanced Features | ⬜ Not Started | 0% | AI Scanners, Itineraries |
 | Stage 4: Compliance & Launch | ⬜ Not Started | 0% | E-Mehmon, Payments, Scale |
 

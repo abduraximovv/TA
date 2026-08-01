@@ -1,8 +1,17 @@
 # UI/UX Design Guidelines — Uzbekistan Digital Tourism Ecosystem
 
-**Version:** 1.0  
-**Date:** 2026-07-16  
+**Version:** 2.0  
+**Date:** 2026-08-01  
 **Status:** Draft
+
+> **Design system update (2.0):** The brand palette and type system below reflect the
+> "Immersive Minimalism" design language (source: Claude Design project `Design System Kitchen
+> Sink.dc.html`, Uzbekistan Digital Tourism Ecosystem — Design Tokens v1.0), currently
+> implemented on the **Tourist WebApp landing/marketing pages** (`apps/tourist-webapp/src/components/landing/*`,
+> `Navbar.tsx`, `Footer.tsx`). It's applied there via inline hex values, not yet wired into
+> `packages/ui/tailwind.config.ts` (which still carries an older, unrelated "Travelora"
+> blue/coral palette used by other in-progress screens). Treat this doc as the target system for
+> the shared component library; §2.1 lists the migration gap.
 
 ---
 
@@ -29,7 +38,8 @@
 
 | Principle | Description |
 |---|---|
-| **Authentic & Modern** | Blend Uzbek cultural identity (geometric patterns, warm earth tones) with contemporary digital aesthetics |
+| **Immersive Minimalism** | Spacious, cinematic layouts — let photography and typography carry the page instead of decoration |
+| **Authentic & Modern** | Blend Uzbek cultural identity with a restrained, editorial digital aesthetic |
 | **Simplicity First** | Especially for the Provider App — every feature must be usable with minimal literacy |
 | **Trust Through Design** | Professional, clean interfaces that build confidence in a new platform |
 | **Progressive Disclosure** | Show only what's needed; reveal complexity as users engage deeper |
@@ -38,10 +48,10 @@
 ### Design Inspiration
 
 The visual identity draws from:
-- **Islamic geometric patterns** — used subtly in backgrounds and loading states
-- **Silk Road color palette** — warm golds, deep blues, terracotta reds
-- **Modern travel apps** — clean cards, bold typography, immersive photography
-- **Uzbek tilework** — intricate border patterns for premium elements
+- **Silk Road travel journals** — serif display headlines (Playfair Display), generous whitespace, muted sand backgrounds
+- **Midnight emerald & brass gold** — deep emerald grounding, warm gold accents on premium/CTA elements, a muted turquoise for secondary actions
+- **Frosted-glass overlays** — badges and circular CTAs on photography use `backdrop-filter: blur()` over a dark gradient scrim, not solid chips
+- **Modern travel apps** — clean cards, immersive full-bleed photography, confident negative space
 
 ---
 
@@ -50,6 +60,13 @@ The visual identity draws from:
 ### 2.1 Shared Component Library
 
 All four portals share a unified component library located in `packages/ui/`. This ensures visual consistency and reduces development time.
+
+> **Migration gap:** `packages/ui/tailwind.config.ts` has not yet been updated with the Immersive
+> Minimalism tokens in §4/§12 below — it still defines an older "Travelora" blue/coral palette.
+> The Tourist WebApp landing page currently implements the new system with inline hex values
+> instead of Tailwind theme classes. Moving those tokens into the shared Tailwind config (so
+> `bg-emerald-950`, `text-gold-400`, etc. work platform-wide) is outstanding follow-up work, not
+> yet done.
 
 ```
 packages/ui/
@@ -99,46 +116,57 @@ packages/ui/
 
 | Role | Font | Weight | Usage |
 |---|---|---|---|
-| **Headings** | `Inter` | 600 (SemiBold), 700 (Bold) | H1–H4, page titles |
-| **Body** | `Inter` | 400 (Regular), 500 (Medium) | Paragraphs, descriptions |
-| **Monospace** | `JetBrains Mono` | 400 | Code snippets, IDs, prices |
-| **Uzbek Display** | `Noto Sans` | 400, 700 | Uzbek/Cyrillic script rendering |
+| **Display / Headings** | `Playfair Display` | 500, 600, 700 | Display type, H1–H2, hero headlines, card titles |
+| **UI / Body** | `Inter` | 400 (Regular), 500 (Medium), 600 (SemiBold), 700 (Bold) | Paragraphs, descriptions, buttons, form labels |
+| **Labels / Data** | `JetBrains Mono` | 400, 500 | Eyebrow labels, badges, prices, IDs, timestamps |
+| **Uzbek Display** | `Noto Sans` | 400, 700 | Uzbek/Cyrillic script rendering (supplementary — not part of the core three-font system) |
+
+Loaded via Google Fonts: `Playfair+Display:wght@500;600;700` and `Inter:wght@400;500;600;700`,
+alongside the existing `JetBrains+Mono:wght@400;500`.
 
 ### 3.2 Type Scale
 
-| Element | Size | Line Height | Weight | Tailwind Class |
-|---|---|---|---|---|
-| **Display** | 48px / 3rem | 1.1 | 700 | `text-5xl font-bold` |
-| **H1** | 36px / 2.25rem | 1.2 | 700 | `text-4xl font-bold` |
-| **H2** | 30px / 1.875rem | 1.25 | 600 | `text-3xl font-semibold` |
-| **H3** | 24px / 1.5rem | 1.3 | 600 | `text-2xl font-semibold` |
-| **H4** | 20px / 1.25rem | 1.35 | 600 | `text-xl font-semibold` |
-| **Body Large** | 18px / 1.125rem | 1.6 | 400 | `text-lg` |
-| **Body** | 16px / 1rem | 1.6 | 400 | `text-base` |
-| **Body Small** | 14px / 0.875rem | 1.5 | 400 | `text-sm` |
-| **Caption** | 12px / 0.75rem | 1.4 | 500 | `text-xs font-medium` |
+| Element | Size | Line Height | Weight | Font | Tailwind Class |
+|---|---|---|---|---|---|
+| **Display** | 56px | 1.08 | 600 | Playfair Display | `text-[56px] font-serif font-semibold leading-[1.08]` |
+| **H1** | 40px | 1.15 | 600 | Playfair Display | `text-[40px] font-serif font-semibold` |
+| **H2** | 28px | 1.2 | 600 | Playfair Display | `text-[28px] font-serif font-semibold` |
+| **Body** | 16px / 1rem | 1.6 | 400 | Inter | `text-base` |
+| **UI Label** | 14px / 0.875rem | 1.4 | 600 | Inter | `text-sm font-semibold` |
+| **Mono / Data** | 12px / 0.75rem | 1.4 | 400 | JetBrains Mono | `font-mono text-xs` |
+
+`font-serif` should map to Playfair Display (not the browser default serif) once the shared
+Tailwind config picks up the new `fontFamily` tokens — see §2.1.
 
 ---
 
 ## 4. Color Palette
 
-### 4.1 Brand Colors
+### 4.1 Brand Colors — "Immersive Minimalism" (Design Tokens v1.0)
 
-Inspired by Uzbek landscapes: desert sands, blue-tiled mosques, golden sunsets, and lush oasis greens.
+Five core tokens, deliberately small. `tailwind.config.js → theme.extend.colors` (target — see
+migration gap in §2.1).
+
+| Token | Hex | Tailwind Name | Usage |
+|---|---|---|---|
+| **Sand / Beige** | `#F9F8F5` | `sand-50` | Page background |
+| **Midnight Emerald** | `#0A2320` | `emerald-950` | Primary text, dark surfaces, primary button background |
+| **Crisp White** | `#FFFFFF` | `white` | Card backgrounds |
+| **Gold** | `#C5A880` | `gold-400` | CTA buttons, price labels, premium accents |
+| **Turquoise** | `#006B70` | `teal-700` | Secondary actions (e.g. "Go Online"), links |
+
+### 4.2 Functional / Status Colors
+
+Not part of the visual rebrand — these are unchanged from the previous palette and still needed
+for booking status, alerts, and map-pin categories regardless of brand styling.
 
 | Token | Hex | HSL | Usage |
 |---|---|---|---|
-| **Primary** | `#1E6F8A` | `hsl(195, 63%, 33%)` | Primary actions, links, active states |
-| **Primary Light** | `#2A9FCC` | `hsl(198, 65%, 48%)` | Hover states, secondary emphasis |
-| **Primary Dark** | `#14506A` | `hsl(198, 68%, 25%)` | Dark mode primary |
-| **Secondary** | `#D4A843` | `hsl(42, 60%, 55%)` | Gold accents, premium elements, CTAs |
-| **Secondary Light** | `#E8C96E` | `hsl(45, 71%, 67%)` | Highlights, badges |
-| **Accent** | `#C4553A` | `hsl(10, 55%, 50%)` | Alerts, important actions, terracotta |
-| **Success** | `#2D8A4E` | `hsl(145, 50%, 36%)` | Online status, success messages |
+| **Success** | `#2D8A4E` | `hsl(145, 50%, 36%)` | Online status, success messages, accepted bookings |
 | **Warning** | `#D9972B` | `hsl(40, 68%, 51%)` | Warnings, pending states |
 | **Error** | `#C93B3B` | `hsl(0, 55%, 51%)` | Error states, declined bookings |
 
-### 4.2 Neutral Colors
+### 4.3 Neutral Colors
 
 | Token | Hex | Usage |
 |---|---|---|
@@ -152,22 +180,24 @@ Inspired by Uzbek landscapes: desert sands, blue-tiled mosques, golden sunsets, 
 | **Gray 300** | `#D1D5DB` | Light borders |
 | **Gray 200** | `#E5E7EB` | Light dividers |
 | **Gray 100** | `#F3F4F6` | Light backgrounds |
-| **Gray 50** | `#F9FAFB` | Page background |
-| **White** | `#FFFFFF` | Card backgrounds |
 
-### 4.3 Semantic Color Usage
+### 4.4 Semantic Color Usage
 
-| State | Light Mode | Dark Mode |
-|---|---|---|
-| **Page Background** | Gray 50 | Gray 950 |
-| **Card Background** | White | Gray 900 |
-| **Primary Text** | Gray 900 | Gray 50 |
-| **Secondary Text** | Gray 600 | Gray 400 |
-| **Border** | Gray 200 | Gray 700 |
-| **Hover** | Gray 100 | Gray 800 |
-| **Active** | Primary | Primary Light |
-| **Online** | Success | Success |
-| **Offline** | Gray 400 | Gray 600 |
+| State | Value |
+|---|---|
+| **Page Background** | Sand `#F9F8F5` |
+| **Card Background** | White |
+| **Primary Text** | Midnight Emerald `#0A2320` |
+| **Secondary Text** | Midnight Emerald at 55–65% opacity, e.g. `rgba(10,35,32,0.65)` |
+| **Border** | Midnight Emerald at 8–10% opacity, e.g. `rgba(10,35,32,0.08)` |
+| **Primary CTA** | Emerald background, Sand text |
+| **Secondary CTA** | Gold background, Emerald text |
+| **Tertiary Action** | Turquoise background, White text |
+| **Online** | Success |
+| **Offline** | Gray 400 |
+
+Dark-mode equivalents for this palette are not yet defined — the legacy dark-mode tokens in
+§12.1 predate this system and should be treated as provisional until revisited.
 
 ---
 
@@ -202,13 +232,16 @@ Based on a 4px grid system:
 
 ### 5.3 Border Radius
 
+Immersive Minimalism favors sharper, more restrained corners than the previous system —
+straight edges read as more editorial, reserving fully-rounded shapes for pill/circular controls.
+
 | Token | Size | Usage |
 |---|---|---|
-| `rounded-sm` | 4px | Inline badges |
-| `rounded` | 8px | Buttons, inputs |
-| `rounded-lg` | 12px | Cards |
+| `rounded-sm` | 3px | Buttons, inputs |
+| `rounded` | 4px | Color swatches, small tiles |
+| `rounded-lg` | 6px | Cards |
 | `rounded-xl` | 16px | Modals, sheets |
-| `rounded-full` | 9999px | Avatars, status dots |
+| `rounded-full` | 9999px | Avatars, status dots, badges, frosted circular CTAs |
 
 ---
 
@@ -216,14 +249,18 @@ Based on a 4px grid system:
 
 ### 6.1 Buttons
 
+`components/ui/Button.tsx`. All variants: Inter 600, 15px label, `rounded-sm` (3px), ~14px/28px
+padding.
+
 | Variant | Usage | Appearance |
 |---|---|---|
-| **Primary** | Main CTAs ("Book Now", "Accept") | Solid primary color, white text |
-| **Secondary** | Secondary actions ("View Details") | Outlined, primary text |
-| **Ghost** | Tertiary actions ("Cancel") | Transparent, subtle hover |
-| **Danger** | Destructive actions ("Decline", "Delete") | Red solid background |
-| **Success** | Positive actions ("Go Online", "Approve") | Green solid background |
-| **Icon** | Map controls, navigation | Circular, icon-only |
+| **Primary** | Main CTAs ("Explore the Silk Road", "Book Now") | Emerald `#0A2320` bg, Sand `#F9F8F5` text; hover `#123833` |
+| **Secondary (Gold)** | High-emphasis commercial actions ("Book Experience") | Gold `#C5A880` bg, Emerald text; hover `#b89a6f` |
+| **Outline** | Secondary actions ("View Itinerary") | Transparent bg, 1px Emerald-at-30%-opacity border, Emerald text; hover fills border + faint bg tint |
+| **Teal Action** | Provider-side positive actions ("Go Online") | Turquoise `#006B70` bg, White text; hover `#00565a` |
+| **Danger** | Destructive actions ("Decline", "Delete") | Error `#C93B3B` solid background, white text |
+| **Disabled** | Any variant, disabled state | Emerald-at-5%-opacity bg, Emerald-at-40%-opacity text, `cursor: not-allowed` |
+| **Icon** | Map controls, navigation, card CTAs | Circular, frosted-glass (see §6.2), icon-only |
 
 Sizes: `sm` (32px height), `md` (40px), `lg` (48px)
 
@@ -231,12 +268,28 @@ Sizes: `sm` (32px height), `md` (40px), `lg` (48px)
 
 | Type | Portal | Content |
 |---|---|---|
+| **Destination Card** | Tourist (landing) | Full-bleed photo, frosted-glass badge, bottom gradient scrim, Playfair title, price + frosted circular CTA — see below |
 | **Service Card** | Tourist, Agency | Photo, title, price, rating, distance, CTA |
 | **Booking Card** | All | Status badge, date, service name, guest count, actions |
 | **Provider Card** | Agency, Admin | Avatar, name, status dot, services count, rating |
 | **Location Pin Card** | Tourist | Name, type icon, distance, quick actions |
 | **Stat Card** | Admin | KPI value, trend indicator, sparkline |
 | **Notification Card** | All | Icon, title, body, timestamp, read/unread |
+
+#### Destination Card — frosted-glass overlay pattern
+
+`components/ui/DestinationCard.tsx`. Reference: Kitchen Sink "Destination Card."
+
+- Container: `rounded-lg` (6px), Emerald `#0A2320` background, fixed height (440px in the
+  reference), `box-shadow: 0 20px 40px -12px rgba(10,35,32,0.25)`
+- Photo fills the container (`position: absolute; inset: 0`)
+- Bottom scrim: `linear-gradient(180deg, rgba(10,35,32,0) 40%, rgba(10,35,32,0.88) 100%)` over the photo
+- Badge (top-left): pill, `background: rgba(249,248,245,0.14)`, `backdrop-filter: blur(12px)`,
+  `border: 1px solid rgba(255,255,255,0.18)`, JetBrains Mono 11px uppercase, white text
+- Content (bottom, over the scrim): Playfair Display 25px/600 title in white, Inter 14px
+  description at 75% white opacity, JetBrains Mono 13px price in Gold `#C5A880`, and a 36px
+  circular frosted CTA (`background: rgba(249,248,245,0.12)`, `backdrop-filter: blur(10px)`,
+  1px white-18%-opacity border) with a directional arrow icon
 
 ### 6.3 Forms
 
@@ -284,12 +337,12 @@ Sizes: `sm` (32px height), `md` (40px), `lg` (48px)
 | Pin | Icon | Color | Usage |
 |---|---|---|---|
 | **SOS Hub** | Shield with cross | Red (`#C93B3B`) | Emergency locations |
-| **Clean Toilet** | Droplet | Blue (`#1E6F8A`) | Hygiene locations |
-| **Cultural Site** | Landmark | Gold (`#D4A843`) | Monuments, mosques |
+| **Clean Toilet** | Droplet | Turquoise (`#006B70`) | Hygiene locations |
+| **Cultural Site** | Landmark | Gold (`#C5A880`) | Monuments, mosques |
 | **Festival** | Music/Star | Purple (`#7C3AED`) | Active festivals |
 | **Pharmacy** | Plus in circle | Green (`#2D8A4E`) | Medical |
 | **ATM** | Banknote | Teal (`#0D9488`) | Financial |
-| **WiFi** | WiFi signal | Blue (`#2A9FCC`) | Connectivity |
+| **WiFi** | WiFi signal | Turquoise (`#006B70`) | Connectivity |
 | **Water** | Glass | Cyan (`#06B6D4`) | Drinking water |
 
 ---
@@ -358,9 +411,10 @@ Sizes: `sm` (32px height), `md` (40px), `lg` (48px)
 
 | Pair | Ratio | Pass |
 |---|---|---|
-| Primary on White | 5.2:1 | ✅ AA |
-| White on Primary | 5.2:1 | ✅ AA |
-| Secondary (Gold) on White | 3.1:1 | ❌ (use on dark bg only) |
+| Emerald on Sand | 15.5:1 | ✅ AAA |
+| White on Emerald | 16.5:1 | ✅ AAA |
+| Gold on Emerald | 7.3:1 | ✅ AAA (gold text/labels on dark surfaces) |
+| Gold on White | 2.3:1 | ❌ (gold is a fill/accent color only — never use as text on light backgrounds) |
 | Gray 600 on White | 4.6:1 | ✅ AA |
 | White on Gray 900 | 15.4:1 | ✅ AAA |
 
@@ -368,7 +422,7 @@ Sizes: `sm` (32px height), `md` (40px), `lg` (48px)
 
 ```css
 :focus-visible {
-  outline: 2px solid var(--color-primary);
+  outline: 2px solid var(--color-turquoise);
   outline-offset: 2px;
   border-radius: var(--radius);
 }
@@ -512,25 +566,27 @@ Toast: Slide in from top-right, auto-dismiss after 5 seconds
 
 ```css
 :root {
-  /* Colors */
-  --color-primary: hsl(195, 63%, 33%);
-  --color-primary-light: hsl(198, 65%, 48%);
-  --color-primary-dark: hsl(198, 68%, 25%);
-  --color-secondary: hsl(42, 60%, 55%);
-  --color-accent: hsl(10, 55%, 50%);
+  /* Brand colors — Immersive Minimalism (Design Tokens v1.0) */
+  --color-sand: #F9F8F5;      /* sand-50 — page background */
+  --color-emerald: #0A2320;   /* emerald-950 — primary text, dark surfaces */
+  --color-white: #FFFFFF;
+  --color-gold: #C5A880;      /* gold-400 — CTAs, price labels */
+  --color-turquoise: #006B70; /* teal-700 — secondary actions */
+
+  /* Functional / status colors (unchanged by the rebrand) */
   --color-success: hsl(145, 50%, 36%);
   --color-warning: hsl(40, 68%, 51%);
   --color-error: hsl(0, 55%, 51%);
 
-  /* Neutrals */
-  --color-bg: #F9FAFB;
-  --color-surface: #FFFFFF;
-  --color-text-primary: #111827;
-  --color-text-secondary: #4B5563;
-  --color-border: #E5E7EB;
+  /* Semantic aliases */
+  --color-bg: var(--color-sand);
+  --color-surface: var(--color-white);
+  --color-text-primary: var(--color-emerald);
+  --color-text-secondary: rgba(10, 35, 32, 0.65);
+  --color-border: rgba(10, 35, 32, 0.08);
 
   /* Typography */
-  --font-heading: 'Inter', sans-serif;
+  --font-display: 'Playfair Display', serif;
   --font-body: 'Inter', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
@@ -538,9 +594,9 @@ Toast: Slide in from top-right, auto-dismiss after 5 seconds
   --space-unit: 4px;
 
   /* Radii */
-  --radius-sm: 4px;
-  --radius: 8px;
-  --radius-lg: 12px;
+  --radius-sm: 3px;
+  --radius: 4px;
+  --radius-lg: 6px;
   --radius-xl: 16px;
   --radius-full: 9999px;
 
@@ -549,6 +605,7 @@ Toast: Slide in from top-right, auto-dismiss after 5 seconds
   --shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
   --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
   --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+  --shadow-card: 0 20px 40px -12px rgba(10,35,32,0.25); /* Destination Card */
 
   /* Transitions */
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -556,7 +613,7 @@ Toast: Slide in from top-right, auto-dismiss after 5 seconds
   --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Dark Mode */
+/* Dark Mode — provisional, predates the Immersive Minimalism system (see §4.4) */
 [data-theme="dark"] {
   --color-bg: #0A0E14;
   --color-surface: #111827;

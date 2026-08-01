@@ -42,7 +42,7 @@ export function Toast({ message, isVisible, onClose, className, variant = "defau
       case "danger":
         return <AlertCircle className="w-5 h-5 text-white" />;
       default:
-        return <Info className="w-5 h-5 text-[#D4A843]" />;
+        return <Info className="w-5 h-5 text-[#C5A880]" />;
     }
   };
 

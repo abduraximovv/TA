@@ -20,13 +20,16 @@ export function ReviewModal({ bookingId, serviceId, itineraryId, onSuccess }: Re
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [toastVisible, setToastVisible] = useState(false);
-  
+  const [toastVariant, setToastVariant] = useState<"default" | "success" | "danger">("success");
+
   const { session } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (rating === 0) {
-      alert("Please select a rating.");
+      setToastVariant("danger");
+      setToastMessage("Please select a rating.");
+      setToastVisible(true);
       return;
     }
 
@@ -55,12 +58,15 @@ export function ReviewModal({ bookingId, serviceId, itineraryId, onSuccess }: Re
       }
 
       setOpen(false);
+      setToastVariant("success");
       setToastMessage("Thank you for your review!");
       setToastVisible(true);
       onSuccess();
     } catch (err: any) {
       console.error(err);
-      alert(err.message || "Failed to submit review.");
+      setToastVariant("danger");
+      setToastMessage(err.message || "Failed to submit review.");
+      setToastVisible(true);
     } finally {
       setIsSubmitting(false);
     }
@@ -68,10 +74,10 @@ export function ReviewModal({ bookingId, serviceId, itineraryId, onSuccess }: Re
 
   return (
     <>
-      <Button 
-        variant="secondary"
+      <Button
+        variant="outline"
         size="sm"
-        className="mt-2 text-primary border-primary hover:bg-primary/5"
+        className="mt-2"
         onClick={() => setOpen(true)}
       >
         Leave a review
@@ -92,11 +98,11 @@ export function ReviewModal({ bookingId, serviceId, itineraryId, onSuccess }: Re
                   className="p-1 transition-transform hover:scale-110 focus:outline-none"
                 >
                   <Star
-                    className={`w-8 h-8 ${
-                      (hoverRating || rating) >= star
-                        ? "fill-yellow-400 text-yellow-400"
-                        : "text-gray-300"
-                    }`}
+                    className="w-8 h-8"
+                    style={{
+                      fill: (hoverRating || rating) >= star ? "#C5A880" : "transparent",
+                      color: (hoverRating || rating) >= star ? "#C5A880" : "#C4CAC9",
+                    }}
                   />
                 </button>
               ))}
@@ -126,11 +132,11 @@ export function ReviewModal({ bookingId, serviceId, itineraryId, onSuccess }: Re
         </form>
       </Modal>
 
-      <Toast 
-        message={toastMessage} 
-        isVisible={toastVisible} 
-        onClose={() => setToastVisible(false)} 
-        variant="success"
+      <Toast
+        message={toastMessage}
+        isVisible={toastVisible}
+        onClose={() => setToastVisible(false)}
+        variant={toastVariant}
       />
     </>
   );

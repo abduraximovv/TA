@@ -347,8 +347,15 @@ userId: string, role: 'tourist' | 'provider' | 'agency', onChange: (payload: any
   const supabase = getSupabase();
   const filterColumn = role === 'tourist' ? 'tourist_id' : 'provider_id';
 
+  // supabase-js reuses an existing channel object when the topic string already exists
+  // (RealtimeClient.channel()), so a shared literal topic like 'public:bookings' collides
+  // whenever two subscribers are mounted at once (e.g. a layout-level listener + a page-level
+  // one) -- the second .on() call lands on an already-subscribed channel and throws. Suffixing
+  // with a random id keeps every subscription on its own channel.
+  const uniqueSuffix = Math.random().toString(36).slice(2);
+
   return supabase
-    .channel('public:bookings')
+    .channel(`public:bookings:${role}:${userId}:${uniqueSuffix}`)
     .on(
       'postgres_changes',
       { event: '*', schema: 'public', table: 'bookings', filter: `${filterColumn}=eq.${userId}` },

@@ -29,6 +29,7 @@ export function ServiceBookingModal({
   const [catalogOption, setCatalogOption] = useState("standard");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
+  const [toastVariant, setToastVariant] = useState<"default" | "success" | "danger">("default");
   const router = useRouter();
   const { user, session } = useAuth();
 
@@ -57,7 +58,7 @@ export function ServiceBookingModal({
         status: "pending",
         booking_date: new Date(date).toISOString(),
         guest_count: guestCount,
-        notes: notes,
+        special_requests: notes,
         passenger_manifest: null,
         dietary_preferences: null,
         pickup_location: null,
@@ -80,13 +81,15 @@ export function ServiceBookingModal({
       }
 
       setOpen(false);
+      setToastVariant("success");
       setToastMessage("Your booking request has been submitted successfully.");
       setTimeout(() => {
         router.push("/profile?booked=true");
       }, 2000);
     } catch (err: any) {
       console.error(err);
-      alert(err.message || "Failed to create booking.");
+      setToastVariant("danger");
+      setToastMessage(err.message || "Failed to create booking.");
     } finally {
       setIsSubmitting(false);
     }
@@ -94,8 +97,8 @@ export function ServiceBookingModal({
 
   return (
     <>
-      <Button 
-        className="bg-primary hover:bg-primary-dark px-8 h-12 rounded-lg text-base font-semibold shadow-lg shadow-primary/20"
+      <Button
+        className="px-8 h-12 text-base font-semibold shadow-lg shadow-primary/20"
         onClick={handleOpen}
       >
         Request Booking
@@ -158,10 +161,11 @@ export function ServiceBookingModal({
           </div>
         </form>
       </Modal>
-      <Toast 
-        message={toastMessage} 
-        isVisible={!!toastMessage} 
-        onClose={() => setToastMessage("")} 
+      <Toast
+        message={toastMessage}
+        isVisible={!!toastMessage}
+        onClose={() => setToastMessage("")}
+        variant={toastVariant}
       />
     </>
   );

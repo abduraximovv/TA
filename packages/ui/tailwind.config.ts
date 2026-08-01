@@ -8,41 +8,70 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Travelora Design System
+        // Uzbekistan "Silk Road Modern" design system — see docs/UZBEKISTAN_DESIGN_LANGUAGE.md
+        // and docs/UI_UX_GUIDELINES.md. `primary`/`secondary`/`accent` are kept as the semantic
+        // role names (so existing `bg-primary`/`text-primary` call sites repaint automatically)
+        // but now point at the real brand tokens instead of the old "Travelora" blue/coral.
         primary: {
-          DEFAULT: "#1877F2",
-          light: "#4B94F5",
-          dark: "#0F5AC2",
-          50: "#E8F1FE",
-          100: "#D1E3FD",
+          DEFAULT: "#0A2320", // Midnight Emerald
+          light: "#123833",
+          dark: "#061613",
+          50: "#EBEDED", // for the few call sites that used primary-50 as a light tint chip
+          100: "#DDE0E0",
         },
         secondary: {
-          DEFAULT: "#FF5A5F",
-          light: "#FF8084",
-          dark: "#E0484D",
+          DEFAULT: "#C5A880", // Gold
+          light: "#d4bc9c",
+          dark: "#b89a6f",
         },
-        accent: "#FFB020",
-        success: "#00B268",
-        warning: "#FFB020",
-        error: "#FF3B30",
-        // Travelora neutrals
+        accent: "#006B70", // Turquoise
+        pomegranate: "#A72608", // promo/badge/urgent accent — the one new brand token
+        success: "#2D8A4E",
+        warning: "#D9972B",
+        error: "#C93B3B",
+        // Brand neutrals, referenced directly where a component wants the literal token
+        // rather than a semantic role name (e.g. `bg-sand-50`, `text-emerald-950`).
         sand: {
-          50: "#F9FAFB",
-          100: "#F3F4F6",
-          200: "#E5E7EB",
-          300: "#D1D5DB",
+          50: "#F9F8F5",
+        },
+        emerald: {
+          950: "#0A2320",
+        },
+        gold: {
+          400: "#C5A880",
+        },
+        teal: {
+          700: "#006B70",
         },
         dark: {
-          DEFAULT: "#111827",
-          forest: "#1F2937",
-          graphite: "#374151",
+          DEFAULT: "#0A2320",
+          forest: "#123833",
+          graphite: "#0A2320",
+        },
+        // Neutral text/border/surface scale, mathematically blended white -> Midnight Emerald
+        // (matches UI_UX_GUIDELINES.md §4.4: "Secondary Text = Emerald @ ~65% opacity",
+        // "Border = Emerald @ ~8-14% opacity") so every existing `text-gray-*`/`border-gray-*`/
+        // `bg-gray-*` call site across all 4 apps repaints on-brand without touching each file.
+        gray: {
+          50: "#F5F6F6",
+          100: "#EBEDED",
+          200: "#DDE0E0",
+          300: "#C4CAC9",
+          400: "#A2ABAA",
+          500: "#808D8B",
+          600: "#60706E",
+          700: "#405351",
+          800: "#273D3B",
+          900: "#0A2320",
+          950: "#081E1B",
         },
       },
       fontFamily: {
         sans: ["Inter", "sans-serif"],
-        serif: ["Inter", "sans-serif"], // We replace serif with sans in Travelora
+        serif: ["'Playfair Display'", "serif"],
+        display: ["'Playfair Display'", "serif"],
         cursive: ["Dancing Script", "cursive"],
-        mono: ["JetBrains Mono", "monospace"],
+        mono: ["'JetBrains Mono'", "monospace"],
       },
       animation: {
         "fade-up": "fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards",
@@ -86,7 +115,14 @@ const config: Config = {
         "section-lg": "8rem",
       },
       borderRadius: {
-        "card": "8px",
+        // Overrides the base Tailwind radius scale to match UI_UX_GUIDELINES.md §5.3 exactly,
+        // so plain `rounded-sm`/`rounded`/`rounded-lg`/`rounded-xl` classes are correct by
+        // default everywhere, instead of every call site needing an arbitrary-value override.
+        "sm": "3px",   // buttons, inputs
+        "DEFAULT": "4px", // color swatches, small tiles
+        "lg": "6px",   // cards (Family 1 "Destination Card")
+        "xl": "16px",  // modals, sheets
+        "card": "6px",
         "pill": "9999px",
       },
       boxShadow: {

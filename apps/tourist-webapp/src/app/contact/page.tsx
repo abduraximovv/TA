@@ -1,27 +1,16 @@
 "use client";
 
 import React from "react";
-import { PhoneCall, ArrowRight } from "lucide-react";
-import Link from "next/link";
+import { PhoneCall } from "lucide-react";
+import { ComingSoonCard } from "@/components/ComingSoonCard";
 
 export default function ContactPage() {
   return (
-    <main className="min-h-[80vh] flex flex-col items-center justify-center bg-sand-50 p-6">
-      <div className="bg-white rounded-3xl p-10 md:p-16 max-w-2xl w-full text-center shadow-sm border border-gray-100 flex flex-col items-center">
-        <div className="w-20 h-20 bg-accent/10 rounded-full flex items-center justify-center mb-6 text-accent">
-          <PhoneCall className="w-10 h-10" />
-        </div>
-        <h1 className="text-3xl md:text-4xl font-black text-dark-graphite mb-4">Contact Us</h1>
-        <p className="text-gray-500 mb-8 max-w-md">
-          Our support team is getting ready to assist you 24/7. In the meantime, you can reach us at info@travelora.com.
-        </p>
-        <Link 
-          href="/" 
-          className="bg-primary hover:bg-primary-dark text-white font-bold rounded-full px-8 py-3.5 inline-flex items-center gap-2 transition-colors"
-        >
-          Go Back Home <ArrowRight className="w-4 h-4" />
-        </Link>
-      </div>
-    </main>
+    <ComingSoonCard
+      icon={PhoneCall}
+      iconColor="teal"
+      title="Contact Us"
+      description="Our support team is getting ready to assist you 24/7. In the meantime, you can reach us at hello@silkroad.uz."
+    />
   );
 }

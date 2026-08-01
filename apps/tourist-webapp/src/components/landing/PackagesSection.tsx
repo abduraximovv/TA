@@ -4,14 +4,14 @@ import React, { useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import type { Service } from "@repo/database";
+import type { Itinerary } from "@repo/types";
 
 interface Props {
-  experiences: Service[];
+  itineraries: Itinerary[];
 }
 
-// Fallback package data matching the design
-const PACKAGES = [
+// Fallback package data matching the design, used only when fewer than 4 real packages exist yet
+const FALLBACK_PACKAGES = [
   {
     id: "pkg-1",
     name: "Classic Silk Road, 7 Days",
@@ -50,21 +50,36 @@ const PACKAGES = [
   },
 ];
 
-export function ExperiencesSection({ experiences }: Props) {
+// Manual thousands-separator instead of Intl.NumberFormat("uz-UZ"): Node's server-side ICU and
+// the browser's ICU format that locale differently (space vs comma grouping), which caused a
+// hydration text mismatch since this renders during SSR.
+function formatPrice(amount: number): string {
+  return Math.round(amount).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+}
+
+function formatDuration(startDate: string | null, endDate: string | null): string {
+  if (!startDate || !endDate) return "MULTI-DAY";
+  const days = Math.round(
+    (new Date(endDate).getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24)
+  ) + 1;
+  return days > 0 ? `${days} DAYS` : "MULTI-DAY";
+}
+
+export function PackagesSection({ itineraries }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const cards =
-    experiences.length >= 4
-      ? experiences.slice(0, 4).map((e, i) => ({
-          id: e.id,
-          name: e.title,
-          desc: e.description || PACKAGES[i % PACKAGES.length].desc,
-          duration: `${Math.floor(Math.random() * 5) + 4} DAYS`,
-          price: e.price ? `$${e.price}` : PACKAGES[i % PACKAGES.length].price,
-          image: e.image_url || PACKAGES[i % PACKAGES.length].image,
-          href: `/service/${e.id}`,
+    itineraries.length >= 4
+      ? itineraries.slice(0, 8).map((it, i) => ({
+          id: it.id,
+          name: it.title,
+          desc: it.description || FALLBACK_PACKAGES[i % FALLBACK_PACKAGES.length].desc,
+          duration: formatDuration(it.start_date, it.end_date),
+          price: `${formatPrice(it.total_price)} ${it.currency}`,
+          image: FALLBACK_PACKAGES[i % FALLBACK_PACKAGES.length].image,
+          href: `/packages/${it.id}`,
         }))
-      : PACKAGES.map((p) => ({ ...p, href: "/packages" }));
+      : FALLBACK_PACKAGES.map((p) => ({ ...p, href: "/packages" }));
 
   return (
     <section

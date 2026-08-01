@@ -1,5 +1,6 @@
 import { getSupabase } from "./client";
-import type { Destination, Service, Event } from "./types";
+import type { Destination, DestinationReview, Service, Event } from "./types";
+import type { Itinerary } from "@repo/types";
 
 /**
  * Fetch featured destinations for the Landing Page carousel.
@@ -82,4 +83,81 @@ export async function getAllDestinations(): Promise<Destination[]> {
   }
 
   return (data as Destination[]) || [];
+}
+
+/**
+ * Fetch a single destination by its slug, for the blog-style detail page.
+ */
+export async function getDestinationBySlug(slug: string): Promise<Destination | null> {
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from("destinations")
+    .select("*")
+    .eq("slug", slug)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Error fetching destination by slug:", error);
+    return null;
+  }
+
+  return data ? (data as Destination) : null;
+}
+
+export interface DestinationReviewWithAuthor extends DestinationReview {
+  author_name: string | null;
+}
+
+/**
+ * Fetch visitor opinions left on a destination, newest first.
+ */
+export async function getDestinationReviews(destinationId: string): Promise<DestinationReviewWithAuthor[]> {
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from("destination_reviews")
+    .select("*")
+    .eq("destination_id", destinationId)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Error fetching destination reviews:", error);
+    return [];
+  }
+
+  const reviews = (data as DestinationReview[]) || [];
+  if (reviews.length === 0) return [];
+
+  const touristIds = [...new Set(reviews.map((r) => r.tourist_id))];
+  const { data: profiles } = await supabase
+    .from("user_profiles")
+    .select("id, full_name")
+    .in("id", touristIds);
+  const nameMap: Record<string, string> = {};
+  if (profiles) {
+    (profiles as { id: string; full_name: string | null }[]).forEach((p) => {
+      nameMap[p.id] = p.full_name ?? "Tourist";
+    });
+  }
+
+  return reviews.map((r) => ({ ...r, author_name: nameMap[r.tourist_id] ?? null }));
+}
+
+/**
+ * Fetch active agency-curated packages (itineraries) for the Landing Page.
+ */
+export async function getFeaturedItineraries(limit = 8): Promise<Itinerary[]> {
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from("itineraries")
+    .select("*")
+    .eq("status", "active")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    console.error("Error fetching itineraries:", error);
+    return [];
+  }
+
+  return (data as Itinerary[]) || [];
 }

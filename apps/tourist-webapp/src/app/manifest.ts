@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "Uzbekistan Digital Tourism Ecosystem",
     start_url: "/",
     display: "standalone",
-    background_color: "#1E6F8A",
-    theme_color: "#1E6F8A",
+    background_color: "#0A2320",
+    theme_color: "#0A2320",
     orientation: "any",
     icons: [
       {

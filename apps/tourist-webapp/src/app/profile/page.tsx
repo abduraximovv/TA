@@ -3,11 +3,16 @@
 import React, { useEffect } from "react";
 import { useAuth } from "@repo/auth";
 import { useRouter } from "next/navigation";
-import { Card } from "@repo/ui";
+import { motion } from "framer-motion";
 import { LogOut, Home, User as UserIcon, Settings, Shield, Bell, HelpCircle } from "lucide-react";
 import Link from "next/link";
 import { BottomNav } from "../../components/BottomNav";
 import { MyBookingsList } from "@/components/booking/MyBookingsList";
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] as const } },
+};
 
 export default function ProfilePage() {
   const { user, signOut, isLoading } = useAuth();
@@ -30,109 +35,170 @@ export default function ProfilePage() {
 
   if (isLoading || !user) {
     return (
-      <main className="min-h-screen bg-sand-50 flex items-center justify-center">
+      <main style={{ minHeight: "100vh", background: "#F9F8F5", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <div className="animate-pulse flex flex-col items-center">
-          <div className="w-16 h-16 bg-gray-200 rounded-full mb-4"></div>
-          <div className="h-4 bg-gray-200 rounded w-32"></div>
+          <div style={{ width: 64, height: 64, background: "#EBEDED", borderRadius: "50%", marginBottom: 16 }} />
+          <div style={{ height: 16, background: "#EBEDED", borderRadius: 4, width: 128 }} />
         </div>
       </main>
     );
   }
 
   return (
-    <main className="flex flex-col min-h-screen bg-sand-50 pb-24">
-      {/* Top App Bar - Matching Dashboard */}
-      <header className="bg-primary text-white pt-12 pb-20 px-6 md:px-12 lg:px-24 rounded-b-3xl shadow-sm relative overflow-hidden">
-        {/* Decorative pattern */}
-        <div className="absolute inset-0 opacity-10">
+    <main style={{ display: "flex", flexDirection: "column", minHeight: "100vh", background: "#F9F8F5", paddingBottom: 96 }}>
+      {/* Top App Bar */}
+      <header style={{ background: "#0A2320", color: "#FFFFFF", paddingTop: 48, paddingBottom: 80, position: "relative", overflow: "hidden", borderRadius: "0 0 24px 24px" }}>
+        <div style={{ position: "absolute", inset: 0, opacity: 0.08 }}>
           <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
             <defs>
-              <pattern id="islamic-pattern-prof" x="0" y="0" width="100" height="100" patternUnits="userSpaceOnUse">
+              <pattern id="girih-prof" x="0" y="0" width="100" height="100" patternUnits="userSpaceOnUse">
                 <path d="M50 0L100 50L50 100L0 50Z" fill="none" stroke="currentColor" strokeWidth="2" />
               </pattern>
             </defs>
-            <rect x="0" y="0" width="100%" height="100%" fill="url(#islamic-pattern-prof)" />
+            <rect x="0" y="0" width="100%" height="100%" fill="url(#girih-prof)" />
           </svg>
         </div>
-        <div className="flex justify-between items-center relative z-10 max-w-4xl mx-auto">
-          <h1 className="text-3xl font-serif font-bold tracking-tight">Profile</h1>
-          <button className="p-2.5 bg-white/10 backdrop-blur-md rounded-full hover:bg-white/20 transition-colors">
-            <Settings className="w-5 h-5 text-white" />
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", position: "relative", zIndex: 1, maxWidth: 900, margin: "0 auto", padding: "0 24px" }}>
+          <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: 28, fontWeight: 600 }}>Profile</h1>
+          <button style={{ padding: 10, background: "rgba(255,255,255,0.1)", backdropFilter: "blur(12px)", borderRadius: "50%", border: "none", cursor: "pointer" }}>
+            <Settings style={{ width: 18, height: 18, color: "#FFFFFF" }} />
           </button>
         </div>
       </header>
 
-      {/* Main Content Area */}
-      <div className="px-6 md:px-12 lg:px-24 -mt-12 space-y-6 relative z-10 max-w-4xl mx-auto w-full">
-        
+      {/* Main Content */}
+      <motion.div
+        initial="hidden"
+        animate="visible"
+        variants={fadeUp}
+        style={{ maxWidth: 900, margin: "-56px auto 0", padding: "0 24px", display: "flex", flexDirection: "column", gap: 24, position: "relative", zIndex: 1, width: "100%" }}
+      >
         {/* Profile Card */}
-        <Card className="p-6 bg-white border border-gray-100 shadow-card rounded-2xl flex flex-col items-center text-center">
-          <div className="w-24 h-24 bg-sand-100 rounded-full flex items-center justify-center text-gray-400 mb-4 shadow-inner border-4 border-white">
-            <UserIcon className="w-12 h-12" />
+        <div
+          style={{
+            padding: 28,
+            background: "#FFFFFF",
+            border: "1px solid rgba(10,35,32,0.05)",
+            boxShadow: "0 8px 24px rgba(10,35,32,0.1)",
+            borderRadius: 8,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            textAlign: "center",
+          }}
+        >
+          <div
+            style={{
+              width: 96,
+              height: 96,
+              background: "#F9F8F5",
+              borderRadius: "50%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "rgba(10,35,32,0.3)",
+              marginBottom: 16,
+              border: "4px solid #FFFFFF",
+              boxShadow: "0 0 0 1px rgba(10,35,32,0.05)",
+            }}
+          >
+            <UserIcon style={{ width: 48, height: 48 }} />
           </div>
-          <h2 className="text-2xl font-bold text-dark-graphite">{user.user_metadata?.full_name || "Traveler"}</h2>
-          <p className="text-gray-500 font-medium text-sm mt-1">{user.email}</p>
-          <div className="mt-4 inline-flex items-center px-5 py-2 rounded-full text-[11px] font-bold tracking-wide uppercase bg-secondary/10 text-secondary">
+          <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 600, color: "#0A2320" }}>
+            {user.user_metadata?.full_name || "Traveler"}
+          </h2>
+          <p style={{ color: "rgba(10,35,32,0.5)", fontSize: 14, fontWeight: 500, marginTop: 4 }}>{user.email}</p>
+          <div
+            style={{
+              marginTop: 16,
+              display: "inline-flex",
+              alignItems: "center",
+              padding: "8px 20px",
+              borderRadius: 100,
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: "0.05em",
+              textTransform: "uppercase",
+              background: "rgba(197,168,128,0.15)",
+              color: "#8A6D3B",
+            }}
+          >
             Verified Tourist
           </div>
-        </Card>
+        </div>
 
         <MyBookingsList />
 
-        <div className="space-y-3 mt-8">
-          <h3 className="font-bold text-dark-graphite text-lg mb-2">Account Options</h3>
-          <Link href="/" className="block">
-            <Card className="p-4 md:p-5 bg-white border border-gray-100 shadow-sm rounded-xl flex items-center justify-between hover:bg-gray-50 transition-colors cursor-pointer group">
-              <div className="flex items-center">
-                <div className="w-12 h-12 bg-primary-50 rounded-full flex items-center justify-center mr-4 group-hover:bg-primary-100 transition-colors">
-                  <Home className="w-6 h-6 text-primary" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-dark-graphite">Back to Main Page</h3>
-                  <p className="text-xs text-gray-500 font-medium">Return to the landing view</p>
-                </div>
-              </div>
-            </Card>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 16 }}>
+          <h3 style={{ fontFamily: "'Playfair Display', serif", fontWeight: 600, fontSize: 18, color: "#0A2320", marginBottom: 4 }}>
+            Account Options
+          </h3>
+
+          <Link href="/" style={{ textDecoration: "none" }}>
+            <OptionRow icon={Home} tone="emerald" title="Back to Main Page" subtitle="Return to the landing view" />
           </Link>
 
-          <Card className="p-4 md:p-5 bg-white border border-gray-100 shadow-sm rounded-xl flex items-center justify-between hover:bg-gray-50 transition-colors cursor-pointer group">
-            <div className="flex items-center">
-              <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mr-4 group-hover:bg-gray-100 transition-colors">
-                <Shield className="w-6 h-6 text-gray-600" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-dark-graphite">Security & Privacy</h3>
-                <p className="text-xs text-gray-500 font-medium">Manage password and data</p>
-              </div>
-            </div>
-          </Card>
+          <OptionRow icon={Shield} tone="neutral" title="Security & Privacy" subtitle="Manage password and data" />
+          <OptionRow icon={HelpCircle} tone="neutral" title="Help & Support" subtitle="Contact us or read FAQs" />
 
-          <Card className="p-4 md:p-5 bg-white border border-gray-100 shadow-sm rounded-xl flex items-center justify-between hover:bg-gray-50 transition-colors cursor-pointer group">
-            <div className="flex items-center">
-              <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mr-4 group-hover:bg-gray-100 transition-colors">
-                <HelpCircle className="w-6 h-6 text-gray-600" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-dark-graphite">Help & Support</h3>
-                <p className="text-xs text-gray-500 font-medium">Contact us or read FAQs</p>
-              </div>
-            </div>
-          </Card>
-
-          <Card 
-            onClick={handleSignOut}
-            className="p-4 md:p-5 bg-white border border-red-100 shadow-sm rounded-xl flex items-center justify-between hover:bg-red-50 transition-colors cursor-pointer mt-8 group"
-          >
-            <div className="flex items-center text-error">
-              <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center mr-4 group-hover:bg-red-100 transition-colors">
-                <LogOut className="w-6 h-6" />
-              </div>
-              <h3 className="font-bold">Log Out</h3>
-            </div>
-          </Card>
+          <div onClick={handleSignOut} style={{ marginTop: 20 }}>
+            <OptionRow icon={LogOut} tone="danger" title="Log Out" />
+          </div>
         </div>
+      </motion.div>
 
-      </div>
+      <BottomNav />
     </main>
+  );
+}
+
+function OptionRow({
+  icon: Icon,
+  tone,
+  title,
+  subtitle,
+}: {
+  icon: React.ElementType;
+  tone: "emerald" | "neutral" | "danger";
+  title: string;
+  subtitle?: string;
+}) {
+  const iconBg = tone === "emerald" ? "rgba(0,107,112,0.1)" : tone === "danger" ? "rgba(201,59,59,0.08)" : "rgba(10,35,32,0.04)";
+  const iconColor = tone === "emerald" ? "#006B70" : tone === "danger" ? "#C93B3B" : "rgba(10,35,32,0.55)";
+
+  return (
+    <div
+      style={{
+        padding: "16px 20px",
+        background: "#FFFFFF",
+        border: tone === "danger" ? "1px solid rgba(201,59,59,0.15)" : "1px solid rgba(10,35,32,0.05)",
+        boxShadow: "0 1px 3px rgba(10,35,32,0.05)",
+        borderRadius: 8,
+        display: "flex",
+        alignItems: "center",
+        cursor: "pointer",
+      }}
+    >
+      <div
+        style={{
+          width: 44,
+          height: 44,
+          borderRadius: "50%",
+          background: iconBg,
+          color: iconColor,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          marginRight: 16,
+          flexShrink: 0,
+        }}
+      >
+        <Icon style={{ width: 20, height: 20 }} />
+      </div>
+      <div>
+        <h3 style={{ fontWeight: 600, color: tone === "danger" ? "#C93B3B" : "#0A2320", fontSize: 14.5 }}>{title}</h3>
+        {subtitle && <p style={{ fontSize: 12, color: "rgba(10,35,32,0.5)", fontWeight: 500, marginTop: 1 }}>{subtitle}</p>}
+      </div>
+    </div>
   );
 }

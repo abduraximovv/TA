@@ -110,6 +110,25 @@ After `pnpm dev`, verify all services are running:
 | Admin Portal | `http://localhost:3003` | Login page |
 | Supabase Studio | `http://localhost:54323` | Database dashboard |
 
+### 2.4 Seeding Demo Accounts
+
+`pnpm supabase db reset` only loads `supabase/seed.sql` (destinations/services/events — no user
+accounts). To get logins for manual testing across all four portals, seed the shared hosted dev
+project with the canonical demo dataset:
+
+```bash
+pnpm db:seed
+```
+
+This runs `packages/database/scripts/seed-full.mjs`, which creates a full set of demo accounts
+(1 admin, 3 tourists, 6 providers with services, 3 agencies with itineraries) plus destinations
+and sample bookings/reviews. It's safe to re-run — it wipes and recreates its own accounts first.
+
+**All demo accounts use the email pattern `*@ta-demo.uz` and password `Demo12345!`**, e.g.
+`admin@ta-demo.uz` / `Demo12345!`, `tourist1@ta-demo.uz` / `Demo12345!`. Don't invent a new
+one-off seed script for ad hoc test accounts — extend `seed-full.mjs` instead so there's always a
+single source of truth for demo credentials.
+
 ---
 
 ## 3. Branch Strategy

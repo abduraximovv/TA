@@ -1,47 +1,59 @@
 import React from "react";
-import { Users, FileCheck, Calendar, DollarSign, TrendingUp, TrendingDown, Map as MapIcon, BarChart3 } from "lucide-react";
+import { Users, FileCheck, Calendar, DollarSign, Map as MapIcon, TrendingUp, TrendingDown } from "lucide-react";
 import { Card } from "@repo/ui";
+import { getPlatformStats } from "../actions/dashboardActions";
 
-const kpiData = [
-  {
-    title: "Total Active Tourists",
-    value: "14,284",
-    trend: "+12.5%",
-    trendUp: true,
-    icon: Users,
-    color: "text-blue-600",
-    bg: "bg-blue-50",
-  },
-  {
-    title: "Pending Verifications",
-    value: "84",
-    trend: "-5.2%",
-    trendUp: false,
-    icon: FileCheck,
-    color: "text-orange-600",
-    bg: "bg-orange-50",
-  },
-  {
-    title: "Total Bookings",
-    value: "3,192",
-    trend: "+8.1%",
-    trendUp: true,
-    icon: Calendar,
-    color: "text-purple-600",
-    bg: "bg-purple-50",
-  },
-  {
-    title: "Total GMV (UZS)",
-    value: "4.2B",
-    trend: "+15.3%",
-    trendUp: true,
-    icon: DollarSign,
-    color: "text-emerald-600",
-    bg: "bg-emerald-50",
-  },
-];
+function formatCompact(n: number): string {
+  if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1)}B`;
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}k`;
+  return n.toString();
+}
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const stats = await getPlatformStats();
+
+  const kpiData = [
+    {
+      title: "Total Active Tourists",
+      value: stats.totalTourists.toLocaleString(),
+      trend: `+${stats.newTouristsThisWeek} this week`,
+      trendUp: stats.newTouristsThisWeek > 0,
+      icon: Users,
+      color: "text-blue-600",
+      bg: "bg-blue-50",
+    },
+    {
+      title: "Pending Verifications",
+      value: stats.pendingVerifications.toLocaleString(),
+      trend: stats.pendingVerifications > 0 ? "Action required" : "All clear",
+      trendUp: stats.pendingVerifications === 0,
+      icon: FileCheck,
+      color: "text-orange-600",
+      bg: "bg-orange-50",
+    },
+    {
+      title: "Total Bookings",
+      value: stats.totalBookings.toLocaleString(),
+      trend: `+${stats.newBookingsThisWeek} this week`,
+      trendUp: stats.newBookingsThisWeek > 0,
+      icon: Calendar,
+      color: "text-purple-600",
+      bg: "bg-purple-50",
+    },
+    {
+      title: "Total GMV (UZS)",
+      value: formatCompact(stats.totalGmv),
+      trend: "from completed bookings, last 7 days",
+      trendUp: true,
+      icon: DollarSign,
+      color: "text-emerald-600",
+      bg: "bg-emerald-50",
+    },
+  ];
+
+  const maxRevenue = Math.max(...stats.revenueLast7Days.map((d) => d.total), 1);
+
   return (
     <div className="p-8 space-y-6">
       <div className="flex justify-between items-center">
@@ -81,7 +93,6 @@ export default function DashboardPage() {
                   {kpi.trendUp ? <TrendingUp className="w-4 h-4 mr-1" /> : <TrendingDown className="w-4 h-4 mr-1" />}
                   {kpi.trend}
                 </span>
-                <span className="text-gray-400 ml-2">vs last period</span>
               </div>
             </Card>
           );
@@ -111,31 +122,28 @@ export default function DashboardPage() {
           </div>
         </Card>
 
-        {/* Analytics Graphs Placeholder */}
+        {/* Revenue — completed bookings, last 7 days */}
         <Card className="flex flex-col border border-gray-100 shadow-sm rounded-xl bg-white h-[400px]">
           <div className="p-5 border-b border-gray-100">
             <h3 className="text-base font-bold text-gray-900">Revenue Growth</h3>
+            <p className="text-xs text-gray-400 mt-0.5">GMV from completed bookings, last 7 days</p>
           </div>
-          <div className="flex-1 p-6 flex items-end space-x-2 relative group cursor-pointer">
-            <div className="absolute inset-0 flex items-center justify-center z-10 bg-white/40 opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-[1px]">
-              <div className="flex flex-col items-center text-[#1E6F8A]">
-                <BarChart3 className="w-8 h-8 mb-2" />
-                <span className="text-sm font-medium">Connect Chart.js / Recharts</span>
+          <div className="flex-1 p-6 flex items-end space-x-2">
+            {stats.revenueLast7Days.every((d) => d.total === 0) ? (
+              <div className="w-full h-full flex items-center justify-center text-sm text-gray-400">
+                No completed bookings in the last 7 days
               </div>
-            </div>
-
-            {/* Mock Bar Chart */}
-            {[40, 70, 45, 90, 65, 100, 85].map((height, i) => (
-              <div key={i} className="flex-1 flex flex-col justify-end h-full">
-                <div 
-                  className="w-full bg-gradient-to-t from-[#1E6F8A] to-[#3B9AB8] rounded-t-sm opacity-80" 
-                  style={{ height: `${height}%` }}
-                />
-                <div className="text-[10px] text-gray-400 text-center mt-2 font-medium">
-                  {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][i]}
+            ) : (
+              stats.revenueLast7Days.map((d, i) => (
+                <div key={i} className="flex-1 flex flex-col justify-end h-full" title={formatCompact(d.total)}>
+                  <div
+                    className="w-full bg-gradient-to-t from-[#1E6F8A] to-[#3B9AB8] rounded-t-sm opacity-80"
+                    style={{ height: `${Math.max((d.total / maxRevenue) * 100, d.total > 0 ? 4 : 0)}%` }}
+                  />
+                  <div className="text-[10px] text-gray-400 text-center mt-2 font-medium">{d.label}</div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </Card>
       </div>

@@ -36,18 +36,22 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const isPublicLanding = pathname === "/";
   const isAuthRoute = pathname.startsWith("/auth");
-  
-  // F-T01 and F-T04 can be public if needed, but the prompt says:
-  // "Enforce server-side protection for all routes except / and /auth/*."
-  // So /map and /translator become protected.
-  const isPublicRoute = isPublicLanding || isAuthRoute;
+
+  // Only account-specific pages require a session -- everything else (destinations, discover,
+  // service listings/details, packages, map, translator, about, contact, etc.) is public
+  // browsing. Actions that actually need an account (booking, reviewing, registering) are gated
+  // inline at the component level (e.g. ServiceBookingModal checks `isLoggedIn` and prompts sign-in
+  // rather than the whole page being blocked).
+  const PROTECTED_PREFIXES = ["/profile", "/dashboard"];
+  const isProtectedRoute = PROTECTED_PREFIXES.some(
+    (p) => pathname === p || pathname.startsWith(`${p}/`)
+  );
 
   // 2. Extract Token and Role
   const accessToken = request.cookies.get("sb-access-token")?.value;
   let userRole: string | null = null;
-  
+
   if (accessToken) {
     const payload = parseJwt(accessToken);
     if (payload) {
@@ -55,8 +59,8 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // 3. Unauthenticated User attempting to access Private Routes -> Redirect to Login
-  if (!isPublicRoute && !accessToken) {
+  // 3. Unauthenticated User attempting to access an account-specific page -> Redirect to Login
+  if (isProtectedRoute && !accessToken) {
     const url = request.nextUrl.clone();
     url.pathname = "/auth/login";
     url.searchParams.set("next", pathname);
@@ -65,31 +69,22 @@ export async function middleware(request: NextRequest) {
 
   // 4. Role-Based Redirection Matrix (Cross-Domain for other roles)
   if (accessToken && userRole) {
-    // If they hit the public landing page or auth routes while logged in
-    if (isPublicRoute) {
-      if (isAuthRoute && userRole === "tourist") {
-        const nextParam = request.nextUrl.searchParams.get("next");
-        return NextResponse.redirect(new URL(nextParam || "/profile", request.url));
-      }
-      if (userRole === "provider") {
-        return NextResponse.redirect("http://localhost:3001/dashboard"); // Assuming provider was bumped down
-      }
-      if (userRole === "agency") {
-        return NextResponse.redirect("http://localhost:3002/dashboard");
-      }
-      if (userRole === "admin") {
-        return NextResponse.redirect("http://localhost:3003/dashboard");
-      }
+    // Landing/browsing pages stay viewable by anyone regardless of role or login state --
+    // only /auth/* (login/register) redirects an already-logged-in tourist away, since landing
+    // there while signed in doesn't make sense.
+    if (isAuthRoute && userRole === "tourist") {
+      const nextParam = request.nextUrl.searchParams.get("next");
+      return NextResponse.redirect(new URL(nextParam || "/profile", request.url));
     }
 
-    if (!isPublicRoute && userRole !== "tourist") {
+    if (isProtectedRoute && userRole !== "tourist") {
       switch (userRole) {
         case "provider":
           return NextResponse.redirect("http://localhost:3002/dashboard");
         case "agency":
-          return NextResponse.redirect("http://localhost:3000/dashboard");
-        case "admin":
           return NextResponse.redirect("http://localhost:3001/dashboard");
+        case "admin":
+          return NextResponse.redirect("http://localhost:3000/dashboard");
       }
     }
   }

@@ -3,6 +3,14 @@ import withPWAInit from "@ducanh2912/next-pwa";
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   transpilePackages: ["@repo/ui", "@repo/database", "@repo/types"],
+  async redirects() {
+    // /destinations was consolidated into /discover (both listed the same destinations data
+    // under two different top-level paths) -- keep old links/bookmarks working.
+    return [
+      { source: "/destinations", destination: "/discover", permanent: true },
+      { source: "/destinations/:slug", destination: "/discover/:slug", permanent: true },
+    ];
+  },
   images: {
     remotePatterns: [
       {

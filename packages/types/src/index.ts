@@ -42,7 +42,7 @@ export interface Booking {
   status: BookingStatus;
   booking_date: string;
   guest_count: number;
-  notes: string | null;
+  special_requests: string | null;
   passenger_manifest: Record<string, unknown> | null;
   dietary_preferences: string | null;
   pickup_location: string | null;

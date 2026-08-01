@@ -163,7 +163,7 @@ export const ContextualTranslator = () => {
     <div className="max-w-2xl mx-auto p-4 space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold flex items-center gap-2">
-          <Globe2 className="w-6 h-6 text-blue-500" />
+          <Globe2 className="w-6 h-6 text-accent" />
           Contextual Translator
         </h2>
         <div className="flex items-center gap-2">
@@ -200,7 +200,7 @@ export const ContextualTranslator = () => {
                 <p className="text-sm text-gray-500 mb-1">{item.original}</p>
                 <p className="font-medium text-lg">{item.translation}</p>
                 {item.context && item.context !== "None" && (
-                  <p className="text-sm text-blue-600 bg-blue-50 p-2 rounded mt-2">
+                  <p className="text-sm text-accent bg-accent/10 p-2 rounded mt-2">
                     💡 {item.context}
                   </p>
                 )}
@@ -258,11 +258,11 @@ export const ContextualTranslator = () => {
               </div>
 
               {currentResult.context && currentResult.context !== "None" && (
-                <div className="bg-blue-50/50 p-3 rounded-md border border-blue-100">
-                  <p className="text-xs text-blue-600 uppercase font-semibold tracking-wider mb-1">
+                <div className="bg-accent/5 p-3 rounded-md border border-accent/20">
+                  <p className="text-xs text-accent uppercase font-semibold tracking-wider mb-1">
                     Cultural Note
                   </p>
-                  <p className="text-sm text-blue-900">
+                  <p className="text-sm text-primary">
                     {currentResult.context}
                   </p>
                 </div>

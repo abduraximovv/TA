@@ -156,40 +156,15 @@ export function Navbar() {
               <>
                 {user ? (
                   <Link href="/profile" style={{ textDecoration: "none" }}>
-                    <button
-                      style={{
-                        fontFamily: "'Inter', sans-serif",
-                        fontWeight: 600,
-                        fontSize: 13,
-                        padding: "9px 16px",
-                        background: "transparent",
-                        color: "#FFFFFF",
-                        border: "1px solid #FFFFFF",
-                        borderRadius: 100,
-                        cursor: "pointer",
-                        flexShrink: 0,
-                        whiteSpace: "nowrap",
-                      }}
-                    >
+                    <button className="btn-pill-outline" style={{ flexShrink: 0 }}>
                       Profile
                     </button>
                   </Link>
                 ) : (
                   <button
                     onClick={() => setIsAuthOpen(true)}
-                    style={{
-                      fontFamily: "'Inter', sans-serif",
-                      fontWeight: 600,
-                      fontSize: 13,
-                      padding: "9px 16px",
-                      background: "transparent",
-                      color: "#FFFFFF",
-                      border: "1px solid #FFFFFF",
-                      borderRadius: 100,
-                      cursor: "pointer",
-                      flexShrink: 0,
-                      whiteSpace: "nowrap",
-                    }}
+                    className="btn-pill-outline"
+                    style={{ flexShrink: 0 }}
                   >
                     Sign In
                   </button>

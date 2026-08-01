@@ -20,6 +20,7 @@ export function Sidebar() {
   const navItems = [
     { label: "Dashboard", href: "/dashboard" },
     { label: "Verification Hub", href: "/verification-hub" },
+    { label: "Destinations", href: "/destinations" },
     { label: "Providers", href: "/providers" },
     { label: "Analytics", href: "/analytics" },
     { label: "Settings", href: "/settings" },

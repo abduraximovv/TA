@@ -49,14 +49,27 @@ export interface Destination {
   name: string;
   slug: string;
   description: string | null;
+  body: string | null;
   region: string | null;
   image_url: string | null;
   hero_image_url: string | null;
+  gallery_images: string[];
   latitude: number | null;
   longitude: number | null;
   service_count: number;
   is_featured: boolean;
   display_order: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface DestinationReview {
+  id: string;
+  destination_id: string;
+  tourist_id: string;
+  rating: number | null;
+  comment: string;
+  created_at: string;
 }
 
 export interface Service {
@@ -76,7 +89,6 @@ export interface Service {
   rating_avg: number;
   rating_count: number;
   is_featured: boolean;
-  is_available: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -212,6 +224,55 @@ export interface Database {
       };
       destinations: {
         Row: Destination;
+        Insert: {
+          id?: string;
+          name: string;
+          slug: string;
+          description?: string | null;
+          body?: string | null;
+          region?: string | null;
+          image_url?: string | null;
+          hero_image_url?: string | null;
+          gallery_images?: string[];
+          latitude?: number | null;
+          longitude?: number | null;
+          is_featured?: boolean;
+          display_order?: number;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          slug?: string;
+          description?: string | null;
+          body?: string | null;
+          region?: string | null;
+          image_url?: string | null;
+          hero_image_url?: string | null;
+          gallery_images?: string[];
+          latitude?: number | null;
+          longitude?: number | null;
+          is_featured?: boolean;
+          display_order?: number;
+        };
+      };
+      destination_reviews: {
+        Row: DestinationReview;
+        Insert: {
+          id?: string;
+          destination_id: string;
+          tourist_id: string;
+          rating?: number | null;
+          comment: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          destination_id?: string;
+          tourist_id?: string;
+          rating?: number | null;
+          comment?: string;
+          created_at?: string;
+        };
       };
       services: {
         Row: Service;
@@ -227,6 +288,12 @@ export interface Database {
           avg_rating?: number;
           reviews_count?: number;
           is_available?: boolean;
+          duration_minutes?: number | null;
+          max_guests?: number | null;
+          city?: string | null;
+          region?: string | null;
+          rating_avg?: number;
+          rating_count?: number;
           created_at?: string;
           updated_at?: string;
         };
@@ -242,6 +309,12 @@ export interface Database {
           avg_rating?: number;
           reviews_count?: number;
           is_available?: boolean;
+          duration_minutes?: number | null;
+          max_guests?: number | null;
+          city?: string | null;
+          region?: string | null;
+          rating_avg?: number;
+          rating_count?: number;
           created_at?: string;
           updated_at?: string;
         };

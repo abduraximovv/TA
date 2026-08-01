@@ -53,8 +53,11 @@ export function BookingDetailsPanel({ booking, onAccept, onDecline }: BookingDet
     }
   };
 
-  const passengers = Array.isArray(booking.passenger_manifest)
-    ? (booking.passenger_manifest as unknown as string[])
+  // Tourist app sends passenger_manifest as { passengers: [{ name: string }, ...] }.
+  const manifestPassengers = (booking.passenger_manifest as { passengers?: { name?: string }[] } | null)
+    ?.passengers;
+  const passengers = Array.isArray(manifestPassengers)
+    ? manifestPassengers.map((p) => p?.name).filter((name): name is string => Boolean(name))
     : null;
 
   return (

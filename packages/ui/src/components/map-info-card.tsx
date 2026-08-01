@@ -54,7 +54,7 @@ export function MapInfoCard({
                 {title}
               </Dialog.Title>
               <div className="flex items-center gap-2 mt-1">
-                <span className="text-sm font-medium text-[#1E6F8A] capitalize">
+                <span className="text-sm font-medium text-[#006B70] capitalize">
                   {category}
                 </span>
                 {formattedDistance && (

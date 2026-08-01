@@ -25,17 +25,17 @@ export function MapPin({ category, selected, className, ...props }: MapPinProps)
       case 'sos':
         return { icon: ShieldAlert, color: 'bg-[#C93B3B]', iconColor: 'text-white' };
       case 'toilet':
-        return { icon: Bath, color: 'bg-[#1E6F8A]', iconColor: 'text-white' };
+        return { icon: Bath, color: 'bg-[#006B70]', iconColor: 'text-white' };
       case 'cultural':
-        return { icon: Landmark, color: 'bg-[#D4A843]', iconColor: 'text-white' };
+        return { icon: Landmark, color: 'bg-[#C5A880]', iconColor: 'text-white' };
       case 'festival':
-        return { icon: PartyPopper, color: 'bg-[#D4A843]', iconColor: 'text-white' };
+        return { icon: PartyPopper, color: 'bg-[#C5A880]', iconColor: 'text-white' };
       case 'pharmacy':
         return { icon: Pill, color: 'bg-[#22c55e]', iconColor: 'text-white' };
       case 'atm':
-        return { icon: Banknote, color: 'bg-[#1E6F8A]', iconColor: 'text-white' };
+        return { icon: Banknote, color: 'bg-[#006B70]', iconColor: 'text-white' };
       case 'wifi':
-        return { icon: Wifi, color: 'bg-[#1E6F8A]', iconColor: 'text-white' };
+        return { icon: Wifi, color: 'bg-[#006B70]', iconColor: 'text-white' };
       case 'water':
         return { icon: Droplets, color: 'bg-[#3b82f6]', iconColor: 'text-white' };
       default:
@@ -65,10 +65,10 @@ export function MapPin({ category, selected, className, ...props }: MapPinProps)
           "border-r-[4px] border-r-transparent",
           "border-t-[6px]",
           category === 'sos' ? "border-t-[#C93B3B]" :
-          category === 'cultural' || category === 'festival' ? "border-t-[#D4A843]" :
+          category === 'cultural' || category === 'festival' ? "border-t-[#C5A880]" :
           category === 'pharmacy' ? "border-t-[#22c55e]" :
           category === 'water' ? "border-t-[#3b82f6]" :
-          category === 'toilet' || category === 'atm' || category === 'wifi' ? "border-t-[#1E6F8A]" :
+          category === 'toilet' || category === 'atm' || category === 'wifi' ? "border-t-[#006B70]" :
           "border-t-gray-500"
         )} 
       />

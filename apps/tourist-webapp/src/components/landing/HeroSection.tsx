@@ -4,6 +4,12 @@ import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 24 },
+  visible: { opacity: 1, y: 0 },
+};
 
 export function HeroSection() {
   const [region, setRegion] = useState("Samarkand & Bukhara");
@@ -47,7 +53,11 @@ export function HeroSection() {
       />
 
       {/* Hero text content — left aligned */}
-      <div
+      <motion.div
+        initial="hidden"
+        animate="visible"
+        variants={fadeUp}
+        transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
         style={{
           position: "absolute",
           left: 0,
@@ -108,7 +118,7 @@ export function HeroSection() {
           }}
         >
           <Link
-            href="/discover"
+            href="/service"
             style={{
               fontFamily: "'Inter', sans-serif",
               fontWeight: 600,
@@ -264,7 +274,7 @@ export function HeroSection() {
             Search
           </button>
         </div>
-      </div>
+      </motion.div>
 
       {/* Scroll indicator */}
       <div

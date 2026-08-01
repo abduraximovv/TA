@@ -5,6 +5,7 @@ import { getSupabase } from "@repo/database";
 import { Toast } from "@repo/ui";
 import { ProviderVerification } from "./types";
 import { approveUser, rejectUser } from "../actions/verificationActions";
+import { getPlatformStats, type PlatformStats } from "../actions/dashboardActions";
 import { useAuth } from "@repo/auth";
 
 export default function VerificationHubPage() {
@@ -12,7 +13,12 @@ export default function VerificationHubPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [platformStats, setPlatformStats] = useState<PlatformStats | null>(null);
   const { user } = useAuth();
+
+  useEffect(() => {
+    getPlatformStats().then(setPlatformStats).catch((err) => console.error("Failed to fetch platform stats:", err));
+  }, []);
 
   const fetchVerifications = useCallback(async () => {
     try {
@@ -77,11 +83,18 @@ export default function VerificationHubPage() {
     width: 34, height: 34, borderRadius: 7, background: bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0
   });
 
+  const formatCompact = (n: number): string => {
+    if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1)}B`;
+    if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+    if (n >= 1_000) return `${(n / 1_000).toFixed(1)}k`;
+    return n.toString();
+  };
+
   const kpiCards = [
     { label: 'Pending Verifications', value: verifications.filter(v => v.status === 'pending').length.toString(), delta: 'Action required', deltaColor: '#B45309', iconWrapStyle: iconWrap('rgba(197,168,128,0.16)'), iconShapeStyle: { width: 14, height: 14, borderRadius: 3, border: '2px solid #C5A880' } },
-    { label: 'Active Tourists', value: '18,240', delta: '+1,120 today', deltaColor: '#006B70', iconWrapStyle: iconWrap('rgba(0,107,112,0.12)'), iconShapeStyle: { width: 14, height: 14, borderRadius: '50%', border: '2px solid #006B70' } },
-    { label: 'Total GMV', value: '$4.2M', delta: '+8.4% MoM', deltaColor: '#006B70', iconWrapStyle: iconWrap('rgba(10,35,32,0.08)'), iconShapeStyle: { width: 14, height: 14, borderRadius: 2, background: '#0A2320' } },
-    { label: 'Verified Providers', value: '2,391', delta: '+42 this week', deltaColor: '#006B70', iconWrapStyle: iconWrap('rgba(197,168,128,0.16)'), iconShapeStyle: { width: 14, height: 8, borderRadius: 2, borderBottom: '2px solid #C5A880', borderLeft: '2px solid #C5A880', transform: 'rotate(-45deg)', borderTop: 'none', borderRight: 'none' } },
+    { label: 'Active Tourists', value: platformStats ? platformStats.totalTourists.toLocaleString() : '—', delta: platformStats ? `+${platformStats.newTouristsThisWeek} this week` : '', deltaColor: '#006B70', iconWrapStyle: iconWrap('rgba(0,107,112,0.12)'), iconShapeStyle: { width: 14, height: 14, borderRadius: '50%', border: '2px solid #006B70' } },
+    { label: 'Total GMV', value: platformStats ? formatCompact(platformStats.totalGmv) : '—', delta: 'completed bookings, last 7 days', deltaColor: '#006B70', iconWrapStyle: iconWrap('rgba(10,35,32,0.08)'), iconShapeStyle: { width: 14, height: 14, borderRadius: 2, background: '#0A2320' } },
+    { label: 'Verified Providers', value: platformStats ? platformStats.verifiedProviders.toLocaleString() : '—', delta: platformStats ? `+${platformStats.newVerifiedProvidersThisWeek} this week` : '', deltaColor: '#006B70', iconWrapStyle: iconWrap('rgba(197,168,128,0.16)'), iconShapeStyle: { width: 14, height: 8, borderRadius: 2, borderBottom: '2px solid #C5A880', borderLeft: '2px solid #C5A880', transform: 'rotate(-45deg)', borderTop: 'none', borderRight: 'none' } },
   ];
 
   const getStatusBadge = (status: string) => {
@@ -180,7 +193,7 @@ export default function VerificationHubPage() {
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 14.5, fontWeight: 600, color: "#0A2320" }}>{q.business_name}</div>
-                        <div style={{ fontSize: 12.5, color: "rgba(10,35,32,0.5)", marginTop: 2 }}>{q.company_registration_number || 'No ID'} · {q.license_number || 'No License'}</div>
+                        <div style={{ fontSize: 12.5, color: "rgba(10,35,32,0.5)", marginTop: 2 }}>{q.email} {q.phone ? `· ${q.phone}` : ''} · {q.role}</div>
                       </div>
                       <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: "rgba(10,35,32,0.45)", flexShrink: 0 }}>
                         {getTimeAgo(q.created_at)}
@@ -218,12 +231,12 @@ export default function VerificationHubPage() {
             <div style={{ position: "absolute", inset: 0, background: "repeating-linear-gradient(115deg, rgba(0,107,112,0.16) 0px, rgba(0,107,112,0.16) 2px, transparent 2px, transparent 26px), repeating-linear-gradient(25deg, rgba(197,168,128,0.08) 0px, rgba(197,168,128,0.08) 2px, transparent 2px, transparent 34px)" }}></div>
             <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
               <div>
-                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 600, color: "#FFFFFF" }}>Live Tourist Density</div>
+                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 600, color: "#FFFFFF" }}>Tourist Density</div>
                 <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11.5, color: "rgba(249,248,245,0.55)", marginTop: 3 }}>PostGIS heatmap · national grid</div>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.08)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 100, padding: "6px 12px" }}>
-                <div style={{ width: 6, height: 6, borderRadius: 100, background: "#4ADE80" }}></div>
-                <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10.5, color: "#F9F8F5" }}>LIVE</div>
+                <div style={{ width: 6, height: 6, borderRadius: 100, background: "#C5A880" }}></div>
+                <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10.5, color: "#F9F8F5" }}>PREVIEW</div>
               </div>
             </div>
 

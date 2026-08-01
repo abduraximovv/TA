@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { LayoutDashboard, Package, CalendarCheck, LogOut, Compass, ShieldCheck, MessageSquare } from "lucide-react";
 import { useAuth } from "@repo/auth";
+import { getMyBookings, getSupabase, subscribeToBookingUpdates } from "@repo/database";
 
 const navItems = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -22,26 +23,24 @@ export function Sidebar() {
   React.useEffect(() => {
     if (!user) return;
 
-    import("@repo/database").then(({ getMyBookings, subscribeToBookingUpdates }) => {
-      const fetchBookings = async () => {
-        try {
-          const bookings = await getMyBookings(user.id, "provider");
-          setPendingCount(bookings.filter((b) => b.status === "pending").length);
-        } catch (e) {
-          console.error("Failed to fetch pending bookings", e);
-        }
-      };
+    const fetchBookings = async () => {
+      try {
+        const bookings = await getMyBookings(user.id, "provider");
+        setPendingCount(bookings.filter((b) => b.status === "pending").length);
+      } catch (e) {
+        console.error("Failed to fetch pending bookings", e);
+      }
+    };
 
+    fetchBookings();
+
+    const channel = subscribeToBookingUpdates(user.id, "provider", () => {
       fetchBookings();
-
-      const channel = subscribeToBookingUpdates(user.id, "provider", () => {
-        fetchBookings();
-      });
-
-      return () => {
-        channel.unsubscribe();
-      };
     });
+
+    return () => {
+      getSupabase().removeChannel(channel);
+    };
   }, [user]);
 
   const handleSignOut = async () => {
