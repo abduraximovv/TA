@@ -5,7 +5,7 @@ import { useAuth } from "@repo/auth";
 import { getSupabase } from "@repo/database";
 import type { Review } from "@repo/types";
 import { Star, MessageSquareReply, CheckCircle2 } from "lucide-react";
-import { LoadingPulse } from "@repo/ui";
+import { LoadingPulse, Toast } from "@repo/ui";
 import { updateReviewResponse, getReviewsForServices } from "@repo/database";
 
 export default function ReviewsPage() {
@@ -15,6 +15,7 @@ export default function ReviewsPage() {
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyText, setReplyText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -60,7 +61,7 @@ export default function ReviewsPage() {
       setReplyText("");
     } catch (e) {
       console.error(e);
-      alert("Failed to submit reply");
+      setToastMessage("Failed to submit reply");
     } finally {
       setIsSubmitting(false);
     }
@@ -97,7 +98,8 @@ export default function ReviewsPage() {
                     {[...Array(5)].map((_, i) => (
                       <Star
                         key={i}
-                        className={`w-4 h-4 ${i < review.rating ? "text-yellow-400 fill-current" : "text-gray-200"}`}
+                        className={`w-4 h-4 ${i < review.rating ? "fill-current" : "text-gray-200"}`}
+                        style={i < review.rating ? { color: "#C5A880" } : undefined}
                       />
                     ))}
                   </div>
@@ -170,6 +172,7 @@ export default function ReviewsPage() {
           ))}
         </div>
       )}
+      <Toast message={toastMessage ?? ""} isVisible={toastMessage !== null} onClose={() => setToastMessage(null)} variant="danger" />
     </div>
   );
 }

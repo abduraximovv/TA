@@ -70,7 +70,7 @@ const PROVIDERS = [
         max_guests: 12,
         city: "Samarkand",
         region: "Samarkand Region",
-        image_url: "https://images.unsplash.com/photo-1596401057633-54ceb50f7e33?q=80&w=1200",
+        image_url: "https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?q=80&w=1200",
         is_featured: false,
         rating_avg: 4.7,
         rating_count: 31,
@@ -140,7 +140,7 @@ const PROVIDERS = [
         max_guests: 6,
         city: "Nurata",
         region: "Navoi Region",
-        image_url: "https://images.unsplash.com/photo-1541364501234-7096e2ccb898?q=80&w=1200",
+        image_url: "https://images.unsplash.com/photo-1621425022689-308a7b7691a3?q=80&w=1200",
         is_featured: true,
         rating_avg: 4.9,
         rating_count: 27,
@@ -238,7 +238,7 @@ const PROVIDERS = [
         max_guests: 12,
         city: "Khiva",
         region: "Khorezm Region",
-        image_url: "https://images.unsplash.com/photo-1600100397608-f0d0f5eb1e8f?q=80&w=1200",
+        image_url: "https://images.unsplash.com/photo-1671048116858-e8ef69175b2d?q=80&w=1200",
         is_featured: true,
         rating_avg: 4.9,
         rating_count: 33,
@@ -421,10 +421,10 @@ const DESTINATIONS = [
     region: "Samarkand Region",
     description: "The jewel of the Silk Road, home to the turquoise domes of Registan Square.",
     body: "Samarkand has drawn travelers along the Silk Road for over two thousand years. Its Registan Square, framed by three monumental madrasas, is one of the most photographed sights in Central Asia, but the city rewards slower exploration too: the Shah-i-Zinda necropolis, the Gur-e-Amir mausoleum, and the working silk paper mills just outside town. Mornings are best spent wandering the old quarter before the day-trip crowds arrive; evenings bring the Registan's light show and the smell of fresh non bread from neighborhood tandirs.",
-    image_url: "https://images.unsplash.com/photo-1591901206811-cb341f9e6da8?q=80&w=1200",
-    hero_image_url: "https://images.unsplash.com/photo-1591901206811-cb341f9e6da8?q=80&w=1800",
+    image_url: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=1200",
+    hero_image_url: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=1800",
     gallery_images: [
-      "https://images.unsplash.com/photo-1596401057633-54ceb50f7e33?q=80&w=1200",
+      "https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?q=80&w=1200",
       "https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=1200",
       "https://images.unsplash.com/photo-1465447142348-e9952c393450?q=80&w=1200",
     ],
@@ -866,6 +866,81 @@ async function main() {
     if (rErr) throw new Error(`review insert failed: ${rErr.message}`);
   }
   console.log(`  ${bookingSeeds.length} completed bookings + reviews`);
+
+  console.log("\nSeeding events...");
+  const eventsData = [
+    {
+      title: "Sharq Taronalari Music Festival",
+      description: "International music festival held every two years in the heart of Registan Square. Musicians from 60+ countries perform under the stars.",
+      location: "Samarkand",
+      event_type: "Culture",
+      start_date: "2026-08-24",
+      end_date: "2026-08-28",
+      image_url: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=900",
+      ticket_url: "/discover",
+      is_featured: true,
+    },
+    {
+      title: "Navruz Spring Festival",
+      description: "The ancient Persian New Year celebration. Witness sumalak cooking, buzkashi matches, and citywide festivities across Uzbekistan.",
+      location: "Tashkent",
+      event_type: "Tradition",
+      start_date: "2026-09-01",
+      end_date: "2026-09-05",
+      image_url: "https://images.unsplash.com/photo-1459749411175-04bf5292ceea?q=80&w=900",
+      ticket_url: "/discover",
+      is_featured: true,
+    },
+    {
+      title: "Bukhara Silk & Spice Festival",
+      description: "Annual celebration of Bukhara's Silk Road heritage. Live music, artisan markets, fashion shows, and traditional cuisine.",
+      location: "Bukhara",
+      event_type: "Bazaar",
+      start_date: "2026-09-15",
+      end_date: "2026-09-18",
+      image_url: "https://images.unsplash.com/photo-1601963404496-e6fcffa44f71?q=80&w=900",
+      ticket_url: "/discover",
+      is_featured: true,
+    },
+    {
+      title: "Boysun Bahori Spring Festival",
+      description: "UNESCO-recognized folk festival in the mountains of Surkhandarya. Traditional dance, music, and rituals passed down for centuries.",
+      location: "Boysun, Surkhandarya",
+      event_type: "Festival",
+      start_date: "2026-10-10",
+      end_date: "2026-10-12",
+      image_url: "https://images.unsplash.com/photo-1504196606672-aef5c9cefc92?q=80&w=900",
+      ticket_url: "/discover",
+      is_featured: true,
+    },
+    {
+      title: "Contemporary Art Week Tashkent",
+      description: "Tashkent's emerging contemporary art scene on display. Gallery openings, installations, and talks across the capital.",
+      location: "Tashkent",
+      event_type: "Exhibition",
+      start_date: "2026-11-01",
+      end_date: "2026-11-07",
+      image_url: "https://images.unsplash.com/photo-1544967082-d9d25d867d66?q=80&w=900",
+      ticket_url: "/discover",
+      is_featured: true,
+    },
+    {
+      title: "Rishtan Ceramics Fair",
+      description: "Annual gathering of Fergana Valley's finest ceramic artists. Watch live demonstrations and purchase unique handmade pieces.",
+      location: "Rishtan, Fergana Valley",
+      event_type: "Fair",
+      start_date: "2026-12-05",
+      end_date: "2026-12-07",
+      image_url: "https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?q=80&w=900",
+      ticket_url: "/discover",
+      is_featured: true,
+    },
+  ];
+
+  await supabase.from("events").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+  const { error: evErr } = await supabase.from("events").insert(eventsData);
+  if (evErr) console.warn("  Events seed warning:", evErr.message);
+  else console.log(`  ${eventsData.length} events seeded`);
 
   console.log("\nSeed complete.");
   console.log(`All mock accounts use password: ${DEMO_PASSWORD}`);

@@ -5,10 +5,6 @@ import { createClient } from "@supabase/supabase-js";
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
-// RLS on user_profiles/bookings/services scopes rows to their owner (tourist_id/provider_id =
-// auth.uid()), with no admin bypass policy -- an anon-key client authenticated as the admin user
-// would silently get zero rows back for these platform-wide aggregates. Service role is required,
-// same pattern as verificationActions.ts / destinationActions.ts.
 function getAdminClient() {
   if (!supabaseServiceKey) {
     throw new Error("SUPABASE_SERVICE_ROLE_KEY is not configured.");
@@ -52,12 +48,15 @@ export async function getPlatformStats(): Promise<PlatformStats> {
   ] = await Promise.all([
     supabaseAdmin.from("user_profiles").select("id", { count: "exact", head: true }).eq("role", "tourist"),
     supabaseAdmin.from("user_profiles").select("id", { count: "exact", head: true }).eq("role", "tourist").gte("created_at", weekAgo),
-    supabaseAdmin.from("provider_verifications").select("id", { count: "exact", head: true }).eq("status", "pending"),
+    // Count all provider and agency profiles where is_verified is false
+    supabaseAdmin.from("user_profiles").select("id", { count: "exact", head: true }).in("role", ["provider", "agency"]).eq("is_verified", false),
     supabaseAdmin.from("bookings").select("id", { count: "exact", head: true }),
     supabaseAdmin.from("bookings").select("id", { count: "exact", head: true }).gte("created_at", weekAgo),
-    supabaseAdmin.from("provider_verifications").select("id", { count: "exact", head: true }).eq("status", "approved").eq("role", "provider"),
-    supabaseAdmin.from("provider_verifications").select("id", { count: "exact", head: true }).eq("status", "approved").eq("role", "provider").gte("updated_at", weekAgo),
-    supabaseAdmin.from("bookings").select("total_price, created_at").eq("status", "completed").gte("created_at", daysAgoIso(7)),
+    // Count all verified providers and agencies
+    supabaseAdmin.from("user_profiles").select("id", { count: "exact", head: true }).in("role", ["provider", "agency"]).eq("is_verified", true),
+    supabaseAdmin.from("user_profiles").select("id", { count: "exact", head: true }).in("role", ["provider", "agency"]).eq("is_verified", true).gte("updated_at", weekAgo),
+    // Total GMV from all completed bookings in database
+    supabaseAdmin.from("bookings").select("total_price, created_at").eq("status", "completed"),
   ]);
 
   const totalGmv = (completedBookings ?? []).reduce((sum, b) => sum + (Number(b.total_price) || 0), 0);

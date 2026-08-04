@@ -48,7 +48,7 @@ export function Navbar() {
           style={{
             maxWidth: 1280,
             margin: "0 auto",
-            padding: "24px 56px",
+            padding: "16px 56px",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
@@ -56,15 +56,15 @@ export function Navbar() {
           }}
         >
           {/* Logo */}
-          <Link href="/" style={{ textDecoration: "none" }}>
+          <Link href="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 14 }}>
             <div
               style={{
                 fontFamily: "'Playfair Display', serif",
-                fontWeight: 600,
-                fontSize: 19,
+                fontWeight: 700,
+                fontSize: 22,
                 color: "#FFFFFF",
                 whiteSpace: "nowrap",
-                letterSpacing: "0.01em",
+                letterSpacing: "0.02em",
               }}
             >
               Silk&nbsp;Road

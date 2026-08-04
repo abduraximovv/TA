@@ -1,10 +1,18 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React from "react";
 import { HeroSection } from "./HeroSection";
 import { DestinationsSection } from "./DestinationsSection";
+import { EventsSection } from "./EventsSection";
+import { OffersSection } from "./OffersSection";
+import { ThingsToDoSection } from "./ThingsToDoSection";
+import { StoriesSection } from "./StoriesSection";
+import { KnowTheDestinationsSection } from "./KnowTheDestinationsSection";
 import { PackagesSection } from "./PackagesSection";
 import { RegionalExperiencesSection } from "./RegionalExperiencesSection";
+import { StatsSection } from "./StatsSection";
+import { KnowBeforeYouGoSection } from "./KnowBeforeYouGoSection";
+import { SurveyCTASection } from "./SurveyCTASection";
 import { Footer } from "./Footer";
 import type { Destination, Service, Event } from "@repo/database";
 import type { Itinerary } from "@repo/types";
@@ -22,23 +30,43 @@ export function LandingClient({
   packages,
   events,
 }: LandingClientProps) {
-  useEffect(() => {
-    // any client-side initialization
-  }, []);
-
   return (
     <div style={{ fontFamily: "'Inter', sans-serif", background: "#F9F8F5", color: "#0A2320" }}>
-      {/* Hero — full viewport, navbar overlays as transparent header */}
+      {/* Hero — full viewport slider, navbar overlays as transparent header */}
       <HeroSection />
 
-      {/* Hidden Uzbekistan — 4-column curated gems grid, curated by admins */}
+      {/* Explore Silk Road Cities — curated destination carousel */}
       <DestinationsSection destinations={destinations} />
 
-      {/* Curated Packages — horizontal scroll carousel, by verified travel agencies */}
+      {/* What's On — upcoming events & festivals */}
+      <EventsSection events={events} />
+
+      {/* Discover the Latest Offers — partner discounts */}
+      <OffersSection />
+
+      {/* Things To Do — filterable category grid */}
+      <ThingsToDoSection experiences={experiences} />
+
+      {/* Regional Experiences — hosted by rural providers */}
+      <RegionalExperiencesSection experiences={experiences} />
+
+      {/* Stories and Insights — editorial tiles */}
+      <StoriesSection />
+
+      {/* Know the Destinations — mini interactive map */}
+      <KnowTheDestinationsSection destinations={destinations} />
+
+      {/* Book Your Next Adventure — curated packages by travel agencies */}
       <PackagesSection itineraries={packages} />
 
-      {/* Regional Experiences — 4-column grid, hosted by rural providers */}
-      <RegionalExperiencesSection experiences={experiences} />
+      {/* Uzbekistan in Numbers */}
+      <StatsSection />
+
+      {/* Know Before You Go */}
+      <KnowBeforeYouGoSection />
+
+      {/* Survey CTA */}
+      <SurveyCTASection />
 
       {/* Footer */}
       <Footer />

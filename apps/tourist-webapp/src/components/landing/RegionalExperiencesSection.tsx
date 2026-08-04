@@ -25,7 +25,7 @@ const FALLBACK_EXPERIENCES = [
     region: "Nuratau Mountains",
     price: "from 180,000 UZS",
     image:
-      "https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?q=80&w=600",
+      "https://images.unsplash.com/photo-1621425022689-308a7b7691a3?q=80&w=600",
     href: "/service",
   },
   {
@@ -52,7 +52,7 @@ const FALLBACK_EXPERIENCES = [
     region: "Fergana Valley",
     price: "from 140,000 UZS",
     image:
-      "https://images.unsplash.com/photo-1578662996442-48f60103fc96?q=80&w=600",
+      "https://images.unsplash.com/photo-1671048116858-e8ef69175b2d?q=80&w=600",
     href: "/service",
   },
 ];
@@ -161,15 +161,21 @@ export function RegionalExperiencesSection({ experiences }: Props) {
                   />
                 </div>
 
-                {/* Content */}
-                <div style={{ padding: 18 }}>
+                {/* Content — fixed height so every card in the row lines up regardless of copy length */}
+                <div style={{ padding: 18, height: 116, display: "flex", flexDirection: "column" }}>
                   <div
                     style={{
                       fontSize: 15,
+                      lineHeight: 1.3,
                       fontWeight: 600,
                       color: "#0A2320",
                       marginBottom: 4,
                       fontFamily: "'Inter', sans-serif",
+                      flexShrink: 0,
+                      display: "-webkit-box",
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: "vertical",
+                      overflow: "hidden",
                     }}
                   >
                     {exp.name}
@@ -180,6 +186,10 @@ export function RegionalExperiencesSection({ experiences }: Props) {
                       color: "rgba(10,35,32,0.5)",
                       marginBottom: 12,
                       fontFamily: "'Inter', sans-serif",
+                      flexShrink: 0,
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
                     }}
                   >
                     {exp.region}
@@ -189,6 +199,7 @@ export function RegionalExperiencesSection({ experiences }: Props) {
                       fontFamily: "'JetBrains Mono', monospace",
                       fontSize: 13,
                       color: "#006B70",
+                      marginTop: "auto",
                     }}
                   >
                     {exp.price}

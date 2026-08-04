@@ -32,7 +32,7 @@ export function DiscoverDetailClient({ destination, opinions, isLoggedIn }: Disc
           src={
             destination.hero_image_url ||
             destination.image_url ||
-            "https://images.unsplash.com/photo-1591901206811-cb341f9e6da8?q=80&w=1800"
+            "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=1800"
           }
           alt={destination.name}
           style={{ width: "100%", height: "100%", objectFit: "cover" }}

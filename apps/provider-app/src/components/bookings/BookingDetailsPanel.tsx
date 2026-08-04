@@ -62,12 +62,12 @@ export function BookingDetailsPanel({ booking, onAccept, onDecline }: BookingDet
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm h-full flex flex-col relative overflow-hidden">
-      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary to-blue-400" />
+      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary to-accent" />
 
       <div className="p-5 border-b border-gray-100 mt-1">
         <h2 className="text-lg font-bold text-gray-900 tracking-tight leading-tight">{booking.itemTitle}</h2>
         <div className="flex items-center mt-2 space-x-2">
-          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-primary uppercase tracking-wider">
+          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-accent/10 text-accent uppercase tracking-wider">
             {booking.itinerary_id ? "Package" : "Service"}
           </span>
           <span className="text-gray-300">•</span>

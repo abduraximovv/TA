@@ -4,6 +4,7 @@ import { Inter } from "next/font/google";
 import { SessionProvider } from "@repo/auth";
 import { InstallPrompt } from "@repo/ui";
 import { BottomNav } from "@/components/BottomNav";
+import { FloatingWidgets } from "@/components/FloatingWidgets";
 import { Navbar } from "@/components/navigation/Navbar";
 import { RealtimeNotifications } from "@/components/providers/RealtimeNotifications";
 
@@ -50,6 +51,7 @@ export default function RootLayout({
             <BottomNav />
           </div>
           <InstallPrompt />
+          <FloatingWidgets />
         </SessionProvider>
       </body>
     </html>

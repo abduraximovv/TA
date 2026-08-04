@@ -37,7 +37,7 @@ export default function RegisterProviderPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#F9FAFB] flex flex-col items-center justify-center p-6 relative overflow-hidden">
+    <main className="min-h-screen bg-[#F9F8F5] flex flex-col items-center justify-center p-6 relative overflow-hidden">
       <div className="absolute top-0 left-0 w-full h-[400px] bg-primary rounded-b-[40px] z-0" />
 
       <div className="relative z-10 w-full max-w-md">

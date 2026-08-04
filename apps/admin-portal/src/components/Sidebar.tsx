@@ -21,7 +21,9 @@ export function Sidebar() {
     { label: "Dashboard", href: "/dashboard" },
     { label: "Verification Hub", href: "/verification-hub" },
     { label: "Destinations", href: "/destinations" },
+    { label: "Events", href: "/events" },
     { label: "Providers", href: "/providers" },
+    { label: "Agencies", href: "/agencies" },
     { label: "Analytics", href: "/analytics" },
     { label: "Settings", href: "/settings" },
   ];

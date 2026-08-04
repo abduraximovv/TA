@@ -53,20 +53,20 @@ export default function PendingPage() {
 
   return (
     <main
-      className="min-h-screen relative flex items-center justify-center p-6 overflow-hidden bg-gradient-to-br from-[#1E6F8A] via-[#175A70] to-[#0F3D4C]"
+      className="min-h-screen relative flex items-center justify-center p-6 overflow-hidden bg-gradient-to-br from-[#0A2320] via-[#0A2320] to-[#061613]"
       data-testid="pending-page"
     >
       <div className="absolute -top-24 -left-24 w-96 h-96 bg-white/5 rounded-full blur-3xl" />
-      <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-[#D4A843]/10 rounded-full blur-3xl" />
+      <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-[#C5A880]/10 rounded-full blur-3xl" />
 
       <div className="relative z-10 w-full max-w-lg p-10 border border-white/15 shadow-2xl rounded-lg bg-white/[0.07] backdrop-blur-xl text-center">
         <div className="relative mx-auto mb-6 flex items-center justify-center w-20 h-20">
-          <div className="absolute inset-0 rounded-full bg-[#D4A843]/20 animate-pulse" />
-          <LoadingPulse className="scale-150 text-[#D4A843]" />
+          <div className="absolute inset-0 rounded-full bg-[#C5A880]/20 animate-pulse" />
+          <LoadingPulse className="scale-150 text-[#C5A880]" />
         </div>
 
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#D4A843]/15 text-[#F0CA6F] border border-[#D4A843]/30 mb-4">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#F0CA6F] animate-pulse" />
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#C5A880]/15 text-[#C5A880] border border-[#C5A880]/30 mb-4">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#C5A880] animate-pulse" />
           Application in review
         </span>
 
@@ -87,9 +87,9 @@ export default function PendingPage() {
                   <div
                     className={`w-9 h-9 rounded-full flex items-center justify-center border ${
                       step.done
-                        ? "bg-[#D4A843] border-[#D4A843] text-[#0F3D4C]"
+                        ? "bg-[#C5A880] border-[#C5A880] text-[#0A2320]"
                         : step.active
-                        ? "bg-white/10 border-[#D4A843] text-[#D4A843]"
+                        ? "bg-white/10 border-[#C5A880] text-[#C5A880]"
                         : "bg-white/5 border-white/20 text-white/40"
                     }`}
                   >
@@ -100,7 +100,7 @@ export default function PendingPage() {
                   </span>
                 </div>
                 {i < STEPS.length - 1 && (
-                  <div className={`flex-1 h-px mx-2 mb-5 ${step.done ? "bg-[#D4A843]/60" : "bg-white/15"}`} />
+                  <div className={`flex-1 h-px mx-2 mb-5 ${step.done ? "bg-[#C5A880]/60" : "bg-white/15"}`} />
                 )}
               </React.Fragment>
             );

@@ -108,7 +108,7 @@ export function DiscoverClient({ destinations }: DiscoverClientProps) {
                     <Image
                       src={
                         d.image_url ||
-                        "https://images.unsplash.com/photo-1591901206811-cb341f9e6da8?q=80&w=800"
+                        "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=800"
                       }
                       alt={d.name}
                       fill

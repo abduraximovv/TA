@@ -67,7 +67,7 @@ export function Sidebar() {
               key={item.href}
               href={item.href}
               className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors ${
-                isActive ? "bg-white/20 font-semibold" : "hover:bg-white/10 text-blue-100 hover:text-white"
+                isActive ? "bg-white/20 font-semibold" : "hover:bg-white/10 text-white/70 hover:text-white"
               }`}
             >
               <Icon className="w-5 h-5" />
@@ -89,7 +89,7 @@ export function Sidebar() {
           </div>
           <div className="flex-1 overflow-hidden">
             <p className="text-sm font-medium truncate">{user?.email || "Provider"}</p>
-            <p className="text-xs text-blue-200 flex items-center gap-1">
+            <p className="text-xs text-white/60 flex items-center gap-1">
               {isVerified ? (
                 <>
                   <ShieldCheck className="w-3 h-3" /> Verified Provider

@@ -19,6 +19,10 @@
     --color-text-muted: rgba(10, 35, 32, 0.5);
     --color-border: #EFEDE7;
     --color-accent: #C5A880;
+    --color-terracotta: #C1592A;
+    --color-terracotta-dark: #A24720;
+    --color-rose: #A63446;
+    --color-gold: #C5A880;
 
     /* Spacing */
     --section-padding-y: 6rem;
@@ -55,6 +59,16 @@
   @keyframes scrollBob {
     0%, 100% { transform: translateY(0); opacity: 0.6; }
     50% { transform: translateY(8px); opacity: 1; }
+  }
+
+  @keyframes heroSlideFill {
+    0% { transform: scaleX(0); }
+    100% { transform: scaleX(1); }
+  }
+
+  @keyframes fadeSlide {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
   }
 }
 
@@ -125,6 +139,106 @@
   .scroll-bob {
     animation: scrollBob 1.8s ease-in-out infinite;
   }
+
+  /* Timurid-inspired 8-point star lattice — muted, used as a section-boundary divider band */
+  .pattern-band-muted {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Cg fill='none' stroke='%23006B70' stroke-width='1' opacity='0.35'%3E%3Crect x='4' y='4' width='16' height='16' transform='rotate(45 12 12)'/%3E%3Crect x='28' y='4' width='16' height='16' transform='rotate(45 36 12)'/%3E%3Crect x='4' y='28' width='16' height='16' transform='rotate(45 12 36)'/%3E%3Crect x='28' y='28' width='16' height='16' transform='rotate(45 36 36)'/%3E%3C/g%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-size: 48px 48px;
+    background-color: #EFEDE7;
+  }
+
+  /* Same lattice, bright multicolor woven-ribbon version — used as a hero/inset frame border */
+  .pattern-band-bright {
+    background-image: repeating-linear-gradient(
+      115deg,
+      var(--color-primary) 0 10px,
+      var(--color-gold) 10px 20px,
+      var(--color-terracotta) 20px 30px,
+      var(--color-rose) 30px 40px
+    );
+    background-size: 56px 100%;
+  }
+
+  /* Very faint full-bleed lattice watermark behind stat/impact sections */
+  .pattern-watermark {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Cg fill='none' stroke='%230A2320' stroke-width='1' opacity='0.06'%3E%3Crect x='6' y='6' width='20' height='20' transform='rotate(45 16 16)'/%3E%3Crect x='38' y='6' width='20' height='20' transform='rotate(45 48 16)'/%3E%3Crect x='6' y='38' width='20' height='20' transform='rotate(45 16 48)'/%3E%3Crect x='38' y='38' width='20' height='20' transform='rotate(45 48 48)'/%3E%3C/g%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-size: 64px 64px;
+  }
+
+  /* Torn-ticket / stamp-perforation left edge for stat cards, in brand colors */
+  .ribbon-card {
+    position: relative;
+    overflow: hidden;
+    padding-left: 30px !important;
+  }
+  .ribbon-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 20px;
+    background: repeating-linear-gradient(
+      125deg,
+      var(--color-primary) 0 6px,
+      var(--color-gold) 6px 12px,
+      var(--color-terracotta) 12px 18px
+    );
+  }
+  .ribbon-card::after {
+    content: '';
+    position: absolute;
+    left: 12px;
+    top: 0;
+    bottom: 0;
+    width: 12px;
+    background-image:
+      linear-gradient(135deg, #FFFFFF 50%, transparent 50%),
+      linear-gradient(-135deg, #FFFFFF 50%, transparent 50%);
+    background-size: 12px 14px;
+    background-repeat: repeat-y;
+  }
+
+  /* Starburst / rosette discount badge — wax-seal look, overlaps card + photo */
+  .starburst-badge {
+    clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: #FFFFFF;
+    font-family: 'Inter', sans-serif;
+  }
+
+  /* Floating circular carousel-advance arrow, used on every horizontal-scroll section */
+  .carousel-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #FFFFFF;
+    border: 1px solid var(--color-border);
+    box-shadow: 0 8px 20px -6px rgba(10,35,32,0.25);
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+    flex-shrink: 0;
+  }
+  .carousel-arrow:hover {
+    background: var(--color-primary);
+    color: #FFFFFF;
+    transform: scale(1.06);
+  }
+
+  .snap-x-cards {
+    scroll-snap-type: x proximity;
+  }
+  .snap-x-cards > * {
+    scroll-snap-align: start;
+  }
 }
 
 @layer components {
@@ -190,5 +304,24 @@
   }
   .btn-pill-outline:hover {
     background: rgba(255,255,255,0.1);
+  }
+
+  .filter-chip {
+    @apply inline-flex items-center gap-1.5 rounded-full transition-all duration-200 cursor-pointer whitespace-nowrap;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    padding: 9px 16px;
+    border: 1px solid var(--color-border);
+    background: #FFFFFF;
+    color: var(--color-text);
+  }
+  .filter-chip:hover {
+    border-color: var(--color-primary);
+  }
+  .filter-chip.active {
+    background: var(--color-dark);
+    border-color: var(--color-dark);
+    color: #FFFFFF;
   }
 }

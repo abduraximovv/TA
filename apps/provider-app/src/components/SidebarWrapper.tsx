@@ -13,7 +13,7 @@ export function SidebarWrapper({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-[#F9FAFB]">
+    <div className="min-h-screen bg-[#F9F8F5]">
       <Sidebar />
       <div className="pl-[240px]">
         <main className="w-full min-h-screen">{children}</main>

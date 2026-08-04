@@ -4,6 +4,7 @@ import React, { useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { MapPin, Footprints } from "lucide-react";
 import type { Itinerary } from "@repo/types";
 
 interface Props {
@@ -18,8 +19,10 @@ const FALLBACK_PACKAGES = [
     desc: "Tashkent, Samarkand, Bukhara, Khiva in one seamless route.",
     duration: "7 DAYS",
     price: "$890",
+    city: "Tashkent → Khiva",
+    activities: 240,
     image:
-      "https://images.unsplash.com/photo-1556109153-a5e59e012b4a?q=80&w=640",
+      "https://images.unsplash.com/photo-1733586092622-1b3201e802a5?q=80&w=640",
   },
   {
     id: "pkg-2",
@@ -27,6 +30,8 @@ const FALLBACK_PACKAGES = [
     desc: "Chimgan trekking paired with Silk Road heritage stops.",
     duration: "5 DAYS",
     price: "$620",
+    city: "Chimgan Highlands",
+    activities: 95,
     image:
       "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=640",
   },
@@ -36,8 +41,10 @@ const FALLBACK_PACKAGES = [
     desc: "Plov masterclasses, bazaars, and family dining rooms.",
     duration: "4 DAYS",
     price: "$450",
+    city: "Fergana Valley",
+    activities: 60,
     image:
-      "https://images.unsplash.com/photo-1578662996442-48f60103fc96?q=80&w=640",
+      "https://images.unsplash.com/photo-1671048116858-e8ef69175b2d?q=80&w=640",
   },
   {
     id: "pkg-4",
@@ -45,8 +52,10 @@ const FALLBACK_PACKAGES = [
     desc: "Kyzylkum crossings and ancient trade-route stopovers.",
     duration: "6 DAYS",
     price: "$710",
+    city: "Kyzylkum Desert",
+    activities: 130,
     image:
-      "https://images.unsplash.com/photo-1549558549-415fe4c37b60?q=80&w=640",
+      "https://images.unsplash.com/photo-1750859876385-c7c9acd92233?q=80&w=640",
   },
 ];
 
@@ -77,6 +86,8 @@ export function PackagesSection({ itineraries }: Props) {
           duration: formatDuration(it.start_date, it.end_date),
           price: `${formatPrice(it.total_price)} ${it.currency}`,
           image: FALLBACK_PACKAGES[i % FALLBACK_PACKAGES.length].image,
+          city: FALLBACK_PACKAGES[i % FALLBACK_PACKAGES.length].city,
+          activities: FALLBACK_PACKAGES[i % FALLBACK_PACKAGES.length].activities,
           href: `/packages/${it.id}`,
         }))
       : FALLBACK_PACKAGES.map((p) => ({ ...p, href: "/packages" }));
@@ -116,7 +127,7 @@ export function PackagesSection({ itineraries }: Props) {
                 color: "#0A2320",
               }}
             >
-              Curated Packages
+              Book Your Next Adventure
             </div>
           </div>
           <Link
@@ -141,8 +152,9 @@ export function PackagesSection({ itineraries }: Props) {
         style={{
           display: "flex",
           gap: 24,
-          padding: "0 56px",
+          padding: "16px 56px 28px",
           overflowX: "auto",
+          overflowY: "hidden",
           scrollbarWidth: "none",
         }}
         className="scrollbar-hide"
@@ -182,11 +194,55 @@ export function PackagesSection({ itineraries }: Props) {
                     className="object-cover pkg-card-img"
                     sizes="320px"
                   />
-                  {/* Duration badge */}
+                  {/* Location, top-left */}
                   <div
                     style={{
                       position: "absolute",
                       top: 14,
+                      left: 14,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 4,
+                      padding: "6px 12px",
+                      background: "rgba(10,35,32,0.7)",
+                      backdropFilter: "blur(8px)",
+                      borderRadius: 100,
+                      fontSize: 11,
+                      fontWeight: 600,
+                      color: "#F9F8F5",
+                      fontFamily: "'Inter', sans-serif",
+                    }}
+                  >
+                    <MapPin size={11} /> {card.city}
+                  </div>
+
+                  {/* Activity count, top-right */}
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: 14,
+                      right: 14,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 4,
+                      padding: "6px 10px",
+                      background: "rgba(249,248,245,0.9)",
+                      backdropFilter: "blur(8px)",
+                      borderRadius: 100,
+                      fontSize: 11,
+                      fontWeight: 600,
+                      color: "#0A2320",
+                      fontFamily: "'JetBrains Mono', monospace",
+                    }}
+                  >
+                    <Footprints size={11} /> {card.activities}
+                  </div>
+
+                  {/* Duration badge */}
+                  <div
+                    style={{
+                      position: "absolute",
+                      bottom: 14,
                       left: 14,
                       padding: "6px 12px",
                       background: "rgba(10,35,32,0.7)",
@@ -201,15 +257,21 @@ export function PackagesSection({ itineraries }: Props) {
                   </div>
                 </div>
 
-                {/* Card body */}
+                {/* Card body — fixed height name/desc so every card in the row lines up */}
                 <div style={{ padding: 20 }}>
                   <div
                     style={{
                       fontFamily: "'Playfair Display', serif",
                       fontSize: 18,
+                      lineHeight: 1.25,
                       fontWeight: 600,
                       color: "#0A2320",
                       marginBottom: 8,
+                      height: 45,
+                      display: "-webkit-box",
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: "vertical",
+                      overflow: "hidden",
                     }}
                   >
                     {card.name}
@@ -220,7 +282,12 @@ export function PackagesSection({ itineraries }: Props) {
                       color: "rgba(10,35,32,0.55)",
                       lineHeight: 1.5,
                       marginBottom: 16,
+                      height: 39,
                       fontFamily: "'Inter', sans-serif",
+                      display: "-webkit-box",
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: "vertical",
+                      overflow: "hidden",
                     }}
                   >
                     {card.desc}

@@ -3,13 +3,12 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { getSupabase } from "@repo/database";
 import { Toast } from "@repo/ui";
-import { ProviderVerification } from "./types";
-import { approveUser, rejectUser } from "../actions/verificationActions";
+import { approveUser, rejectUser, getUnifiedVerificationRequests, type VerificationRequestRow } from "../actions/verificationActions";
 import { getPlatformStats, type PlatformStats } from "../actions/dashboardActions";
 import { useAuth } from "@repo/auth";
 
 export default function VerificationHubPage() {
-  const [verifications, setVerifications] = useState<ProviderVerification[]>([]);
+  const [verifications, setVerifications] = useState<VerificationRequestRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -23,15 +22,8 @@ export default function VerificationHubPage() {
   const fetchVerifications = useCallback(async () => {
     try {
       setIsLoading(true);
-      const supabase = getSupabase();
-
-      const { data, error } = await supabase
-        .from("provider_verifications")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      setVerifications((data ?? []) as ProviderVerification[]);
+      const data = await getUnifiedVerificationRequests();
+      setVerifications(data);
       setError(null);
     } catch (err: any) {
       console.error("Failed to fetch verifications:", err);
@@ -84,10 +76,10 @@ export default function VerificationHubPage() {
   });
 
   const formatCompact = (n: number): string => {
-    if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1)}B`;
-    if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-    if (n >= 1_000) return `${(n / 1_000).toFixed(1)}k`;
-    return n.toString();
+    if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1)}B UZS`;
+    if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M UZS`;
+    if (n >= 1_000) return `${(n / 1_000).toFixed(1)}k UZS`;
+    return `${n.toLocaleString()} UZS`;
   };
 
   const kpiCards = [
