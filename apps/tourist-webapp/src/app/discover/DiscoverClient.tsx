@@ -26,14 +26,7 @@ interface DiscoverClientProps {
 
 export function DiscoverClient({ destinations }: DiscoverClientProps) {
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        paddingTop: 90,
-        background: "#F9F8F5",
-        fontFamily: "'Inter', sans-serif",
-      }}
-    >
+    <main className="min-h-screen pt-[90px] bg-sand-50 font-sans">
       <div style={{ maxWidth: 1600, margin: "0 auto", padding: "0 24px", paddingBottom: 96 }}>
         <motion.div
           initial={{ opacity: 0, y: 20, scale: 1 }}
@@ -72,16 +65,7 @@ export function DiscoverClient({ destinations }: DiscoverClientProps) {
           />
           
           <div style={{ position: "absolute", bottom: 48, left: 48 }}>
-            <h1
-              style={{
-                fontFamily: "'Playfair Display', serif",
-                fontSize: 64,
-                fontWeight: 700,
-                color: "#FFFFFF",
-                margin: 0,
-                letterSpacing: "-0.02em",
-              }}
-            >
+            <h1 className="font-serif text-[64px] font-bold text-white m-0 tracking-tight">
               Destinations
             </h1>
           </div>
@@ -167,43 +151,18 @@ export function DiscoverClient({ destinations }: DiscoverClientProps) {
                       />
                     </div>
                     
-                    <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "0 4px" }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <div
-                          style={{
-                            fontSize: 11,
-                            fontWeight: 700,
-                            fontFamily: "'Inter', sans-serif",
-                            textTransform: "uppercase",
-                            color: "#111111",
-                            letterSpacing: "0.05em",
-                          }}
-                        >
+                    <div className="flex flex-col gap-2.5 px-1 py-1">
+                      <div className="flex justify-between items-center">
+                        <div className="font-mono text-[10px] text-teal-700 font-semibold uppercase tracking-widest">
                           {d.region ? d.region.toUpperCase() : "CULTURE & HISTORY"}
                         </div>
-                        <div
-                          style={{
-                            fontSize: 13,
-                            fontWeight: 500,
-                            color: "#111111",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 6,
-                          }}
-                        >
+                        <div className="flex items-center gap-1.5 font-mono text-[13px] font-bold text-emerald-950">
                           <Sun size={15} /> {22 + (i % 10)}.{i % 10}°C
                         </div>
                       </div>
-                      <div
-                        style={{
-                          fontFamily: "'Inter', sans-serif",
-                          fontSize: 24,
-                          fontWeight: 700,
-                          color: "#000000",
-                        }}
-                      >
+                      <h3 className="font-serif text-[24px] font-bold text-emerald-950 leading-tight">
                         {d.name}
-                      </div>
+                      </h3>
                     </div>
                   </div>
                 </Link>

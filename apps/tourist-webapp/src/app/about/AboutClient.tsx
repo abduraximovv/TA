@@ -38,7 +38,7 @@ export function AboutClient() {
               }}
             >
               Unveiling<br/>
-              <span style={{ color: "#C5A880" }}>Hidden</span> Uzbekistan
+              <span className="text-gold-400">Hidden</span> Uzbekistan
             </h1>
             <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 18, lineHeight: 1.6, color: "rgba(10, 35, 32, 0.75)", maxWidth: 500 }}>
               Four thousand years of the Silk Road, one transformative journey. 

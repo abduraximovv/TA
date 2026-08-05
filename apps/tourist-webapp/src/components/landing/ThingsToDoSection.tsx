@@ -257,7 +257,7 @@ export function ThingsToDoSection({ experiences }: Props) {
                       <span style={{ fontSize: 12.5, color: "rgba(10,35,32,0.6)", fontFamily: "'Inter', sans-serif", whiteSpace: "nowrap" }}>
                         From{" "}
                         <span style={{ fontWeight: 700, color: "#0A2320" }}>
-                          {new Intl.NumberFormat("uz-UZ").format(tile.price)}
+                          {(Number(tile.price) || 0).toLocaleString("en-US").replace(/,/g, " ")}
                         </span>{" "}
                         {tile.currency}
                       </span>

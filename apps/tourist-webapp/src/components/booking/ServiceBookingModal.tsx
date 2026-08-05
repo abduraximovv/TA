@@ -152,7 +152,7 @@ export function ServiceBookingModal({
             <div>
               <p className="text-sm text-gray-500">Total Price</p>
               <p className="font-bold text-lg">
-                {new Intl.NumberFormat("uz-UZ").format(totalPrice)} {currency}
+                {(Number(totalPrice) || 0).toLocaleString("en-US").replace(/,/g, " ")} {currency}
               </p>
             </div>
             <Button type="submit" disabled={isSubmitting || !date || !time}>

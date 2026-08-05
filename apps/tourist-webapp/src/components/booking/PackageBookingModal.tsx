@@ -185,8 +185,8 @@ export function PackageBookingModal({
           <div className="pt-4 mt-6 flex justify-between items-center border-t border-gray-100 sticky bottom-0 bg-white pb-2">
             <div>
               <p className="text-sm text-gray-500">Total Price</p>
-              <p className="font-bold text-lg text-primary">
-                {new Intl.NumberFormat("uz-UZ").format(price * guestCount)} {currency}
+              <p className="font-bold text-lg text-emerald-950">
+                {(Number(price * guestCount) || 0).toLocaleString("en-US").replace(/,/g, " ")} {currency}
               </p>
             </div>
             <Button type="submit" disabled={isSubmitting || !date}>

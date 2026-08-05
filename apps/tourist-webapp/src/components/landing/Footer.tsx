@@ -38,7 +38,7 @@ export function Footer() {
   const [email, setEmail] = useState("");
 
   return (
-    <footer style={{ background: "#0A2320" }}>
+    <footer className="bg-emerald-950">
       {/* Geometric pattern divider band */}
       <div className="pattern-band-muted" style={{ height: 18, width: "100%" }} />
 

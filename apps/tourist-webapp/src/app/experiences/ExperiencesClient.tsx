@@ -115,26 +115,11 @@ export function ExperiencesClient({ experiences }: ExperiencesClientProps) {
   }, [displayExperiences, searchQuery, activeFilter, selectedDestination, advancedFilters]);
 
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        background: "#F9F8F5",
-        fontFamily: "'Inter', sans-serif",
-      }}
-    >
+    <main className="min-h-screen bg-sand-50 font-sans">
       <div style={{ maxWidth: 1440, margin: "0 auto", padding: "120px 56px 96px" }}>
         
         {/* Page Title */}
-        <h1
-          style={{
-            fontFamily: "'Playfair Display', serif",
-            fontSize: 64,
-            fontWeight: 700,
-            color: "#111111",
-            margin: "0 0 40px 0",
-            letterSpacing: "-0.02em",
-          }}
-        >
+        <h1 className="font-serif text-[64px] font-bold text-[#111111] mb-10 tracking-tight">
           Things to do
         </h1>
 
@@ -160,7 +145,7 @@ export function ExperiencesClient({ experiences }: ExperiencesClientProps) {
                   border: "1px solid transparent", // matching screenshot's flat look
                   background: "#FFFFFF",
                   fontSize: 14,
-                  fontFamily: "'Inter', sans-serif",
+
                   width: 240,
                   outline: "none",
                   boxShadow: "0 2px 8px rgba(0,0,0,0.04)"
@@ -184,7 +169,6 @@ export function ExperiencesClient({ experiences }: ExperiencesClientProps) {
                 fontSize: 14,
                 fontWeight: 600,
                 cursor: "pointer",
-                fontFamily: "'Inter', sans-serif",
               }}
             >
               <SlidersHorizontal size={16} /> Filters
@@ -247,7 +231,7 @@ export function ExperiencesClient({ experiences }: ExperiencesClientProps) {
                       fontSize: 14,
                       fontWeight: (isActive || isDropdownOpen) ? 600 : 500,
                       cursor: "pointer",
-                      fontFamily: "'Inter', sans-serif",
+    
                       transition: "all 0.2s",
                     }}
                   >
@@ -300,7 +284,7 @@ export function ExperiencesClient({ experiences }: ExperiencesClientProps) {
                             color: "#333",
                             cursor: "pointer",
                             borderRadius: 8,
-                            fontFamily: "'Inter', sans-serif",
+          
                           }}
                           onMouseEnter={(e) => (e.currentTarget.style.background = "#F5F5F5")}
                           onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
@@ -329,7 +313,6 @@ export function ExperiencesClient({ experiences }: ExperiencesClientProps) {
               fontSize: 14,
               fontWeight: 600,
               cursor: "pointer",
-              fontFamily: "'Inter', sans-serif",
             }}
           >
             Default
@@ -376,18 +359,17 @@ export function ExperiencesClient({ experiences }: ExperiencesClientProps) {
                     </div>
 
                     {/* Meta */}
-                    <div style={{ display: "flex", flexDirection: "column", gap: 6, padding: "0 4px" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 4, color: "#555", fontSize: 13, fontWeight: 500 }}>
-                        <MapPin size={14} />
-                        {exp.city || "Tashkent"}
+                    <div className="flex flex-col gap-1.5 px-1 py-1">
+                      <div className="font-mono text-[10px] text-teal-700 font-semibold uppercase tracking-widest">
+                        {exp.city?.toUpperCase() || "TASHKENT"}
                       </div>
                       
-                      <div style={{ fontSize: 15, fontWeight: 700, color: "#111", lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                      <h3 className="font-serif text-[18px] font-bold text-emerald-950 leading-[1.3] line-clamp-2">
                         {exp.title}
-                      </div>
+                      </h3>
                       
-                      <div style={{ fontSize: 13, fontWeight: 500, color: "#111", marginTop: 4 }}>
-                        From <span style={{ fontWeight: 700, color: "#82165b" }}>{exp.currency === "UZS" ? "UZS " : "$"} {exp.price?.toLocaleString() || "350,000"}</span>
+                      <div className="mt-2 font-mono text-[15px] font-bold text-emerald-950 flex items-baseline gap-1">
+                        {exp.price?.toLocaleString() || "350,000"} <span className="text-[9px] text-gray-400">{exp.currency === "UZS" ? "UZS" : "$"}</span>
                       </div>
                     </div>
 

@@ -210,7 +210,7 @@ export function ServiceDetailClient({ service, reviews, isLoggedIn }: ServiceDet
         <div>
           <div style={{ fontSize: 12, color: "rgba(10,35,32,0.5)", fontWeight: 500 }}>Price per person</div>
           <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 600, color: "#0A2320" }}>
-            {new Intl.NumberFormat("uz-UZ").format(service.price)}{" "}
+            {(Number(service.price) || 0).toLocaleString("en-US").replace(/,/g, " ")}{" "}
             <span style={{ fontSize: 14, fontWeight: 400, color: "rgba(10,35,32,0.5)" }}>{service.currency}</span>
           </div>
         </div>

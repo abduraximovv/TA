@@ -55,7 +55,7 @@ export function ServiceListClient({ services, locations }: ServiceListClientProp
               marginBottom: 12,
             }}
           >
-            Book <span style={{ color: "#C5A880" }}>Experiences</span>
+            Book <span className="text-gold-400">Experiences</span>
           </h1>
           <p style={{ fontSize: 17, color: "rgba(10,35,32,0.6)", maxWidth: 560 }}>
             Verified local providers, ready to book.
@@ -350,7 +350,7 @@ function ServiceCard({ service }: { service: Service }) {
 
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 13, color: "#C5A880" }}>
-                {new Intl.NumberFormat("uz-UZ").format(service.price)} {service.currency}
+                {(Number(service.price) || 0).toLocaleString("en-US").replace(/,/g, " ")} {service.currency}
               </span>
               <div
                 style={{

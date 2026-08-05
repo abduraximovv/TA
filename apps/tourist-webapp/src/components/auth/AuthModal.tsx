@@ -112,7 +112,7 @@ export function AuthModal({ isOpen, onOpenChange, defaultMode = "login" }: AuthM
             <Button
               type="submit"
               disabled={isLoading}
-              className="w-full h-14 text-base font-bold bg-primary hover:bg-primary-dark transition-colors rounded-xl shadow-md hover:shadow-lg"
+              className="w-full h-14 text-base font-bold bg-emerald-950 hover:bg-primary-dark transition-colors rounded-xl shadow-md hover:shadow-lg"
             >
               {isLoading ? "Please wait..." : (mode === "login" ? "Sign In" : "Create Account")}
             </Button>
@@ -141,7 +141,7 @@ export function AuthModal({ isOpen, onOpenChange, defaultMode = "login" }: AuthM
               <button
                 type="button"
                 onClick={() => setMode(mode === "login" ? "register" : "login")}
-                className="text-primary font-bold hover:text-primary-dark transition-colors focus:outline-none"
+                className="text-emerald-950 font-bold hover:text-primary-dark transition-colors focus:outline-none"
               >
                 {mode === "login" ? "Sign up" : "Sign in"}
               </button>

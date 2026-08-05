@@ -85,9 +85,9 @@ export function MyBookingsList() {
           
           <div className="mt-4 pt-4 border-t border-gray-100 flex justify-between items-center">
             <span className="text-sm text-gray-500">Total Price</span>
-            <span className="font-bold text-primary">
+            <span className="font-bold text-emerald-950">
               {booking.total_price != null 
-                ? `${new Intl.NumberFormat("uz-UZ").format(booking.total_price)} ${booking.currency}` 
+                ? `${(Number(booking.total_price) || 0).toLocaleString("en-US").replace(/,/g, " ")} ${booking.currency}` 
                 : "TBD"}
             </span>
           </div>

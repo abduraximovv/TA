@@ -56,7 +56,7 @@ export function PackagesClient({ itineraries }: { itineraries: ItineraryWithMeta
               marginBottom: 12,
             }}
           >
-            Tour <span style={{ color: "#C5A880" }}>Packages</span>
+            Tour <span className="text-gold-400">Packages</span>
           </h1>
           <p style={{ fontSize: 17, color: "rgba(10,35,32,0.6)", maxWidth: 560 }}>
             Curated multi-day itineraries crafted by verified travel agencies.
@@ -221,7 +221,7 @@ function PackageCard({ itinerary, fallback }: { itinerary: ItineraryWithMeta; fa
               }}
             >
               <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 15, color: "#0A2320", fontWeight: 700 }}>
-                {new Intl.NumberFormat("uz-UZ").format(itinerary.total_price)}{" "}
+                {(Number(itinerary.total_price) || 0).toLocaleString("en-US").replace(/,/g, " ")}{" "}
                 <span style={{ fontSize: 10, color: "rgba(10,35,32,0.4)", fontWeight: 600 }}>{itinerary.currency}</span>
               </span>
               <span style={{ color: "#006B70", fontSize: 13, fontWeight: 700, display: "flex", alignItems: "center", gap: 4 }}>

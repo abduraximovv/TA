@@ -26,7 +26,7 @@ export function DestinationOpinionForm({
     return (
       <div className="p-5 bg-gray-50 rounded-lg border border-gray-100 text-sm text-gray-600">
         <button
-          className="text-primary font-semibold underline"
+          className="text-emerald-950 font-semibold underline"
           onClick={() => router.push(`/auth/login?next=/discover/${destinationSlug}`)}
         >
           Log in

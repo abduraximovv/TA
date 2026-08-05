@@ -23,8 +23,7 @@ export default async function ServiceDetailPage({
   if (!service) {
     return (
       <div
-        className="min-h-screen flex flex-col items-center justify-center p-6 text-center"
-        style={{ background: "#F9F8F5" }}
+        className="min-h-screen flex flex-col items-center justify-center p-6 text-center bg-sand-50"
       >
         <h1
           style={{

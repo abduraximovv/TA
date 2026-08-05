@@ -1,6 +1,6 @@
 import "@repo/ui/src/styles/globals.css";
 import "./globals.css";
-import { Inter } from "next/font/google";
+import { Inter, Playfair_Display, JetBrains_Mono } from "next/font/google";
 import { SessionProvider } from "@repo/auth";
 import { InstallPrompt } from "@repo/ui";
 import { BottomNav } from "@/components/BottomNav";
@@ -8,11 +8,9 @@ import { FloatingWidgets } from "@/components/FloatingWidgets";
 import { Navbar } from "@/components/navigation/Navbar";
 import { RealtimeNotifications } from "@/components/providers/RealtimeNotifications";
 
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-  display: "swap",
-});
+const fontSans = Inter({ subsets: ["latin"], variable: "--font-sans", display: "swap" });
+const fontSerif = Playfair_Display({ subsets: ["latin"], variable: "--font-serif", display: "swap" });
+const fontMono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono", display: "swap" });
 
 export const metadata = {
   title: "Silk Road Uzbekistan — Official Tourism Platform",
@@ -39,8 +37,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={inter.variable}>
-      <body style={{ margin: 0, background: "#F9F8F5", fontFamily: "'Inter', sans-serif" }}>
+    <html lang="en" className={`${fontSans.variable} ${fontSerif.variable} ${fontMono.variable}`}>
+      <body className="font-sans bg-[#F9F8F5] text-[#0A2320] antialiased m-0">
         <SessionProvider>
           <RealtimeNotifications />
           <Navbar />

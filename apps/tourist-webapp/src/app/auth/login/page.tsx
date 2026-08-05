@@ -121,7 +121,7 @@ export default function LoginPage() {
 
             <Button 
               type="submit" 
-              className="w-full h-14 mt-2 rounded-xl bg-primary hover:bg-primary-dark font-bold shadow-md hover:shadow-lg transition-all" 
+              className="w-full h-14 mt-2 rounded-xl bg-emerald-950 hover:bg-primary-dark font-bold shadow-md hover:shadow-lg transition-all" 
               disabled={isLoading}
             >
               {isLoading ? (
@@ -156,7 +156,7 @@ export default function LoginPage() {
 
           <p className="mt-10 text-center text-sm text-gray-500 font-medium">
             Don&apos;t have an account?{" "}
-            <Link href="/auth/register" className="text-primary font-bold hover:text-primary-dark transition-colors">
+            <Link href="/auth/register" className="text-emerald-950 font-bold hover:text-primary-dark transition-colors">
               Create one now
             </Link>
           </p>

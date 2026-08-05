@@ -169,7 +169,7 @@ export function PackageDetailClient({ itinerary, reviews, isLoggedIn }: PackageD
                   </div>
                   {item.price != null && (
                     <span style={{ color: "#0A2320", fontWeight: 700, fontSize: 13, marginLeft: 14, flexShrink: 0 }}>
-                      {new Intl.NumberFormat("uz-UZ").format(item.price)}{" "}
+                      {(Number(item.price) || 0).toLocaleString("en-US").replace(/,/g, " ")}{" "}
                       <span style={{ fontSize: 10, color: "rgba(10,35,32,0.4)", fontWeight: 600 }}>UZS</span>
                     </span>
                   )}
@@ -240,7 +240,7 @@ export function PackageDetailClient({ itinerary, reviews, isLoggedIn }: PackageD
         <div>
           <div style={{ fontSize: 12, color: "rgba(10,35,32,0.5)", fontWeight: 500 }}>Total price</div>
           <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 600, color: "#0A2320" }}>
-            {new Intl.NumberFormat("uz-UZ").format(itinerary.total_price)}{" "}
+            {(Number(itinerary.total_price) || 0).toLocaleString("en-US").replace(/,/g, " ")}{" "}
             <span style={{ fontSize: 14, fontWeight: 400, color: "rgba(10,35,32,0.5)" }}>{itinerary.currency}</span>
           </div>
         </div>

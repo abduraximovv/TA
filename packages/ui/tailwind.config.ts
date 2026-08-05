@@ -12,42 +12,22 @@ const config: Config = {
         // and docs/UI_UX_GUIDELINES.md. `primary`/`secondary`/`accent` are kept as the semantic
         // role names (so existing `bg-primary`/`text-primary` call sites repaint automatically)
         // but now point at the real brand tokens instead of the old "Travelora" blue/coral.
-        primary: {
-          DEFAULT: "#0A2320", // Midnight Emerald
-          light: "#123833",
-          dark: "#061613",
-          50: "#EBEDED", // for the few call sites that used primary-50 as a light tint chip
-          100: "#DDE0E0",
-        },
-        secondary: {
-          DEFAULT: "#C5A880", // Gold
-          light: "#d4bc9c",
-          dark: "#b89a6f",
-        },
-        accent: "#006B70", // Turquoise
-        pomegranate: "#A72608", // promo/badge/urgent accent — the one new brand token
-        success: "#2D8A4E",
-        warning: "#D9972B",
-        error: "#C93B3B",
-        // Brand neutrals, referenced directly where a component wants the literal token
-        // rather than a semantic role name (e.g. `bg-sand-50`, `text-emerald-950`).
         sand: {
           50: "#F9F8F5",
         },
         emerald: {
           950: "#0A2320",
         },
+        white: "#FFFFFF",
         gold: {
           400: "#C5A880",
         },
         teal: {
           700: "#006B70",
         },
-        dark: {
-          DEFAULT: "#0A2320",
-          forest: "#123833",
-          graphite: "#0A2320",
-        },
+        success: "#2D8A4E",
+        warning: "#D9972B",
+        error: "#C93B3B",
         // Neutral text/border/surface scale, mathematically blended white -> Midnight Emerald
         // (matches UI_UX_GUIDELINES.md §4.4: "Secondary Text = Emerald @ ~65% opacity",
         // "Border = Emerald @ ~8-14% opacity") so every existing `text-gray-*`/`border-gray-*`/
@@ -67,11 +47,11 @@ const config: Config = {
         },
       },
       fontFamily: {
-        sans: ["Inter", "sans-serif"],
-        serif: ["'Playfair Display'", "serif"],
-        display: ["'Playfair Display'", "serif"],
+        sans: ["var(--font-sans)", "Inter", "sans-serif"],
+        serif: ["var(--font-serif)", "'Playfair Display'", "serif"],
+        display: ["var(--font-serif)", "'Playfair Display'", "serif"],
         cursive: ["Dancing Script", "cursive"],
-        mono: ["'JetBrains Mono'", "monospace"],
+        mono: ["var(--font-mono)", "'JetBrains Mono'", "monospace"],
       },
       animation: {
         "fade-up": "fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards",
