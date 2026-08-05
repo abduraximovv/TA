@@ -44,8 +44,30 @@ const FALLBACK_LIST = [
   { name: "Fergana Valley", tags: "Crafts, Food", temp: "33°" },
 ];
 
+// Verified-working images.unsplash.com photos (images.unsplash.com is an allowed host in next.config.mjs).
+// Most match the destination's own image_url in the seed data (packages/database/scripts/seed-full.mjs); Tashkent,
+// Nurata, and Khiva use a different photo than their seed row because that row's own image_url/hero_image_url
+// is itself a broken/nonexistent Unsplash ID -- see note to the user about fixing that at the source too.
+const FALLBACK_IMAGES: Record<string, string> = {
+  Tashkent: "https://images.unsplash.com/photo-1715966743489-0ac1138420a5?q=80&w=800",
+  Samarkand: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=800",
+  Bukhara: "https://images.unsplash.com/photo-1601918774946-25832a4be0d6?q=80&w=800",
+  Khiva: "https://images.unsplash.com/photo-1601918774946-25832a4be0d6?q=80&w=800",
+  Chimgan: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=800",
+  "Chimgan Highlands": "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=800",
+  "Fergana Valley": "https://images.unsplash.com/photo-1578662996442-48f60103fc96?q=80&w=800",
+  Nurata: "https://images.unsplash.com/photo-1694167232441-fd7a2c238d19?q=80&w=800",
+  "Nurata & the Kyzylkum Desert": "https://images.unsplash.com/photo-1694167232441-fd7a2c238d19?q=80&w=800",
+};
+
 export function KnowTheDestinationsSection({ destinations }: Props) {
   const [hovered, setHovered] = useState<string | null>(null);
+  const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
+
+  const getValidImage = (name: string, originalImage: string | null) => {
+    if (failedImages.has(name)) return FALLBACK_IMAGES[name] || `https://placehold.co/600x400/EFEDE7/0A2320?text=${encodeURIComponent(name)}`;
+    return originalImage || FALLBACK_IMAGES[name] || `https://placehold.co/600x400/EFEDE7/0A2320?text=${encodeURIComponent(name)}`;
+  };
 
   const list =
     destinations.length >= 4
@@ -68,8 +90,8 @@ export function KnowTheDestinationsSection({ destinations }: Props) {
     () =>
       list
         .filter((item): item is typeof item & { lat: number; lng: number } => item.lat !== null && item.lng !== null)
-        .map((item, i) => ({ name: item.name, lat: item.lat, lng: item.lng, featured: i < 3 })),
-    [list]
+        .map((item, i) => ({ name: item.name, lat: item.lat, lng: item.lng, featured: i < 3, image: getValidImage(item.name, item.image) })),
+    [list, failedImages]
   );
 
   return (
@@ -77,21 +99,9 @@ export function KnowTheDestinationsSection({ destinations }: Props) {
       <div style={{ marginBottom: 40 }}>
         <div
           style={{
-            fontFamily: "'JetBrains Mono', monospace",
-            fontSize: 12,
-            letterSpacing: "0.1em",
-            textTransform: "uppercase",
-            color: "#006B70",
-            marginBottom: 12,
-          }}
-        >
-          Interactive Map
-        </div>
-        <div
-          style={{
             fontFamily: "'Playfair Display', serif",
-            fontSize: 36,
-            fontWeight: 600,
+            fontSize: 42,
+            fontWeight: 700,
             color: "#0A2320",
           }}
         >
@@ -99,17 +109,17 @@ export function KnowTheDestinationsSection({ destinations }: Props) {
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "320px 1fr", gap: 32 }}>
-        {/* Left: scrollable destination list */}
+      <div style={{ display: "grid", gridTemplateColumns: "400px 1fr", gap: 32 }}>
+        {/* Left: scrollable destination list with large cards */}
         <div
           className="scrollbar-hide"
           style={{
             display: "flex",
             flexDirection: "column",
-            gap: 12,
-            maxHeight: 480,
+            gap: 24,
+            maxHeight: 640,
             overflowY: "auto",
-            paddingRight: 4,
+            paddingRight: 8,
           }}
         >
           {list.map((item) => (
@@ -119,32 +129,42 @@ export function KnowTheDestinationsSection({ destinations }: Props) {
               onMouseLeave={() => setHovered(null)}
               style={{
                 display: "flex",
-                alignItems: "center",
-                gap: 12,
-                padding: 10,
-                borderRadius: 10,
-                border: "1px solid #EFEDE7",
+                flexDirection: "column",
+                borderRadius: 16,
+                overflow: "hidden",
+                border: hovered === item.name ? "1px solid #006B70" : "1px solid #EFEDE7",
                 background: hovered === item.name ? "#F9F8F5" : "#FFFFFF",
-                transition: "background 0.2s",
+                transition: "all 0.2s ease-in-out",
                 cursor: "pointer",
+                boxShadow: hovered === item.name ? "0 8px 24px rgba(10,35,32,0.08)" : "0 2px 8px rgba(10,35,32,0.03)"
               }}
             >
               <div
                 style={{
-                  width: 52,
-                  height: 52,
-                  borderRadius: 8,
-                  overflow: "hidden",
+                  width: "100%",
+                  height: 200,
                   position: "relative",
-                  flexShrink: 0,
                   background: "#EFEDE7",
                 }}
               >
-                {item.image && (
-                  <Image src={item.image} alt={item.name} fill className="object-cover" sizes="52px" />
+                {item.image || FALLBACK_IMAGES[item.name] ? (
+                  <Image 
+                    src={getValidImage(item.name, item.image)} 
+                    alt={item.name} 
+                    fill 
+                    className="object-cover" 
+                    sizes="400px" 
+                    onError={() => {
+                      setFailedImages(prev => new Set(prev).add(item.name));
+                    }}
+                  />
+                ) : (
+                  <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#A8A393", fontFamily: "'Inter', sans-serif", fontSize: 12 }}>
+                    No Image Available
+                  </div>
                 )}
               </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: 12 }}>
                 <div
                   style={{
                     display: "flex",
@@ -155,37 +175,39 @@ export function KnowTheDestinationsSection({ destinations }: Props) {
                 >
                   <div
                     style={{
-                      fontFamily: "'Playfair Display', serif",
-                      fontSize: 14.5,
-                      fontWeight: 600,
-                      color: "#0A2320",
+                      fontSize: 11,
+                      fontWeight: 700,
+                      letterSpacing: "0.08em",
+                      textTransform: "uppercase",
+                      color: "rgba(10,35,32,0.6)",
+                      fontFamily: "'Inter', sans-serif",
                     }}
                   >
-                    {item.name}
+                    {item.tags}
                   </div>
                   <div
                     style={{
                       display: "flex",
                       alignItems: "center",
-                      gap: 3,
-                      fontSize: 12,
-                      color: "#C1592A",
-                      flexShrink: 0,
-                      fontFamily: "'JetBrains Mono', monospace",
+                      gap: 4,
+                      fontSize: 13,
+                      fontWeight: 600,
+                      color: "#0A2320",
+                      fontFamily: "'Inter', sans-serif",
                     }}
                   >
-                    <Sun size={12} /> {item.temp}
+                    <Sun size={14} color="#C1592A" /> {item.temp}
                   </div>
                 </div>
                 <div
                   style={{
-                    fontSize: 11.5,
-                    color: "rgba(10,35,32,0.5)",
-                    marginTop: 2,
-                    fontFamily: "'Inter', sans-serif",
+                    fontFamily: "'Playfair Display', serif",
+                    fontSize: 24,
+                    fontWeight: 700,
+                    color: "#0A2320",
                   }}
                 >
-                  {item.tags}
+                  {item.name}
                 </div>
               </div>
             </div>
@@ -196,10 +218,10 @@ export function KnowTheDestinationsSection({ destinations }: Props) {
         <div
           style={{
             position: "relative",
-            borderRadius: 20,
+            borderRadius: 24,
             overflow: "hidden",
-            background: "#F3F1EA",
-            minHeight: 480,
+            background: "#E5E3DD",
+            minHeight: 640,
             border: "1px solid #EFEDE7",
           }}
         >

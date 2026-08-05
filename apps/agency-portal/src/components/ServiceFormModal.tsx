@@ -14,7 +14,7 @@ export interface ServiceFormValues {
   image_url: string;
 }
 
-const CATEGORIES = ["tour", "stay", "food", "gastronomy", "artisan", "experience", "transport", "other"];
+const CATEGORIES = ["tour", "stay", "food", "gastronomy", "artisan", "experience", "transport", "other", "nature", "bazaar"];
 
 interface ServiceFormModalProps {
   open: boolean;

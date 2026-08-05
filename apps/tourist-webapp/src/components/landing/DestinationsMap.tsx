@@ -10,6 +10,7 @@ export interface MapPinData {
   lat: number;
   lng: number;
   featured: boolean;
+  image: string | null;
 }
 
 interface Props {
@@ -18,12 +19,12 @@ interface Props {
   onHoverPin: (name: string | null) => void;
 }
 
-function pinIcon(featured: boolean, active: boolean) {
-  const size = active ? (featured ? 20 : 15) : featured ? 16 : 11;
-  const color = featured ? "#006B70" : "#C1592A";
+function pinIcon(imageUrl: string | null, active: boolean) {
+  const size = active ? 56 : 44;
+  const imgHtml = imageUrl ? `<img src="${imageUrl}" style="width:100%;height:100%;object-fit:cover;" />` : '';
   return L.divIcon({
     className: "",
-    html: `<div style="width:${size}px;height:${size}px;border-radius:50%;background:${color};border:2.5px solid #FFFFFF;box-shadow:0 2px 8px rgba(10,35,32,0.35);transition:width 0.15s,height 0.15s;"></div>`,
+    html: `<div style="width:${size}px;height:${size}px;border-radius:50%;background:#006B70;border:3px solid ${active ? '#C5A880' : '#FFFFFF'};box-shadow:0 4px 12px rgba(10,35,32,0.4);overflow:hidden;transition:all 0.2s;transform: scale(${active ? 1.05 : 1}); z-index: ${active ? 999 : 1}; position: relative;">${imgHtml}</div>`,
     iconSize: [size, size],
     iconAnchor: [size / 2, size / 2],
   });
@@ -50,7 +51,7 @@ export function DestinationsMap({ pins, hovered, onHoverPin }: Props) {
       attributionControl={false}
     >
       <TileLayer
-        url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+        url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png"
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
       />
       <FitBounds pins={pins} />
@@ -58,14 +59,15 @@ export function DestinationsMap({ pins, hovered, onHoverPin }: Props) {
         <Marker
           key={pin.name}
           position={[pin.lat, pin.lng]}
-          icon={pinIcon(pin.featured, hovered === pin.name)}
+          icon={pinIcon(pin.image, hovered === pin.name)}
           eventHandlers={{
             mouseover: () => onHoverPin(pin.name),
             mouseout: () => onHoverPin(null),
           }}
+          zIndexOffset={hovered === pin.name ? 1000 : 0}
         >
-          <Tooltip direction="top" offset={[0, -8]} opacity={1} className="destinations-map-tooltip">
-            {pin.name}
+          <Tooltip direction="top" offset={[0, -20]} opacity={1} className="destinations-map-tooltip">
+            <span style={{ fontFamily: "'Playfair Display', serif", fontWeight: 600, fontSize: 14 }}>{pin.name}</span>
           </Tooltip>
         </Marker>
       ))}

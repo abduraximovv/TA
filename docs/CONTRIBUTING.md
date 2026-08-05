@@ -121,7 +121,7 @@ pnpm db:seed
 ```
 
 This runs `packages/database/scripts/seed-full.mjs`, which creates a full set of demo accounts
-(1 admin, 3 tourists, 6 providers with services, 3 agencies with itineraries) plus destinations
+(1 admin, 3 tourists, 7 providers with services, 3 agencies with itineraries) plus destinations
 and sample bookings/reviews. It's safe to re-run — it wipes and recreates its own accounts first.
 
 **All demo accounts use the email pattern `*@ta-demo.uz` and password `Demo12345!`**, e.g.

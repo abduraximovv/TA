@@ -32,6 +32,7 @@
     "react-leaflet": "^4.2.1",
     "react-map-gl": "^8.1.1",
     "supercluster": "^8.0.1",
+    "swiper": "^14.0.7",
     "use-supercluster": "^1.2.0"
   },
   "devDependencies": {

@@ -3,8 +3,12 @@
 import React, { useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { motion } from "framer-motion";
-import { LayoutGrid, TreePine, Landmark, ShoppingBag, UtensilsCrossed, MapPin, Check, ChevronRight } from "lucide-react";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Navigation } from "swiper/modules";
+import type { Swiper as SwiperType } from "swiper";
+import "swiper/css";
+import "swiper/css/navigation";
+import { LayoutGrid, TreePine, Landmark, ShoppingBag, UtensilsCrossed, MapPin, ChevronLeft, ChevronRight } from "lucide-react";
 import type { Service } from "@repo/database";
 
 interface Props {
@@ -104,12 +108,12 @@ function normalizeCategory(raw: string): string {
 
 export function ThingsToDoSection({ experiences }: Props) {
   const [active, setActive] = useState("all");
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const swiperRef = useRef<SwiperType | null>(null);
 
   const tiles = useMemo(() => {
     const source =
       experiences.length >= 6
-        ? experiences.slice(0, 12).map((e) => ({
+        ? experiences.slice(0, 24).map((e) => ({
             id: e.id,
             title: e.title,
             city: e.city || e.region || "Uzbekistan",
@@ -120,16 +124,20 @@ export function ThingsToDoSection({ experiences }: Props) {
             href: `/service/${e.id}`,
           }))
         : FALLBACK_TILES.map((t) => ({ ...t, href: "/service" }));
-    return active === "all" ? source : source.filter((t) => t.category === active);
-  }, [experiences, active]);
+    const filtered = active === "all" ? source : source.filter((t) => t.category === active);
 
-  const scrollByCard = () => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const card = el.querySelector<HTMLElement>("[data-carousel-item]");
-    const delta = card ? card.getBoundingClientRect().width + 24 : el.clientWidth * 0.65;
-    el.scrollBy({ left: delta, behavior: "smooth" });
-  };
+    // Swiper's loop mode (centeredSlides, slidesPerView 2.1) needs roughly 6+ real slides to loop
+    // cleanly -- with fewer it logs "not enough slides for loop mode" and mispositions slides.
+    // Categories with only 4-5 real items are padded by cycling them so the carousel still loops.
+    const MIN_FOR_LOOP = 6;
+    if (filtered.length === 0 || filtered.length >= MIN_FOR_LOOP) return filtered;
+    const padded = [...filtered];
+    for (let i = 0; padded.length < MIN_FOR_LOOP; i++) {
+      const src = filtered[i % filtered.length];
+      padded.push({ ...src, id: `${src.id}-dup${Math.floor(i / filtered.length)}` });
+    }
+    return padded;
+  }, [experiences, active]);
 
   return (
     <section style={{ padding: "88px 0 100px", background: "#FFFFFF" }}>
@@ -159,7 +167,7 @@ export function ThingsToDoSection({ experiences }: Props) {
         </div>
 
         {/* Filter chips */}
-        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", gap: 64, flexWrap: "wrap", justifyContent: "center" }}>
           {FILTERS.map((f) => {
             const Icon = f.icon;
             const isActive = active === f.key;
@@ -167,70 +175,85 @@ export function ThingsToDoSection({ experiences }: Props) {
               <button
                 key={f.key}
                 onClick={() => setActive(f.key)}
-                className={`filter-chip${isActive ? " active" : ""}`}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: 12,
+                  background: "none",
+                  border: "none",
+                  padding: 0,
+                  cursor: "pointer",
+                  fontFamily: "'Inter', sans-serif",
+                }}
               >
-                {isActive ? <Check size={13} /> : <Icon size={13} />}
-                {f.label}
+                <Icon
+                  size={60}
+                  strokeWidth={1.15}
+                  color={isActive ? "#006B70" : "rgba(10,35,32,0.55)"}
+                />
+                <span
+                  style={{
+                    fontSize: 16,
+                    fontWeight: isActive ? 700 : 500,
+                    color: isActive ? "#0A2320" : "rgba(10,35,32,0.65)",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {f.label}
+                </span>
               </button>
             );
           })}
         </div>
       </div>
 
-      {/* Full-bleed horizontal photo carousel — flush edge-to-edge tiles, no card chrome */}
-      <div style={{ position: "relative", marginTop: 36 }}>
-        <div
-          ref={scrollRef}
-          className="scrollbar-hide snap-x-cards"
-          style={{
-            display: "flex",
-            gap: 24,
-            paddingBottom: 8,
-            overflowX: "auto",
-            overflowY: "hidden",
-            scrollSnapType: "x mandatory",
-          }}
+      {/* Swiper carousel — circular loop; one long centered slide fills the view, neighbors peek on each side */}
+      <div style={{ position: "relative", marginTop: 36 }} className="things-to-do-swiper">
+        <Swiper
+          key={active}
+          modules={[Navigation]}
+          onSwiper={(s) => (swiperRef.current = s)}
+          loop={tiles.length > 3}
+          observer
+          observeParents
+          centeredSlides
+          spaceBetween={20}
+          slidesPerView={2.1}
         >
-          {tiles.map((tile, i) => (
-            <motion.div
-              key={tile.id}
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true, margin: "-40px" }}
-              transition={{ duration: 0.45, delay: i * 0.06 }}
-              data-carousel-item
-              style={{ flexShrink: 0, width: "min(920px, 62vw)", scrollSnapAlign: "center" }}
-            >
+          {tiles.map((tile) => (
+            <SwiperSlide key={tile.id}>
               <Link href={tile.href} style={{ textDecoration: "none", display: "block" }}>
                 <div style={{ position: "relative", height: 500, borderRadius: 20, overflow: "hidden" }} className="discover-card">
                   <Image
                     src={tile.image}
                     alt={tile.title}
                     fill
+                    priority
                     className="object-cover discover-card-img"
-                    sizes="460px"
+                    sizes="(max-width: 640px) 90vw, 460px"
                   />
                 </div>
 
-                <div style={{ padding: "18px 24px 4px", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 24 }}>
+                <div style={{ padding: "22px 4px 4px", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 20 }}>
                   <div style={{ minWidth: 0 }}>
                     <div
                       style={{
                         display: "flex",
                         alignItems: "center",
-                        gap: 5,
-                        fontSize: 11,
+                        gap: 6,
+                        fontSize: 13,
                         letterSpacing: "0.06em",
                         textTransform: "uppercase",
                         color: "rgba(10,35,32,0.5)",
-                        marginBottom: 8,
+                        marginBottom: 10,
                         fontFamily: "'Inter', sans-serif",
                         whiteSpace: "nowrap",
                         overflow: "hidden",
                         textOverflow: "ellipsis",
                       }}
                     >
-                      <MapPin size={12} style={{ flexShrink: 0 }} />
+                      <MapPin size={14} style={{ flexShrink: 0 }} />
                       <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         {tile.city} | {FILTERS.find((f) => f.key === tile.category)?.label || "Culture"}
                       </span>
@@ -238,7 +261,7 @@ export function ThingsToDoSection({ experiences }: Props) {
                     <div
                       style={{
                         fontFamily: "'Playfair Display', serif",
-                        fontSize: 20,
+                        fontSize: 24,
                         lineHeight: 1.3,
                         fontWeight: 600,
                         color: "#0A2320",
@@ -252,9 +275,9 @@ export function ThingsToDoSection({ experiences }: Props) {
                     </div>
                   </div>
 
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 10, flexShrink: 0 }}>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 12, flexShrink: 0 }}>
                     {tile.price > 0 ? (
-                      <span style={{ fontSize: 12.5, color: "rgba(10,35,32,0.6)", fontFamily: "'Inter', sans-serif", whiteSpace: "nowrap" }}>
+                      <span style={{ fontSize: 14, color: "rgba(10,35,32,0.6)", fontFamily: "'Inter', sans-serif", whiteSpace: "nowrap" }}>
                         From{" "}
                         <span style={{ fontWeight: 700, color: "#0A2320" }}>
                           {(Number(tile.price) || 0).toLocaleString("en-US").replace(/,/g, " ")}
@@ -264,22 +287,30 @@ export function ThingsToDoSection({ experiences }: Props) {
                     ) : (
                       <span />
                     )}
-                    <span className="btn-pill-primary" style={{ fontSize: 12.5, padding: "8px 18px", display: "inline-flex" }}>
+                    <span className="btn-pill-primary" style={{ fontSize: 14, padding: "10px 22px", display: "inline-flex" }}>
                       Book Now
                     </span>
                   </div>
                 </div>
               </Link>
-            </motion.div>
+            </SwiperSlide>
           ))}
-        </div>
+        </Swiper>
 
-        {/* Floating advance arrow */}
+        {/* Prev/next arrows — visitsaudi-style floating circular controls */}
         <button
-          onClick={scrollByCard}
+          onClick={() => swiperRef.current?.slidePrev()}
+          aria-label="Previous things to do"
+          className="carousel-arrow"
+          style={{ position: "absolute", left: 24, top: "38%", zIndex: 5 }}
+        >
+          <ChevronLeft size={18} />
+        </button>
+        <button
+          onClick={() => swiperRef.current?.slideNext()}
           aria-label="Next things to do"
           className="carousel-arrow"
-          style={{ position: "absolute", right: 24, top: "40%" }}
+          style={{ position: "absolute", right: 24, top: "38%", zIndex: 5 }}
         >
           <ChevronRight size={18} />
         </button>

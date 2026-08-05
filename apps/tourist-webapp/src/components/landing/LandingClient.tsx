@@ -6,7 +6,6 @@ import { DestinationsSection } from "./DestinationsSection";
 import { EventsSection } from "./EventsSection";
 import { OffersSection } from "./OffersSection";
 import { ThingsToDoSection } from "./ThingsToDoSection";
-import { StoriesSection } from "./StoriesSection";
 import { KnowTheDestinationsSection } from "./KnowTheDestinationsSection";
 import { PackagesSection } from "./PackagesSection";
 import { StatsSection } from "./StatsSection";
@@ -45,9 +44,6 @@ export function LandingClient({
 
       {/* Things To Do — filterable category carousel */}
       <ThingsToDoSection experiences={experiences} />
-
-      {/* Stories and Insights — editorial tiles */}
-      <StoriesSection />
 
       {/* Know the Destinations — mini interactive map */}
       <KnowTheDestinationsSection destinations={destinations} />

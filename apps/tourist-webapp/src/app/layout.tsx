@@ -1,6 +1,7 @@
 import "@repo/ui/src/styles/globals.css";
 import "./globals.css";
 import { Inter, Playfair_Display, JetBrains_Mono } from "next/font/google";
+import "leaflet/dist/leaflet.css";
 import { SessionProvider } from "@repo/auth";
 import { InstallPrompt } from "@repo/ui";
 import { BottomNav } from "@/components/BottomNav";

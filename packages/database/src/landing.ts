@@ -27,7 +27,7 @@ export async function getTopDestinations(limit = 5): Promise<Destination[]> {
  * Fetch featured experiences for the Landing Page.
  * Prioritizes high-rated services with verified rural providers.
  */
-export async function getFeaturedExperiences(limit = 8): Promise<Service[]> {
+export async function getFeaturedExperiences(limit = 24): Promise<Service[]> {
   const supabase = getSupabase();
   const { data, error } = await supabase
     .from("services")

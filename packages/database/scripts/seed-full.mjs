@@ -89,6 +89,34 @@ const PROVIDERS = [
         rating_avg: 4.6,
         rating_count: 9,
       },
+      {
+        title: "Siyob Bazaar Food Tasting Tour",
+        description: "Taste your way through Samarkand's Siyob Bazaar with a local food guide — dried apricots, fresh non, halva, and the best samsa stall in the old town.",
+        category: "food",
+        price: 100000,
+        duration_minutes: 150,
+        max_guests: 12,
+        city: "Samarkand",
+        region: "Samarkand Region",
+        image_url: "https://images.unsplash.com/photo-1629649407271-2dac934c1f1b?q=80&w=1200",
+        is_featured: true,
+        rating_avg: 4.83,
+        rating_count: 29,
+      },
+      {
+        title: "Urgut Sunday Bazaar Textile Hunt",
+        description: "Join the crowds at Central Asia's largest Sunday market for a guided hunt through mountains of handwoven suzani, kilim, and carpets, with tips on bargaining like a local.",
+        category: "bazaar",
+        price: 85000,
+        duration_minutes: 180,
+        max_guests: 12,
+        city: "Urgut",
+        region: "Samarkand Region",
+        image_url: "https://images.unsplash.com/photo-1764423075260-cfa7908758eb?q=80&w=1200",
+        is_featured: true,
+        rating_avg: 4.6,
+        rating_count: 13,
+      },
     ],
   },
   {
@@ -120,9 +148,23 @@ const PROVIDERS = [
         city: "Fergana",
         region: "Fergana Valley",
         image_url: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?q=80&w=1200",
-        is_featured: false,
+        is_featured: true,
         rating_avg: 4.8,
         rating_count: 14,
+      },
+      {
+        title: "Kumtepa Silk & Spice Bazaar Tour",
+        description: "Visit one of Central Asia's oldest bazaars on its Thursday market day, where Margilan's ikat silk weavers sell alongside spice merchants and livestock traders.",
+        category: "bazaar",
+        price: 110000,
+        duration_minutes: 150,
+        max_guests: 10,
+        city: "Margilan",
+        region: "Fergana Valley",
+        image_url: "https://images.unsplash.com/photo-1698755839162-b73e142c0284?q=80&w=1200",
+        is_featured: true,
+        rating_avg: 4.7,
+        rating_count: 8,
       },
     ],
   },
@@ -173,6 +215,20 @@ const PROVIDERS = [
         rating_avg: 4.5,
         rating_count: 6,
       },
+      {
+        title: "Aydarkul Lake Birdwatching Walk",
+        description: "A quiet dawn walk along the reed-lined shores of Lake Aydarkul, where herons, pelicans, and migratory waterfowl gather far from any city noise.",
+        category: "nature",
+        price: 130000,
+        duration_minutes: 150,
+        max_guests: 10,
+        city: "Nurata",
+        region: "Navoi Region",
+        image_url: "https://images.unsplash.com/photo-1759304971749-6433be523814?q=80&w=1200",
+        is_featured: true,
+        rating_avg: 4.65,
+        rating_count: 9,
+      },
     ],
   },
   {
@@ -221,6 +277,34 @@ const PROVIDERS = [
         is_featured: true,
         rating_avg: 4.95,
         rating_count: 12,
+      },
+      {
+        title: "Chimgan Ridgeline Trek",
+        description: "A full-day trek along the exposed ridgelines above the Chimgan ski slopes, tracing alpine lakes and high pastures far past where the cable car reaches.",
+        category: "nature",
+        price: 280000,
+        duration_minutes: 360,
+        max_guests: 8,
+        city: "Chimgan",
+        region: "Tashkent Region",
+        image_url: "https://images.unsplash.com/photo-1726547507018-606c37f09b82?q=80&w=1200",
+        is_featured: true,
+        rating_avg: 4.86,
+        rating_count: 21,
+      },
+      {
+        title: "Chatkal Biosphere Reserve Nature Walk",
+        description: "A gentle guided walk into the Chatkal Biosphere Reserve's walnut and juniper forest, tracking the region's rare mountain wildlife and alpine plant life away from the ski-resort crowds.",
+        category: "nature",
+        price: 240000,
+        duration_minutes: 270,
+        max_guests: 10,
+        city: "Chimgan",
+        region: "Tashkent Region",
+        image_url: "https://images.unsplash.com/photo-1757005550139-e05b63ec88d9?q=80&w=1200",
+        is_featured: true,
+        rating_avg: 4.78,
+        rating_count: 14,
       },
     ],
   },
@@ -301,10 +385,73 @@ const PROVIDERS = [
         max_guests: 8,
         city: "Zaamin",
         region: "Jizzakh Region",
-        image_url: "https://images.unsplash.com/photo-1553284965-83fd3e82fa5a?q=80&w=1200",
+        image_url: "https://images.unsplash.com/photo-1507777767380-68bdac55c642?q=80&w=1200",
         is_featured: false,
         rating_avg: 4.85,
         rating_count: 24,
+      },
+      {
+        title: "Sentob Village Highland Trek",
+        description: "Trek through the Nuratau Mountains to the walnut-forest village of Sentob, with a home-cooked lunch and a night sky far from any city light.",
+        category: "nature",
+        price: 260000,
+        duration_minutes: 300,
+        max_guests: 8,
+        city: "Sentob",
+        region: "Navoi Region",
+        image_url: "https://images.unsplash.com/photo-1500534623283-312aade485b7?q=80&w=1200",
+        is_featured: true,
+        rating_avg: 4.7,
+        rating_count: 11,
+      },
+      {
+        title: "Bukhara Trading Domes Bazaar Walk",
+        description: "Wander beneath the 16th-century domes of Toki Zargaron and Toki Telpak Furushon, still working bazaars today, browsing jewelry, hats, and textiles with a local historian.",
+        category: "bazaar",
+        price: 95000,
+        duration_minutes: 120,
+        max_guests: 14,
+        city: "Bukhara",
+        region: "Bukhara Region",
+        image_url: "https://images.unsplash.com/photo-1673446840855-1c82bafdb67d?q=80&w=1200",
+        is_featured: true,
+        rating_avg: 4.82,
+        rating_count: 22,
+      },
+    ],
+  },
+  {
+    email: "provider7@ta-demo.uz",
+    full_name: "Sevara Nishonova",
+    business_name: "Tashkent Old City Tours",
+    services: [
+      {
+        title: "Chorsu Bazaar Spice Market Tour",
+        description: "Wander the blue-domed halls of Tashkent's oldest bazaar with a local guide, sampling dried fruits, fresh spices, and non bread straight from the ovens.",
+        category: "bazaar",
+        price: 90000,
+        duration_minutes: 120,
+        max_guests: 14,
+        city: "Tashkent",
+        region: "Tashkent",
+        image_url: "https://images.unsplash.com/photo-1601963404496-e6fcffa44f71?q=80&w=1200",
+        is_featured: true,
+        rating_avg: 4.75,
+        rating_count: 16,
+      },
+      {
+        title: "Tashkent Plov Center Tasting",
+        description: "Watch cooks stir hundreds of servings of plov in enormous qozon cauldrons at Tashkent's legendary plov center, then sit down for a heaping plate of your own.",
+        category: "food",
+        price: 70000,
+        duration_minutes: 90,
+        max_guests: 20,
+        city: "Tashkent",
+        region: "Tashkent",
+        image_url: "https://images.unsplash.com/photo-1671048116810-6f885b2b35a5?q=80&w=1200",
+        is_featured: true,
+        rating_avg: 4.8,
+        rating_count: 34,
       },
     ],
   },
@@ -599,12 +746,16 @@ async function deleteWhereIn(table, column, values) {
   if (error) throw new Error(`delete from ${table} where ${column} in (...) failed: ${error.message}`);
 }
 
-// Deleting an auth user only cascades user_profiles -> services -> provider_verifications
-// (those are the only FKs declared ON DELETE CASCADE). itineraries.agency_id,
-// bookings.tourist_id/provider_id, reviews.tourist_id, notifications.user_id,
-// destination_reviews.tourist_id, and booking_status_history.changed_by all reference
-// auth.users(id) with no cascade, and itinerary_items.service_id references services with no
-// cascade either -- so admin.deleteUser() 500s with a foreign key violation unless all of this
+// Deleting an auth user only cascades to user_profiles and provider_verifications (those are the
+// only FKs actually declared ON DELETE CASCADE against auth.users(id) on the live table -- the
+// services.provider_id -> auth.users(id) CASCADE that appears in the very first migration,
+// 20240101000000_init.sql, was never carried forward into the live schema; see
+// packages/database/schema/03_services.sql, where provider_id has no FK at all). So services,
+// itineraries.agency_id, bookings.tourist_id/provider_id, reviews.tourist_id,
+// notifications.user_id, destination_reviews.tourist_id, and booking_status_history.changed_by
+// all reference auth.users(id) with no cascade, and itinerary_items.service_id references
+// services with no cascade either -- so admin.deleteUser() 500s with a foreign key violation, and
+// re-running this script silently piles up orphaned `services` rows forever, unless all of this
 // is cleared first, in FK-safe order (children before parents).
 async function deleteDependentRows(userIds) {
   if (userIds.length === 0) return;
@@ -625,6 +776,7 @@ async function deleteDependentRows(userIds) {
   await deleteWhereIn("itinerary_items", "itinerary_id", itineraryIds);
   await deleteWhereIn("itinerary_items", "service_id", serviceIds);
   await deleteWhereIn("itineraries", "id", itineraryIds);
+  await deleteWhereIn("services", "provider_id", userIds);
 }
 
 async function deleteDisposableTestUsers() {
@@ -834,8 +986,8 @@ async function main() {
 
   console.log("\nCreating a few completed bookings + reviews for realism...");
   const bookingSeeds = [
-    { touristIdx: 0, service: allServices[0] },
-    { touristIdx: 1, service: allServices[3] },
+    { touristIdx: 0, service: allServices.find((s) => s.title === "Traditional Tandir Bread Baking") },
+    { touristIdx: 1, service: allServices.find((s) => s.title === "Ceramic Workshop with a Master Potter") },
   ];
   for (const seed of bookingSeeds) {
     const tourist = touristIds[seed.touristIdx];
@@ -909,7 +1061,7 @@ async function main() {
       event_type: "Festival",
       start_date: "2026-10-10",
       end_date: "2026-10-12",
-      image_url: "https://images.unsplash.com/photo-1504196606672-aef5c9cefc92?q=80&w=900",
+      image_url: "https://images.unsplash.com/photo-1623065078802-8595aa906f86?q=80&w=900",
       ticket_url: "/discover",
       is_featured: true,
     },

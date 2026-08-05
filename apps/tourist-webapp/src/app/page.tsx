@@ -17,7 +17,7 @@ export default async function LandingPage() {
   // map both have enough cities to be worth scrolling through.
   const [destinations, experiences, packages, events] = await Promise.all([
     getAllDestinations(),
-    getFeaturedExperiences(8),
+    getFeaturedExperiences(24),
     getFeaturedItineraries(8),
     getUpcomingEvents(6),
   ]);

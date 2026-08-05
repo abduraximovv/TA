@@ -138,12 +138,12 @@ export function HeroSection() {
         {muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
       </button>
 
-      {/* Hero text content — left aligned, crossfades with slide */}
+      {/* Hero text content — left aligned, anchored above the bottom slide tabs, crossfades with slide */}
       <div
         style={{
           position: "absolute",
           left: 0,
-          top: 150,
+          bottom: 128,
           zIndex: 2,
           maxWidth: "38%",
           padding: "0 56px",
