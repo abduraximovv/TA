@@ -9,7 +9,6 @@ import { ThingsToDoSection } from "./ThingsToDoSection";
 import { StoriesSection } from "./StoriesSection";
 import { KnowTheDestinationsSection } from "./KnowTheDestinationsSection";
 import { PackagesSection } from "./PackagesSection";
-import { RegionalExperiencesSection } from "./RegionalExperiencesSection";
 import { StatsSection } from "./StatsSection";
 import { KnowBeforeYouGoSection } from "./KnowBeforeYouGoSection";
 import { SurveyCTASection } from "./SurveyCTASection";
@@ -44,11 +43,8 @@ export function LandingClient({
       {/* Discover the Latest Offers — partner discounts */}
       <OffersSection />
 
-      {/* Things To Do — filterable category grid */}
+      {/* Things To Do — filterable category carousel */}
       <ThingsToDoSection experiences={experiences} />
-
-      {/* Regional Experiences — hosted by rural providers */}
-      <RegionalExperiencesSection experiences={experiences} />
 
       {/* Stories and Insights — editorial tiles */}
       <StoriesSection />

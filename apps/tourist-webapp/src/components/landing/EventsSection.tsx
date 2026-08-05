@@ -71,7 +71,8 @@ export function EventsSection({ events }: Props) {
           alignItems: "flex-end",
           justifyContent: "space-between",
           marginBottom: 40,
-          padding: "0 56px",
+          paddingLeft: 56,
+          paddingRight: 56,
         }}
       >
         <div>
@@ -119,7 +120,11 @@ export function EventsSection({ events }: Props) {
           style={{
             display: "flex",
             gap: 20,
-            padding: "16px 56px 28px",
+            paddingTop: 16,
+            paddingBottom: 28,
+            paddingLeft: 56,
+            paddingRight: 56,
+            scrollPaddingLeft: 56,
             overflowX: "auto",
             overflowY: "hidden",
           }}
@@ -134,39 +139,40 @@ export function EventsSection({ events }: Props) {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-40px" }}
                 transition={{ duration: 0.5, delay: i * 0.08 }}
-                style={{ flexShrink: 0, width: 280 }}
+                style={{ flexShrink: 0, width: 400 }}
               >
                 <div
                   className="event-card"
                   style={{
-                    borderRadius: 14,
-                    overflow: "hidden",
-                    background: "#0F2E29",
-                    border: "1px solid rgba(255,255,255,0.08)",
+                    borderRadius: 20,
+                    background: "#0A2320",
+                    border: "1px solid rgba(255,255,255,0.10)",
+                    boxShadow: "0 20px 40px -24px rgba(0,0,0,0.5)",
+                    padding: 16,
                   }}
                 >
-                  <div style={{ position: "relative", height: 200 }}>
+                  <div style={{ position: "relative", height: 340, borderRadius: 14, overflow: "hidden" }}>
                     <Image
                       src={evt.image_url || FALLBACK_EVENTS[0].image_url}
                       alt={evt.title}
                       fill
                       className="object-cover event-card-img"
-                      sizes="280px"
+                      sizes="400px"
                     />
                     {/* Stacked date badge */}
                     <div
                       style={{
                         position: "absolute",
-                        top: 14,
-                        left: 14,
+                        top: 18,
+                        left: 18,
                         background: "rgba(10,35,32,0.75)",
                         backdropFilter: "blur(8px)",
-                        borderRadius: 8,
-                        padding: "6px 10px",
+                        borderRadius: 10,
+                        padding: "8px 12px",
                         fontFamily: "'JetBrains Mono', monospace",
-                        fontSize: 10.5,
+                        fontSize: 12,
                         color: "#F9F8F5",
-                        lineHeight: 1.6,
+                        lineHeight: 1.7,
                       }}
                     >
                       <div>{start.day} / {start.month} / {start.year}</div>
@@ -178,25 +184,25 @@ export function EventsSection({ events }: Props) {
                     </div>
                   </div>
 
-                  <div style={{ padding: 18 }}>
-                    <div style={{ height: 82, overflow: "hidden" }}>
+                  <div style={{ padding: "20px 8px 6px" }}>
+                    <div style={{ height: 104, overflow: "hidden" }}>
                       <div
                         style={{
                           display: "flex",
                           alignItems: "center",
-                          gap: 5,
-                          fontSize: 11,
+                          gap: 6,
+                          fontSize: 12.5,
                           letterSpacing: "0.06em",
                           textTransform: "uppercase",
                           color: "#C5A880",
-                          marginBottom: 8,
+                          marginBottom: 10,
                           fontFamily: "'Inter', sans-serif",
                           whiteSpace: "nowrap",
                           overflow: "hidden",
                           textOverflow: "ellipsis",
                         }}
                       >
-                        <MapPin size={11} style={{ flexShrink: 0 }} />
+                        <MapPin size={13} style={{ flexShrink: 0 }} />
                         <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                           {evt.location || "Uzbekistan"} | {evt.event_type}
                         </span>
@@ -204,7 +210,7 @@ export function EventsSection({ events }: Props) {
                       <div
                         style={{
                           fontFamily: "'Playfair Display', serif",
-                          fontSize: 17,
+                          fontSize: 22,
                           fontWeight: 600,
                           color: "#FFFFFF",
                           lineHeight: 1.3,
@@ -220,7 +226,7 @@ export function EventsSection({ events }: Props) {
                     <Link
                       href={evt.ticket_url || "/discover"}
                       className="btn-pill-primary"
-                      style={{ textDecoration: "none", fontSize: 12.5, padding: "8px 18px", marginTop: 12, display: "inline-flex" }}
+                      style={{ textDecoration: "none", fontSize: 13.5, padding: "10px 22px", marginTop: 16, display: "inline-flex" }}
                     >
                       {evt.ticket_url ? "Buy Tickets" : "Visit Website"}
                     </Link>
@@ -232,7 +238,7 @@ export function EventsSection({ events }: Props) {
         </div>
 
         <button
-          onClick={() => scrollBy(300)}
+          onClick={() => scrollBy(420)}
           aria-label="Next events"
           className="carousel-arrow"
           style={{ position: "absolute", right: 24, top: "34%" }}

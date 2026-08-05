@@ -73,18 +73,21 @@ export const getServiceById = async (id: string): Promise<Service | null> => {
 export interface ItineraryWithMeta extends Itinerary {
   agency_name: string | null;
   item_count: number;
+  image_url: string | null;
 }
 
 export const getApprovedItineraries = async (): Promise<ItineraryWithMeta[]> => {
   const supabase = getSupabase();
   const { data, error } = await supabase
     .from("itineraries")
-    .select("*, itinerary_items(id)")
+    .select("*, itinerary_items(id, sort_order, services(image_url))")
     .neq("status", "draft")
     .order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
 
-  const rows = (data ?? []) as unknown as (Itinerary & { itinerary_items: { id: string }[] })[];
+  const rows = (data ?? []) as unknown as (Itinerary & {
+    itinerary_items: { id: string; sort_order: number; services: { image_url: string | null } | null }[];
+  })[];
 
   // Batch-fetch agency names from user_profiles
   const agencyIds = [...new Set(rows.map(r => r.agency_id).filter(Boolean))] as string[];
@@ -115,6 +118,10 @@ export const getApprovedItineraries = async (): Promise<ItineraryWithMeta[]> => 
     updated_at: r.updated_at,
     agency_name: r.agency_id ? (agencyMap[r.agency_id] ?? null) : null,
     item_count: r.itinerary_items?.length ?? 0,
+    image_url:
+      [...(r.itinerary_items ?? [])]
+        .sort((a, b) => a.sort_order - b.sort_order)
+        .find(item => item.services?.image_url)?.services?.image_url ?? null,
   }));
 };
 

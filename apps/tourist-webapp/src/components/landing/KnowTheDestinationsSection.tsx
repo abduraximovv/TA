@@ -1,15 +1,39 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import dynamic from "next/dynamic";
 import { Sun, CloudSun } from "lucide-react";
 import type { Destination } from "@repo/database";
+import type { MapPinData } from "./DestinationsMap";
+
+const DestinationsMap = dynamic(() => import("./DestinationsMap").then((m) => m.DestinationsMap), {
+  ssr: false,
+  loading: () => (
+    <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(10,35,32,0.4)", fontSize: 13 }}>
+      Loading map…
+    </div>
+  ),
+});
 
 interface Props {
   destinations: Destination[];
 }
+
+// Real coordinates for well-known Uzbekistan destinations — used whenever a DB record has no lat/lng of its own.
+const KNOWN_COORDS: Record<string, { lat: number; lng: number }> = {
+  Tashkent: { lat: 41.2995, lng: 69.2401 },
+  Samarkand: { lat: 39.627, lng: 66.975 },
+  Bukhara: { lat: 39.7747, lng: 64.4286 },
+  Khiva: { lat: 41.3775, lng: 60.3639 },
+  Chimgan: { lat: 41.6167, lng: 70.0333 },
+  "Chimgan Highlands": { lat: 41.6167, lng: 70.0333 },
+  "Fergana Valley": { lat: 40.3894, lng: 71.7869 },
+  Fergana: { lat: 40.3894, lng: 71.7869 },
+  Nurata: { lat: 40.5675, lng: 65.6892 },
+  "Nurata & the Kyzylkum Desert": { lat: 40.5675, lng: 65.6892 },
+};
 
 const FALLBACK_LIST = [
   { name: "Tashkent", tags: "Urban, Food", temp: "34°" },
@@ -18,17 +42,6 @@ const FALLBACK_LIST = [
   { name: "Khiva", tags: "Heritage, Desert", temp: "37°" },
   { name: "Chimgan", tags: "Nature, Adventure", temp: "24°" },
   { name: "Fergana Valley", tags: "Crafts, Food", temp: "33°" },
-];
-
-// Stylized, illustrative pin positions (percentage of the map frame) — not to geographic scale.
-const PINS = [
-  { name: "Tashkent", top: "20%", left: "68%", featured: true },
-  { name: "Samarkand", top: "48%", left: "44%", featured: true },
-  { name: "Bukhara", top: "55%", left: "24%", featured: true },
-  { name: "Khiva", top: "38%", left: "8%", featured: false },
-  { name: "Chimgan", top: "12%", left: "76%", featured: false },
-  { name: "Fergana Valley", top: "26%", left: "88%", featured: false },
-  { name: "Nurata", top: "38%", left: "52%", featured: false },
 ];
 
 export function KnowTheDestinationsSection({ destinations }: Props) {
@@ -41,8 +54,23 @@ export function KnowTheDestinationsSection({ destinations }: Props) {
           tags: d.region || FALLBACK_LIST[i % FALLBACK_LIST.length].tags,
           temp: FALLBACK_LIST[i % FALLBACK_LIST.length].temp,
           image: d.image_url,
+          lat: d.latitude ?? KNOWN_COORDS[d.name]?.lat ?? null,
+          lng: d.longitude ?? KNOWN_COORDS[d.name]?.lng ?? null,
         }))
-      : FALLBACK_LIST.map((f) => ({ ...f, image: null as string | null }));
+      : FALLBACK_LIST.map((f) => ({
+          ...f,
+          image: null as string | null,
+          lat: KNOWN_COORDS[f.name]?.lat ?? null,
+          lng: KNOWN_COORDS[f.name]?.lng ?? null,
+        }));
+
+  const pins: MapPinData[] = useMemo(
+    () =>
+      list
+        .filter((item): item is typeof item & { lat: number; lng: number } => item.lat !== null && item.lng !== null)
+        .map((item, i) => ({ name: item.name, lat: item.lat, lng: item.lng, featured: i < 3 })),
+    [list]
+  );
 
   return (
     <section style={{ padding: "88px 56px 96px", background: "#FFFFFF" }}>
@@ -164,7 +192,7 @@ export function KnowTheDestinationsSection({ destinations }: Props) {
           ))}
         </div>
 
-        {/* Right: stylized illustrated map */}
+        {/* Right: real map with actual destination coordinates */}
         <div
           style={{
             position: "relative",
@@ -175,70 +203,7 @@ export function KnowTheDestinationsSection({ destinations }: Props) {
             border: "1px solid #EFEDE7",
           }}
         >
-          {/* Illustrative landmass blob */}
-          <svg
-            viewBox="0 0 400 300"
-            preserveAspectRatio="none"
-            style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
-          >
-            <path
-              d="M20,120 C40,70 110,40 170,55 C230,20 320,35 360,90 C390,120 380,170 340,190 C360,220 320,260 260,250 C220,275 140,270 110,235 C60,240 15,200 25,160 C0,150 5,130 20,120 Z"
-              fill="#EAE6DA"
-              stroke="#006B70"
-              strokeOpacity="0.35"
-              strokeWidth="1.5"
-            />
-          </svg>
-
-          {/* Pins */}
-          {PINS.map((pin) => (
-            <div
-              key={pin.name}
-              onMouseEnter={() => setHovered(pin.name)}
-              onMouseLeave={() => setHovered(null)}
-              style={{
-                position: "absolute",
-                top: pin.top,
-                left: pin.left,
-                transform: "translate(-50%, -50%)",
-                zIndex: hovered === pin.name ? 3 : 2,
-              }}
-            >
-              <div
-                style={{
-                  width: pin.featured ? 16 : 11,
-                  height: pin.featured ? 16 : 11,
-                  borderRadius: "50%",
-                  background: pin.featured ? "#006B70" : "#C1592A",
-                  border: "2.5px solid #FFFFFF",
-                  boxShadow: "0 2px 8px rgba(10,35,32,0.3)",
-                  cursor: "pointer",
-                  transition: "transform 0.2s",
-                  transform: hovered === pin.name ? "scale(1.25)" : "scale(1)",
-                }}
-              />
-              {hovered === pin.name && (
-                <motion.div
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  style={{
-                    position: "absolute",
-                    bottom: "calc(100% + 8px)",
-                    left: "50%",
-                    transform: "translateX(-50%)",
-                    background: "#FFFFFF",
-                    borderRadius: 8,
-                    padding: "8px 12px",
-                    boxShadow: "0 8px 24px rgba(10,35,32,0.2)",
-                    whiteSpace: "nowrap",
-                    fontFamily: "'Inter', sans-serif",
-                  }}
-                >
-                  <div style={{ fontSize: 12.5, fontWeight: 700, color: "#0A2320" }}>{pin.name}</div>
-                </motion.div>
-              )}
-            </div>
-          ))}
+          <DestinationsMap pins={pins} hovered={hovered} onHoverPin={setHovered} />
 
           {/* CTA overlay */}
           <div style={{ position: "absolute", bottom: 20, right: 20, zIndex: 4 }}>

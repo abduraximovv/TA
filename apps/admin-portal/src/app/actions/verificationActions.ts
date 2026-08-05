@@ -1,7 +1,7 @@
 "use server";
 
 import { createClient } from "@supabase/supabase-js";
-import { revalidatePath } from "next/cache";
+import { unstable_noStore, revalidatePath } from "next/cache";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -22,11 +22,12 @@ export interface VerificationRequestRow {
   email: string;
   phone: string | null;
   role: "provider" | "agency";
-  status: "pending" | "approved" | "rejected";
+  status: "pending" | "approved" | "rejected" | "incomplete";
   created_at: string;
 }
 
 export async function getUnifiedVerificationRequests(): Promise<VerificationRequestRow[]> {
+  unstable_noStore();
   const supabaseAdmin = getAdminClient();
 
   // 1. Fetch provider & agency user profiles
@@ -56,14 +57,14 @@ export async function getUnifiedVerificationRequests(): Promise<VerificationRequ
     const business_name = v?.business_name || p.full_name || "Business Account";
 
     // Determine status: if provider_verifications has status, use it; otherwise infer from is_verified
-    let status: "pending" | "approved" | "rejected" = "pending";
+    let status: "pending" | "approved" | "rejected" | "incomplete" = "incomplete";
     if (v?.status) {
       status = v.status as "pending" | "approved" | "rejected";
     } else if (p.is_verified) {
       status = "approved";
     }
 
-    return {
+    const req: VerificationRequestRow = {
       id: v?.id || p.id,
       user_id: p.id,
       business_name,
@@ -73,6 +74,7 @@ export async function getUnifiedVerificationRequests(): Promise<VerificationRequ
       status,
       created_at: v?.created_at || p.created_at,
     };
+    return req;
   });
 
   // Sort: pending requests first, then by date descending

@@ -95,6 +95,8 @@ export default function VerificationHubPage() {
         return { bg: 'rgba(74,222,128,0.18)', color: '#15803D', label: 'Verified' };
       case 'rejected':
         return { bg: 'rgba(220,38,38,0.12)', color: '#B91C1C', label: 'Rejected' };
+      case 'incomplete':
+        return { bg: 'rgba(229,231,235,0.4)', color: '#6B7280', label: 'Incomplete' };
       default:
         return { bg: 'rgba(197,168,128,0.18)', color: '#8A6D3B', label: 'Pending' };
     }

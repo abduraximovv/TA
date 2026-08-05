@@ -64,7 +64,8 @@ export function DestinationsSection({ destinations }: Props) {
           alignItems: "flex-end",
           justifyContent: "space-between",
           marginBottom: 40,
-          padding: "0 56px",
+          paddingLeft: 56,
+          paddingRight: 56,
         }}
       >
         <div>
@@ -113,7 +114,11 @@ export function DestinationsSection({ destinations }: Props) {
           style={{
             display: "flex",
             gap: 24,
-            padding: "16px 56px 28px",
+            paddingTop: 16,
+            paddingBottom: 28,
+            paddingLeft: 56,
+            paddingRight: 56,
+            scrollPaddingLeft: 56,
             overflowX: "auto",
             overflowY: "hidden",
           }}
@@ -125,41 +130,60 @@ export function DestinationsSection({ destinations }: Props) {
               whileInView={{ opacity: 1 }}
               viewport={{ once: true, margin: "-50px" }}
               transition={{ duration: 0.55, delay: i * 0.08 }}
-              style={{ flexShrink: 0, width: 300 }}
+              style={{ flexShrink: 0, width: 400 }}
             >
               <Link href={`/discover/${card.slug}`} style={{ textDecoration: "none", display: "block" }}>
                 <div
                   className="silk-feature-card"
                   style={{
-                    borderRadius: 20,
-                    background: "#FFFFFF",
-                    boxShadow: "0 16px 32px -18px rgba(10,35,32,0.25)",
+                    position: "relative",
+                    borderRadius: 24,
+                    background: "#0A2320",
+                    boxShadow: "0 24px 48px -20px rgba(10,35,32,0.35)",
                     cursor: "pointer",
-                    display: "flex",
-                    flexDirection: "column",
-                    height: "100%",
+                    height: 520,
+                    overflow: "hidden",
                   }}
                 >
-                  {/* Text area — fixed height so every card in the row lines up regardless of copy length */}
+                  {/* Full-bleed photo */}
                   <div
                     style={{
-                      height: 160,
-                      padding: "24px 22px 16px",
-                      textAlign: "center",
-                      display: "flex",
-                      flexDirection: "column",
-                      overflow: "hidden",
+                      position: "absolute",
+                      inset: 0,
+                    }}
+                    className="discover-card"
+                  >
+                    <CardPhoto src={card.image} fallback={card.fallback} alt={card.name} />
+                  </div>
+
+                  {/* Gradient scrim so text stays legible over any photo */}
+                  <div
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      background:
+                        "linear-gradient(180deg, rgba(10,35,32,0) 40%, rgba(10,35,32,0.55) 72%, rgba(10,35,32,0.92) 100%)",
+                    }}
+                  />
+
+                  {/* Text overlay */}
+                  <div
+                    style={{
+                      position: "absolute",
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      padding: "28px 28px 30px",
                     }}
                   >
                     <div
                       style={{
                         fontFamily: "'Playfair Display', serif",
-                        fontSize: 19,
-                        lineHeight: 1.25,
+                        fontSize: 28,
+                        lineHeight: 1.2,
                         fontWeight: 600,
-                        color: "#0A2320",
-                        marginBottom: 8,
-                        flexShrink: 0,
+                        color: "#FFFFFF",
+                        marginBottom: 10,
                         display: "-webkit-box",
                         WebkitLineClamp: 2,
                         WebkitBoxOrient: "vertical",
@@ -170,12 +194,10 @@ export function DestinationsSection({ destinations }: Props) {
                     </div>
                     <div
                       style={{
-                        fontSize: 12.5,
-                        color: "rgba(10,35,32,0.55)",
+                        fontSize: 14,
+                        color: "rgba(255,255,255,0.78)",
                         lineHeight: 1.5,
-                        marginBottom: 12,
-                        minHeight: 37.5,
-                        flexShrink: 0,
+                        marginBottom: 18,
                         display: "-webkit-box",
                         WebkitLineClamp: 2,
                         WebkitBoxOrient: "vertical",
@@ -186,29 +208,22 @@ export function DestinationsSection({ destinations }: Props) {
                     </div>
                     <div
                       style={{
-                        fontSize: 12.5,
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6,
+                        fontSize: 13,
                         fontWeight: 600,
-                        color: "#006B70",
+                        color: "#FFFFFF",
                         fontFamily: "'Inter', sans-serif",
-                        marginTop: "auto",
+                        letterSpacing: "0.02em",
+                        textTransform: "uppercase",
+                        borderBottom: "1px solid rgba(255,255,255,0.5)",
+                        paddingBottom: 4,
                       }}
                     >
                       Discover More
+                      <ChevronRight size={14} />
                     </div>
-                  </div>
-
-                  {/* Photo — tucked into the bottom, top corners squared off */}
-                  <div
-                    style={{
-                      position: "relative",
-                      height: 190,
-                      borderRadius: "0 0 20px 20px",
-                      overflow: "hidden",
-                      marginTop: "auto",
-                    }}
-                    className="discover-card"
-                  >
-                    <CardPhoto src={card.image} fallback={card.fallback} alt={card.name} />
                   </div>
                 </div>
               </Link>
@@ -218,7 +233,7 @@ export function DestinationsSection({ destinations }: Props) {
 
         {/* Floating advance arrow */}
         <button
-          onClick={() => scrollBy(324)}
+          onClick={() => scrollBy(424)}
           aria-label="Next destinations"
           className="carousel-arrow"
           style={{ position: "absolute", right: 24, top: "38%" }}
