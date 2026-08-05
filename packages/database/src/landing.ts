@@ -45,6 +45,24 @@ export async function getFeaturedExperiences(limit = 8): Promise<Service[]> {
 }
 
 /**
+ * Fetch all experiences for the Experiences page.
+ */
+export async function getAllExperiences(): Promise<Service[]> {
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from("services")
+    .select("*")
+    .order("avg_rating", { ascending: false });
+
+  if (error) {
+    console.error("Error fetching all experiences:", error);
+    return [];
+  }
+
+  return (data as Service[]) || [];
+}
+
+/**
  * Fetch upcoming featured events for the Landing Page.
  * Only returns future events, ordered by start_date.
  */

@@ -1,16 +1,11 @@
-"use client";
-
 import React from "react";
-import { Info } from "lucide-react";
-import { ComingSoonCard } from "@/components/ComingSoonCard";
+import { AboutClient } from "./AboutClient";
+
+export const metadata = {
+  title: "About Us | Silk Road Uzbekistan",
+  description: "Learn about our mission to bridge the digital divide for rural artisans and local guides in Uzbekistan.",
+};
 
 export default function AboutPage() {
-  return (
-    <ComingSoonCard
-      icon={Info}
-      iconColor="emerald"
-      title="About Silk Road"
-      description="We're passionate about connecting travelers with authentic, verified Uzbek experiences. Our full company story is being written right now and will be published soon."
-    />
-  );
+  return <AboutClient />;
 }
