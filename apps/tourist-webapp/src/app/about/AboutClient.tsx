@@ -1,12 +1,60 @@
 "use client";
 
 import React from "react";
-import Image from "next/image";
 import { motion, Variants } from "framer-motion";
 import { Footer } from "@/components/landing/Footer";
-import { Globe, Users, ShieldCheck, Map } from "lucide-react";
+import { Globe, Users, ShieldCheck, Map, Compass, Sparkles, type LucideIcon } from "lucide-react";
+import { Breadcrumb } from "@/components/navigation/Breadcrumb";
+import { PageHero } from "@/components/PageHero";
+import type { SiteStats } from "@repo/database";
 
-export function AboutClient() {
+// A diamond-lattice motif (echoes the Ikat/mosaic strip used elsewhere on the site) tiled as a
+// faint background watermark -- the "cultural pattern" backdrop, in our own palette rather than
+// literal Arabic script/ornamentation.
+const MOSAIC_WATERMARK =
+  "url(\"data:image/svg+xml,%3Csvg width='84' height='84' viewBox='0 0 84 84' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%230A2320' fill-opacity='1'%3E%3Cpath d='M42 0L21 21 42 42 63 21z M0 42L21 21 0 0z M84 42L63 21 84 0z M42 84L21 63 42 42 63 63z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")";
+
+function Watermark({ opacity = 0.045 }: { opacity?: number }) {
+  return (
+    <div
+      style={{
+        position: "absolute",
+        inset: 0,
+        opacity,
+        pointerEvents: "none",
+        backgroundImage: MOSAIC_WATERMARK,
+        backgroundSize: "84px 84px",
+      }}
+    />
+  );
+}
+
+function IconBadge({ icon: Icon, gradient }: { icon: LucideIcon; gradient: string }) {
+  return (
+    <div
+      style={{
+        width: 76,
+        height: 76,
+        borderRadius: 20,
+        background: gradient,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        marginBottom: 24,
+        boxShadow: "0 14px 28px -10px rgba(10,35,32,0.4)",
+      }}
+    >
+      <Icon size={34} color="#FFFFFF" />
+    </div>
+  );
+}
+
+const TEAL_GRADIENT = "linear-gradient(135deg, #00888E, #006B70)";
+const GOLD_GRADIENT = "linear-gradient(135deg, #D8BC94, #B0925F)";
+const DARK_GRADIENT = "linear-gradient(135deg, #16413C, #0A2320)";
+const TERRACOTTA_GRADIENT = "linear-gradient(135deg, #D66A38, #C1592A)";
+
+export function AboutClient({ stats }: { stats: SiteStats }) {
   const fadeUpVariant: Variants = {
     hidden: { opacity: 0, y: 30 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } },
@@ -20,48 +68,51 @@ export function AboutClient() {
     },
   };
 
+  const ecosystem = [
+    { title: "Tourist WebApp", icon: Globe, gradient: TEAL_GRADIENT, desc: "A premium planning and booking platform offering budget-friendly safety and discovery tools for independent travelers." },
+    { title: "Local Provider App", icon: Users, gradient: GOLD_GRADIENT, desc: "A mobile-first tool empowering rural artisans and guides to list services, manage bookings, and enter the formal economy." },
+    { title: "Agency Portal", icon: Map, gradient: DARK_GRADIENT, desc: "A comprehensive B2B dashboard for global travel agencies to curate and manage group tours at scale." },
+    { title: "Admin Portal", icon: ShieldCheck, gradient: TERRACOTTA_GRADIENT, desc: "The central nervous system ensuring quality control, verification, and seamless ecosystem orchestration." },
+  ];
+
+  const impact = [
+    { stat: `${stats.destinationCount}`, label: "Destinations Covered", sub: "From Silk Road capitals to desert camps and mountain valleys.", icon: Compass, gradient: TEAL_GRADIENT },
+    { stat: `${stats.verifiedProviderCount}+`, label: "Verified Local Providers", sub: "Rural artisans and guides brought into the formal tourism economy.", icon: ShieldCheck, gradient: TERRACOTTA_GRADIENT },
+    { stat: `${stats.experienceCount}+`, label: "Curated Experiences", sub: "Real, bookable tours, workshops, and stays from verified local guides.", icon: Sparkles, gradient: GOLD_GRADIENT },
+  ];
+
   return (
     <main style={{ background: "#F9F8F5", color: "#0A2320", minHeight: "100vh", overflowX: "hidden" }}>
       
       {/* Hero Section */}
-      <section style={{ paddingTop: 140, paddingBottom: 100, paddingLeft: "5%", paddingRight: "5%", maxWidth: 1440, margin: "0 auto" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 64, alignItems: "center" }} className="max-md:grid-cols-1">
-          <motion.div initial="hidden" animate="visible" variants={fadeUpVariant}>
-            <h1 
-              style={{ 
-                fontFamily: "'Playfair Display', serif", 
-                fontSize: "clamp(3rem, 6vw, 5rem)", 
-                fontWeight: 700, 
-                lineHeight: 1.1, 
-                marginBottom: 24,
-                letterSpacing: "-0.02em"
-              }}
-            >
-              Unveiling<br/>
-              <span className="text-gold-400">Hidden</span> Uzbekistan
-            </h1>
-            <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 18, lineHeight: 1.6, color: "rgba(10, 35, 32, 0.75)", maxWidth: 500 }}>
-              Four thousand years of the Silk Road, one transformative journey. 
-              We are on a mission to bring the authentic, untold stories of rural artisans and local guides to the global stage.
-            </p>
-          </motion.div>
-          
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.95 }} 
-            animate={{ opacity: 1, scale: 1 }} 
-            transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
-            style={{ position: "relative", width: "100%", aspectRatio: "4/5", borderRadius: 24, overflow: "hidden" }}
+      <section style={{ paddingTop: 140, paddingLeft: "5%", paddingRight: "5%", maxWidth: 1440, margin: "0 auto" }}>
+        <Breadcrumb items={[{ label: "About" }]} style={{ marginBottom: 20 }} />
+
+        <PageHero
+          title="About"
+          eyebrow="Our Story"
+          image="https://images.unsplash.com/photo-1673446840855-1c82bafdb67d?q=80&w=2000"
+          alt="Local artisans and guides of Uzbekistan"
+        />
+
+        <motion.div initial="hidden" animate="visible" variants={fadeUpVariant} style={{ paddingBottom: 100, maxWidth: 700 }}>
+          <h2
+            style={{
+              fontFamily: "'Playfair Display', serif",
+              fontSize: "clamp(2.5rem, 4vw, 3.5rem)",
+              fontWeight: 700,
+              lineHeight: 1.15,
+              marginBottom: 24,
+              letterSpacing: "-0.02em",
+            }}
           >
-            <Image
-              src="https://images.unsplash.com/photo-1541845157-a6d2d100c931?q=80&w=1200"
-              alt="Authentic Uzbekistan"
-              fill
-              style={{ objectFit: "cover" }}
-              sizes="(max-width: 768px) 100vw, 50vw"
-              priority
-            />
-          </motion.div>
-        </div>
+            Unveiling <span className="text-gold-400">Hidden</span> Uzbekistan
+          </h2>
+          <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 18, lineHeight: 1.6, color: "rgba(10, 35, 32, 0.75)" }}>
+            Four thousand years of the Silk Road, one transformative journey.
+            We are on a mission to bring the authentic, untold stories of rural artisans and local guides to the global stage.
+          </p>
+        </motion.div>
       </section>
 
       {/* The Mission */}
@@ -89,98 +140,104 @@ export function AboutClient() {
       </section>
 
       {/* Ecosystem Portals */}
-      <section style={{ padding: "120px 5%", maxWidth: 1440, margin: "0 auto" }}>
-        <motion.div 
-          initial="hidden" 
-          whileInView="visible" 
-          viewport={{ once: true, margin: "-100px" }}
-          variants={fadeUpVariant}
-          style={{ textAlign: "center", marginBottom: 64 }}
-        >
-          <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(2rem, 3vw, 3rem)", fontWeight: 700, marginBottom: 16 }}>
-            One Unified Ecosystem
-          </h2>
-          <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 16, color: "rgba(10, 35, 32, 0.7)", maxWidth: 600, margin: "0 auto" }}>
-            Four purpose-built portals working seamlessly together to solve the industry's toughest challenges.
-          </p>
-        </motion.div>
+      <section style={{ position: "relative", padding: "120px 5%", background: "#FFFFFF", overflow: "hidden" }}>
+        <Watermark />
+        <div style={{ position: "relative", maxWidth: 1440, margin: "0 auto" }}>
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={fadeUpVariant}
+            style={{ textAlign: "center", marginBottom: 72 }}
+          >
+            <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(2.5rem, 4vw, 3.5rem)", fontWeight: 700, marginBottom: 16 }}>
+              One Unified Ecosystem
+            </h2>
+            <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 18, color: "rgba(10, 35, 32, 0.7)", maxWidth: 640, margin: "0 auto" }}>
+              Four purpose-built portals working seamlessly together to solve the industry's toughest challenges.
+            </p>
+          </motion.div>
 
-        <motion.div 
-          variants={staggerContainer}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-50px" }}
-          style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 32 }}
-        >
-          {[
-            { title: "Tourist WebApp", icon: Globe, desc: "A premium planning and booking platform offering budget-friendly safety and discovery tools for independent travelers." },
-            { title: "Local Provider App", icon: Users, desc: "A mobile-first tool empowering rural artisans and guides to list services, manage bookings, and enter the formal economy." },
-            { title: "Agency Portal", icon: Map, desc: "A comprehensive B2B dashboard for global travel agencies to curate and manage group tours at scale." },
-            { title: "Admin Portal", icon: ShieldCheck, desc: "The central nervous system ensuring quality control, verification, and seamless ecosystem orchestration." }
-          ].map((portal, idx) => (
-            <motion.div 
-              key={idx} 
-              variants={fadeUpVariant}
-              style={{ 
-                padding: 40, 
-                backgroundColor: "#FFFFFF", 
-                borderRadius: 24,
-                boxShadow: "0 12px 32px rgba(10, 35, 32, 0.04)",
-                border: "1px solid rgba(10, 35, 32, 0.03)"
-              }}
-            >
-              <div style={{ width: 48, height: 48, borderRadius: "50%", backgroundColor: "rgba(197, 168, 128, 0.1)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 24 }}>
-                <portal.icon size={24} color="#C5A880" />
-              </div>
-              <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 24, fontWeight: 700, marginBottom: 16 }}>
-                {portal.title}
-              </h3>
-              <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, lineHeight: 1.6, color: "rgba(10, 35, 32, 0.65)" }}>
-                {portal.desc}
-              </p>
-            </motion.div>
-          ))}
-        </motion.div>
+          <motion.div
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-50px" }}
+            style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 40 }}
+          >
+            {ecosystem.map((portal, idx) => (
+              <motion.div
+                key={idx}
+                variants={fadeUpVariant}
+                style={{
+                  padding: 44,
+                  backgroundColor: "#FFFFFF",
+                  borderRadius: 28,
+                  boxShadow: "0 16px 40px rgba(10, 35, 32, 0.07)",
+                  border: "1px solid rgba(10, 35, 32, 0.05)",
+                }}
+              >
+                <IconBadge icon={portal.icon} gradient={portal.gradient} />
+                <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 26, fontWeight: 700, marginBottom: 16 }}>
+                  {portal.title}
+                </h3>
+                <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 16, lineHeight: 1.6, color: "rgba(10, 35, 32, 0.65)" }}>
+                  {portal.desc}
+                </p>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
       </section>
 
-      {/* Impact Section */}
-      <section style={{ padding: "0 5% 120px", maxWidth: 1440, margin: "0 auto" }}>
-        <motion.div 
-          initial="hidden" 
-          whileInView="visible" 
+      {/* Impact Section -- real, live counts from the database, not marketing targets */}
+      <section style={{ position: "relative", padding: "0 5% 120px", maxWidth: 1440, margin: "0 auto" }}>
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
           viewport={{ once: true, margin: "-100px" }}
           variants={fadeUpVariant}
-          style={{ 
-            backgroundColor: "#0A2320", 
-            borderRadius: 32, 
-            padding: "80px 5%", 
-            color: "#F9F8F5",
-            textAlign: "center",
-            backgroundImage: "linear-gradient(to bottom right, #0A2320, #061513)"
+          style={{
+            position: "relative",
+            backgroundColor: "#F3F1EA",
+            borderRadius: 32,
+            padding: "80px 5%",
+            overflow: "hidden",
           }}
         >
-          <div style={{ color: "#C5A880", fontFamily: "'Inter', sans-serif", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 16, fontSize: 13 }}>
-            Our Impact Targets
+          <Watermark opacity={0.06} />
+          <div style={{ position: "relative", textAlign: "center", marginBottom: 56 }}>
+            <div style={{ color: "#006B70", fontFamily: "'Inter', sans-serif", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 16, fontSize: 13 }}>
+              Real Numbers, Real Impact
+            </div>
+            <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(2.5rem, 4vw, 3.5rem)", fontWeight: 700, color: "#0A2320" }}>
+              Uzbekistan, By the Numbers
+            </h2>
           </div>
-          <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(2rem, 3vw, 3rem)", fontWeight: 700, marginBottom: 48 }}>
-            Empowering the Future of Travel
-          </h2>
-          
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 40 }}>
-            {[
-              { stat: "100%", label: "Formal Economy", sub: "Transitioning rural guides out of the shadow economy." },
-              { stat: "3x", label: "Rural Revenue", sub: "Increasing direct earnings for local artisans and families." },
-              { stat: "0", label: "Hidden Fees", sub: "Transparent, budget-friendly booking for global travelers." }
-            ].map((impact, idx) => (
-              <div key={idx}>
-                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 64, fontWeight: 700, color: "#C5A880", marginBottom: 8, lineHeight: 1 }}>
-                  {impact.stat}
+
+          <div style={{ position: "relative", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 32 }}>
+            {impact.map((item, idx) => (
+              <div
+                key={idx}
+                style={{
+                  position: "relative",
+                  backgroundColor: "#FFFFFF",
+                  borderRadius: 24,
+                  padding: "40px 36px",
+                  overflow: "hidden",
+                  boxShadow: "0 16px 40px rgba(10, 35, 32, 0.06)",
+                }}
+              >
+                <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 6, background: item.gradient }} />
+                <IconBadge icon={item.icon} gradient={item.gradient} />
+                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 48, fontWeight: 700, color: "#0A2320", marginBottom: 8, lineHeight: 1 }}>
+                  {item.stat}
                 </div>
-                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 18, fontWeight: 600, marginBottom: 8 }}>
-                  {impact.label}
+                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 18, fontWeight: 600, color: "#0A2320", marginBottom: 8 }}>
+                  {item.label}
                 </div>
-                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 14, opacity: 0.7, lineHeight: 1.5 }}>
-                  {impact.sub}
+                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 14, color: "rgba(10,35,32,0.6)", lineHeight: 1.5 }}>
+                  {item.sub}
                 </div>
               </div>
             ))}

@@ -7,6 +7,7 @@ import { ArrowLeft, Star, Clock, MapPin, User } from "lucide-react";
 import { ServiceBookingModal } from "@/components/booking/ServiceBookingModal";
 import { formatDuration } from "@repo/database";
 import type { Service, ReviewWithAuthor } from "@repo/database";
+import { Breadcrumb } from "@/components/navigation/Breadcrumb";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -38,7 +39,7 @@ export function ServiceDetailClient({ service, reviews, isLoggedIn }: ServiceDet
           style={{ width: "100%", height: "100%", objectFit: "cover" }}
         />
         <div className="overlay-gradient-bottom" style={{ position: "absolute", inset: 0 }} />
-        <div style={{ position: "absolute", top: 0, left: 0, width: "100%", padding: 20 }}>
+        <div style={{ position: "absolute", top: 0, left: 0, width: "100%", padding: 20, display: "flex", alignItems: "center", gap: 16 }}>
           <Link
             href="/service"
             style={{
@@ -52,10 +53,12 @@ export function ServiceDetailClient({ service, reviews, isLoggedIn }: ServiceDet
               alignItems: "center",
               justifyContent: "center",
               textDecoration: "none",
+              flexShrink: 0,
             }}
           >
             <ArrowLeft style={{ width: 20, height: 20, color: "#FFFFFF" }} />
           </Link>
+          <Breadcrumb light items={[{ label: "Experiences", href: "/service" }, { label: service.title }]} style={{ padding: 0 }} />
         </div>
       </motion.div>
 

@@ -56,9 +56,9 @@ export function Navbar() {
           <Link href="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 14 }}>
             <div
               style={{
-                fontFamily: "'Playfair Display', serif",
+                fontFamily: "var(--font-serif), serif",
                 fontWeight: 700,
-                fontSize: 22,
+                fontSize: 26,
                 color: "#FFFFFF",
                 whiteSpace: "nowrap",
                 letterSpacing: "0.02em",
@@ -82,14 +82,15 @@ export function Navbar() {
                 key={link.href}
                 href={link.href}
                 style={{
-                  fontSize: 13.5,
+                  fontSize: 14.5,
                   fontWeight: pathname === link.href ? 700 : 500,
                   color:
                     pathname === link.href ? "#FFFFFF" : "rgba(255,255,255,0.75)",
                   textDecoration: "none",
                   whiteSpace: "nowrap",
                   transition: "color 0.2s",
-                  fontFamily: "'Inter', sans-serif",
+                  fontFamily: "var(--font-sans), sans-serif",
+                  letterSpacing: "0.01em",
                 }}
                 className="nav-link-hover"
               >
@@ -182,8 +183,8 @@ export function Navbar() {
           border: 1px solid rgba(255, 255, 255, 0.4);
           background: transparent;
           color: #FFFFFF;
-          font-family: 'Inter', sans-serif;
-          font-size: 14px;
+          font-family: var(--font-sans), sans-serif;
+          font-size: 15px;
           font-weight: 500;
           cursor: pointer;
           transition: all 0.2s;

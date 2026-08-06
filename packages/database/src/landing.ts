@@ -179,3 +179,32 @@ export async function getFeaturedItineraries(limit = 8): Promise<Itinerary[]> {
 
   return (data as Itinerary[]) || [];
 }
+
+export interface SiteStats {
+  experienceCount: number;
+  verifiedProviderCount: number;
+  destinationCount: number;
+}
+
+/**
+ * Real, live counts from the database -- used for the About page's impact numbers
+ * instead of hardcoded marketing claims.
+ */
+export async function getSiteStats(): Promise<SiteStats> {
+  const supabase = getSupabase();
+  const [servicesRes, providersRes, destinationsRes] = await Promise.all([
+    supabase.from("services").select("*", { count: "exact", head: true }),
+    supabase
+      .from("user_profiles")
+      .select("*", { count: "exact", head: true })
+      .eq("role", "provider")
+      .eq("is_verified", true),
+    supabase.from("destinations").select("*", { count: "exact", head: true }),
+  ]);
+
+  return {
+    experienceCount: servicesRes.count ?? 0,
+    verifiedProviderCount: providersRes.count ?? 0,
+    destinationCount: destinationsRes.count ?? 0,
+  };
+}

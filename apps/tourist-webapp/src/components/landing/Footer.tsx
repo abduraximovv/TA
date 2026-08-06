@@ -45,7 +45,7 @@ export function Footer() {
       {/* App download + newsletter strip */}
       <div
         style={{
-          maxWidth: 1280,
+          maxWidth: 1600,
           margin: "0 auto",
           padding: "40px 56px",
           display: "flex",
@@ -120,12 +120,12 @@ export function Footer() {
       {/* Main footer body */}
       <div
         style={{
-          maxWidth: 1280,
+          maxWidth: 1600,
           margin: "0 auto",
-          padding: "48px 56px",
+          padding: "56px 56px",
           display: "grid",
           gridTemplateColumns: "1.2fr repeat(3, 1fr)",
-          gap: 32,
+          gap: 48,
         }}
       >
         <div>
@@ -133,7 +133,7 @@ export function Footer() {
             style={{
               fontFamily: "'Playfair Display', serif",
               fontWeight: 600,
-              fontSize: 20,
+              fontSize: 23,
               background: "linear-gradient(135deg, #C5A880 0%, #006B70 100%)",
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
@@ -143,9 +143,10 @@ export function Footer() {
           >
             Silk&nbsp;Road&nbsp;Uzbekistan
           </div>
-          <p style={{ fontSize: 12.5, color: "rgba(249,248,245,0.55)", lineHeight: 1.6, marginBottom: 18, maxWidth: 260 }}>
-            The official tourism platform of the Republic of Uzbekistan — plan, translate, and
-            book with verified local providers.
+          <p style={{ fontSize: 15, color: "rgba(249,248,245,0.6)", lineHeight: 1.65, marginBottom: 20, maxWidth: 340 }}>
+            Your independent guide to Uzbekistan's Silk Road — discover real destinations, plan
+            multi-day itineraries, and book directly with verified local guides, artisans, and
+            travel agencies across the country.
           </p>
           <div style={{ display: "flex", gap: 10 }}>
             {[Instagram, Send, Facebook].map((Icon, i) => (
@@ -179,25 +180,25 @@ export function Footer() {
           <div key={col.title}>
             <div
               style={{
-                fontSize: 12,
+                fontSize: 13,
                 fontWeight: 700,
                 letterSpacing: "0.06em",
                 textTransform: "uppercase",
                 color: "#FFFFFF",
-                marginBottom: 16,
+                marginBottom: 20,
                 fontFamily: "'Inter', sans-serif",
               }}
             >
               {col.title}
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 13 }}>
               {col.links.map((link) => (
                 <Link
                   key={link.label}
                   href={link.href}
                   className="footer-link"
                   style={{
-                    fontSize: 13,
+                    fontSize: 14.5,
                     color: "rgba(249,248,245,0.6)",
                     textDecoration: "none",
                     transition: "color 0.2s",
@@ -224,7 +225,7 @@ export function Footer() {
         }}
       >
         <div style={{ fontSize: 11.5, color: "rgba(249,248,245,0.45)", fontFamily: "'JetBrains Mono', monospace" }}>
-          © {new Date().getFullYear()} Republic of Uzbekistan · Ministry of Tourism and Sport
+          © {new Date().getFullYear()} Silk Road Uzbekistan. All rights reserved.
         </div>
         <div style={{ display: "flex", gap: 24 }}>
           {["Terms", "Privacy", "Freedom of Information", "Sitemap"].map((label) => (

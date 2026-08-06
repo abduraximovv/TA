@@ -12,7 +12,7 @@ const SLIDE_DURATION = 6500;
 const SLIDES = [
   {
     id: "registan",
-    eyebrow: "Republic of Uzbekistan · Official Tourism Platform",
+    eyebrow: "Silk Road Uzbekistan · Independent Travel Platform",
     headline: "Four Thousand Years of the Silk Road, One Journey.",
     subtitle:
       "From the turquoise domes of Samarkand to the mountain trails of Chimgan — plan, translate, and book with verified local providers.",
@@ -26,7 +26,7 @@ const SLIDES = [
     subtitle:
       "Every two years, musicians from across the world gather beneath the Registan for Central Asia's grandest festival of song.",
     image:
-      "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=2400&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1733586092622-1b3201e802a5?q=80&w=2400&auto=format&fit=crop",
     cta: { label: "See Uzbekistan Calendar", href: "/discover" },
   },
   {
@@ -159,7 +159,7 @@ export function HeroSection() {
           >
             <div
               style={{
-                fontFamily: "'JetBrains Mono', monospace",
+                fontFamily: "var(--font-mono), monospace",
                 fontSize: 12,
                 letterSpacing: "0.14em",
                 textTransform: "uppercase",
@@ -172,7 +172,7 @@ export function HeroSection() {
 
             <h1
               style={{
-                fontFamily: "'Playfair Display', serif",
+                fontFamily: "var(--font-serif), serif",
                 fontWeight: 600,
                 fontSize: 44,
                 lineHeight: 1.15,
@@ -254,7 +254,7 @@ export function HeroSection() {
                 background: "transparent",
                 border: "none",
                 outline: "none",
-                fontFamily: "'Inter', sans-serif",
+                fontFamily: "var(--font-sans), sans-serif",
                 width: "100%",
               }}
             />
@@ -270,7 +270,7 @@ export function HeroSection() {
           >
             <div
               style={{
-                fontFamily: "'JetBrains Mono', monospace",
+                fontFamily: "var(--font-mono), monospace",
                 fontSize: 10,
                 textTransform: "uppercase",
                 letterSpacing: "0.08em",
@@ -333,7 +333,7 @@ export function HeroSection() {
                 border: "none",
                 padding: 0,
                 cursor: "pointer",
-                fontFamily: "'Inter', sans-serif",
+                fontFamily: "var(--font-sans), sans-serif",
                 fontSize: 13,
                 fontWeight: i === current ? 700 : 500,
                 color: i === current ? "#FFFFFF" : "rgba(255,255,255,0.45)",

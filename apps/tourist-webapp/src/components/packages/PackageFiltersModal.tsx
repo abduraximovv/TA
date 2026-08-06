@@ -3,50 +3,37 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Check } from "lucide-react";
-import type { Service } from "@repo/database";
+import type { ItineraryWithMeta } from "@repo/database";
 
-export interface AppliedFilters {
-  destinations: string[];
-  categories: string[];
-  showFreeEntryOnly: boolean;
+export interface AppliedPackageFilters {
+  agencies: string[];
   budget: { min: number; max: number };
   budgetActive: boolean;
 }
 
-interface FiltersModalProps {
+interface PackageFiltersModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onApply: (filters: AppliedFilters) => void;
-  experiences: Service[];
-}
-
-function capitalize(s: string) {
-  return s.length ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+  onApply: (filters: AppliedPackageFilters) => void;
+  itineraries: ItineraryWithMeta[];
 }
 
 const HISTOGRAM_BUCKETS = 24;
 
-export function FiltersModal({ isOpen, onClose, onApply, experiences }: FiltersModalProps) {
-  // Every option below is derived from the real services passed in -- nothing here is hardcoded.
-  const destinations = useMemo(
-    () => Array.from(new Set(experiences.map((e) => e.city).filter((c): c is string => !!c))).sort(),
-    [experiences]
+export function PackageFiltersModal({ isOpen, onClose, onApply, itineraries }: PackageFiltersModalProps) {
+  // Agencies and budget bounds are derived from the real itineraries passed in -- nothing hardcoded.
+  const agencies = useMemo(
+    () => Array.from(new Set(itineraries.map((i) => i.agency_name).filter((a): a is string => !!a))).sort(),
+    [itineraries]
   );
-  const categories = useMemo(
-    () => Array.from(new Set(experiences.map((e) => e.category).filter((c): c is string => !!c))).sort(),
-    [experiences]
-  );
-  const prices = useMemo(() => experiences.map((e) => e.price).filter((p) => typeof p === "number"), [experiences]);
+  const prices = useMemo(() => itineraries.map((i) => Number(i.total_price) || 0), [itineraries]);
   const minPrice = prices.length ? Math.min(...prices) : 0;
   const maxPrice = prices.length ? Math.max(...prices) : 0;
 
-  const [selectedDestinations, setSelectedDestinations] = useState<string[]>([]);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [showFreeEntryOnly, setShowFreeEntryOnly] = useState(false);
+  const [selectedAgencies, setSelectedAgencies] = useState<string[]>([]);
   const [budgetMin, setBudgetMin] = useState(minPrice);
   const [budgetMax, setBudgetMax] = useState(maxPrice);
 
-  // Re-sync the budget bounds to the real price range whenever the modal opens (data may have changed).
   useEffect(() => {
     if (isOpen) {
       setBudgetMin(minPrice);
@@ -66,39 +53,29 @@ export function FiltersModal({ isOpen, onClose, onApply, experiences }: FiltersM
     return buckets.map((count) => ({ count, height: 8 + (count / tallest) * 52 }));
   }, [prices, minPrice, maxPrice]);
 
-  const toggleSelection = (item: string, list: string[], setList: React.Dispatch<React.SetStateAction<string[]>>) => {
-    setList(list.includes(item) ? list.filter((i) => i !== item) : [...list, item]);
+  const toggleAgency = (name: string) => {
+    setSelectedAgencies((prev) => (prev.includes(name) ? prev.filter((a) => a !== name) : [...prev, name]));
   };
 
   const budgetActive = budgetMin > minPrice || budgetMax < maxPrice;
 
-  // Live preview of how many real services match the selections currently made in this modal.
   const matchCount = useMemo(() => {
-    return experiences.filter((exp) => {
-      if (selectedDestinations.length > 0 && (!exp.city || !selectedDestinations.includes(exp.city))) return false;
-      if (selectedCategories.length > 0 && !selectedCategories.includes(exp.category)) return false;
-      if (showFreeEntryOnly && exp.price > 0) return false;
-      if (exp.price < budgetMin || exp.price > budgetMax) return false;
+    return itineraries.filter((itin) => {
+      if (selectedAgencies.length > 0 && (!itin.agency_name || !selectedAgencies.includes(itin.agency_name))) return false;
+      const price = Number(itin.total_price) || 0;
+      if (price < budgetMin || price > budgetMax) return false;
       return true;
     }).length;
-  }, [experiences, selectedDestinations, selectedCategories, showFreeEntryOnly, budgetMin, budgetMax]);
+  }, [itineraries, selectedAgencies, budgetMin, budgetMax]);
 
   const handleClearAll = () => {
-    setSelectedDestinations([]);
-    setSelectedCategories([]);
-    setShowFreeEntryOnly(false);
+    setSelectedAgencies([]);
     setBudgetMin(minPrice);
     setBudgetMax(maxPrice);
   };
 
   const handleApply = () => {
-    onApply({
-      destinations: selectedDestinations,
-      categories: selectedCategories,
-      showFreeEntryOnly,
-      budget: { min: budgetMin, max: budgetMax },
-      budgetActive,
-    });
+    onApply({ agencies: selectedAgencies, budget: { min: budgetMin, max: budgetMax }, budgetActive });
     onClose();
   };
 
@@ -148,7 +125,7 @@ export function FiltersModal({ isOpen, onClose, onApply, experiences }: FiltersM
             background: "#FFFFFF",
             borderRadius: 24,
             width: "100%",
-            maxWidth: 900,
+            maxWidth: 720,
             maxHeight: "90vh",
             display: "flex",
             flexDirection: "column",
@@ -168,71 +145,31 @@ export function FiltersModal({ isOpen, onClose, onApply, experiences }: FiltersM
           {/* Scrollable Content */}
           <div style={{ flex: 1, overflowY: "auto", padding: "32px", display: "flex", flexDirection: "column", gap: 48, fontFamily: "'Inter', sans-serif" }}>
 
-            {/* Destinations -- real cities from the services table */}
+            {/* Agencies -- real verified agencies from the database */}
             <div>
-              <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16, color: "#0A2320" }}>Destinations</h3>
+              <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16, color: "#0A2320" }}>Agency</h3>
               <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-                <button onClick={() => setSelectedDestinations([])} style={chipStyle(selectedDestinations.length === 0)}>
-                  {selectedDestinations.length === 0 && <Check size={14} color="#C1592A" />}
+                <button onClick={() => setSelectedAgencies([])} style={chipStyle(selectedAgencies.length === 0)}>
+                  {selectedAgencies.length === 0 && <Check size={14} color="#C1592A" />}
                   All
                 </button>
-                {destinations.map((dest) => (
-                  <button
-                    key={dest}
-                    onClick={() => toggleSelection(dest, selectedDestinations, setSelectedDestinations)}
-                    style={chipStyle(selectedDestinations.includes(dest))}
-                  >
-                    {dest}
+                {agencies.map((name) => (
+                  <button key={name} onClick={() => toggleAgency(name)} style={chipStyle(selectedAgencies.includes(name))}>
+                    {name}
                   </button>
                 ))}
-                {destinations.length === 0 && (
-                  <span style={{ fontSize: 14, color: "rgba(10,35,32,0.4)" }}>No destinations yet.</span>
+                {agencies.length === 0 && (
+                  <span style={{ fontSize: 14, color: "rgba(10,35,32,0.4)" }}>No agencies yet.</span>
                 )}
               </div>
             </div>
 
             <hr style={{ border: "none", borderTop: "1px solid #EFEDE7" }} />
 
-            {/* Categories -- real categories from the services table */}
-            <div>
-              <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16, color: "#0A2320" }}>Categories</h3>
-              <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-                <button onClick={() => setSelectedCategories([])} style={chipStyle(selectedCategories.length === 0)}>
-                  {selectedCategories.length === 0 && <Check size={14} color="#C1592A" />}
-                  All
-                </button>
-                {categories.map((cat) => (
-                  <button
-                    key={cat}
-                    onClick={() => toggleSelection(cat, selectedCategories, setSelectedCategories)}
-                    style={chipStyle(selectedCategories.includes(cat))}
-                  >
-                    {capitalize(cat)}
-                  </button>
-                ))}
-                {categories.length === 0 && (
-                  <span style={{ fontSize: 14, color: "rgba(10,35,32,0.4)" }}>No categories yet.</span>
-                )}
-              </div>
-            </div>
-
-            <hr style={{ border: "none", borderTop: "1px solid #EFEDE7" }} />
-
-            {/* Budget -- real min/max price range from the services table */}
+            {/* Budget -- real min/max total_price across published packages */}
             <div>
               <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16, color: "#0A2320" }}>Budget</h3>
 
-              <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", marginBottom: 32 }}>
-                <input
-                  type="checkbox"
-                  checked={showFreeEntryOnly}
-                  onChange={(e) => setShowFreeEntryOnly(e.target.checked)}
-                  style={{ width: 18, height: 18, accentColor: "#006B70" }}
-                />
-                <span style={{ fontSize: 14, color: "#0A2320" }}>Show free entry only</span>
-              </label>
-
-              {/* Real price distribution across the current catalog */}
               <div style={{ marginBottom: 24 }}>
                 <div style={{ display: "flex", alignItems: "flex-end", gap: 2, height: 60 }}>
                   {histogram.map((bucket, i) => (
@@ -244,7 +181,6 @@ export function FiltersModal({ isOpen, onClose, onApply, experiences }: FiltersM
                 </div>
               </div>
 
-              {/* Min/Max Inputs -- real, editable, drive the actual filter */}
               <div style={{ display: "flex", justifyContent: "space-between", gap: 24 }}>
                 <div style={{ flex: 1, textAlign: "center" }}>
                   <div style={{ fontSize: 13, color: "rgba(10,35,32,0.6)", marginBottom: 8 }}>Minimum</div>
@@ -256,7 +192,7 @@ export function FiltersModal({ isOpen, onClose, onApply, experiences }: FiltersM
                       min={minPrice}
                       max={budgetMax}
                       onChange={(e) => setBudgetMin(Math.min(Number(e.target.value), budgetMax))}
-                      style={{ width: 90, border: "none", outline: "none", fontSize: 14, fontWeight: 600, color: "#0A2320", textAlign: "center" }}
+                      style={{ width: 100, border: "none", outline: "none", fontSize: 14, fontWeight: 600, color: "#0A2320", textAlign: "center" }}
                     />
                   </div>
                 </div>
@@ -270,7 +206,7 @@ export function FiltersModal({ isOpen, onClose, onApply, experiences }: FiltersM
                       min={budgetMin}
                       max={maxPrice}
                       onChange={(e) => setBudgetMax(Math.max(Number(e.target.value), budgetMin))}
-                      style={{ width: 90, border: "none", outline: "none", fontSize: 14, fontWeight: 600, color: "#0A2320", textAlign: "center" }}
+                      style={{ width: 100, border: "none", outline: "none", fontSize: 14, fontWeight: 600, color: "#0A2320", textAlign: "center" }}
                     />
                   </div>
                 </div>

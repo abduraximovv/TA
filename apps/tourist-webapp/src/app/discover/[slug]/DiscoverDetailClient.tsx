@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { ArrowLeft, MapPin, Star } from "lucide-react";
 import type { Destination, DestinationReviewWithAuthor } from "@repo/database";
 import { DestinationOpinionForm } from "@/components/destinations/DestinationOpinionForm";
+import { Breadcrumb } from "@/components/navigation/Breadcrumb";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -32,14 +33,14 @@ export function DiscoverDetailClient({ destination, opinions, isLoggedIn }: Disc
           src={
             destination.hero_image_url ||
             destination.image_url ||
-            "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=1800"
+            "https://images.unsplash.com/photo-1733586092622-1b3201e802a5?q=80&w=1800"
           }
           alt={destination.name}
           style={{ width: "100%", height: "100%", objectFit: "cover" }}
         />
         <div className="overlay-gradient-bottom" style={{ position: "absolute", inset: 0 }} />
 
-        <div style={{ position: "absolute", top: 0, left: 0, width: "100%", padding: 20 }}>
+        <div style={{ position: "absolute", top: 0, left: 0, width: "100%", padding: 20, display: "flex", alignItems: "center", gap: 16 }}>
           <Link
             href="/discover"
             style={{
@@ -53,10 +54,12 @@ export function DiscoverDetailClient({ destination, opinions, isLoggedIn }: Disc
               alignItems: "center",
               justifyContent: "center",
               textDecoration: "none",
+              flexShrink: 0,
             }}
           >
             <ArrowLeft style={{ width: 20, height: 20, color: "#FFFFFF" }} />
           </Link>
+          <Breadcrumb light items={[{ label: "Destinations", href: "/discover" }, { label: destination.name }]} style={{ padding: 0 }} />
         </div>
 
         <motion.div

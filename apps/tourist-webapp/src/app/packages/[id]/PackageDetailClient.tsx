@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { ArrowLeft, Package, Calendar, Star } from "lucide-react";
 import { PackageBookingModal } from "@/components/booking/PackageBookingModal";
 import type { ItineraryDetail, ReviewWithAuthor } from "@repo/database";
+import { Breadcrumb } from "@/components/navigation/Breadcrumb";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -36,6 +37,7 @@ export function PackageDetailClient({ itinerary, reviews, isLoggedIn }: PackageD
         style={{ background: "#0A2320", color: "#FFFFFF", paddingTop: 112, paddingBottom: 48 }}
       >
         <div style={{ maxWidth: 900, margin: "0 auto", padding: "0 56px" }}>
+          <Breadcrumb light items={[{ label: "Packages", href: "/packages" }, { label: itinerary.title }]} style={{ padding: 0, marginBottom: 16 }} />
           <Link
             href="/packages"
             style={{

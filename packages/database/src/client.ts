@@ -74,19 +74,21 @@ export interface ItineraryWithMeta extends Itinerary {
   agency_name: string | null;
   item_count: number;
   image_url: string | null;
+  /** Distinct cities covered by this itinerary's services, derived from real data (not hardcoded). */
+  cities: string[];
 }
 
 export const getApprovedItineraries = async (): Promise<ItineraryWithMeta[]> => {
   const supabase = getSupabase();
   const { data, error } = await supabase
     .from("itineraries")
-    .select("*, itinerary_items(id, sort_order, services(image_url))")
+    .select("*, itinerary_items(id, sort_order, services(image_url, city))")
     .neq("status", "draft")
     .order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
 
   const rows = (data ?? []) as unknown as (Itinerary & {
-    itinerary_items: { id: string; sort_order: number; services: { image_url: string | null } | null }[];
+    itinerary_items: { id: string; sort_order: number; services: { image_url: string | null; city: string | null } | null }[];
   })[];
 
   // Batch-fetch agency names from user_profiles
@@ -122,6 +124,9 @@ export const getApprovedItineraries = async (): Promise<ItineraryWithMeta[]> => 
       [...(r.itinerary_items ?? [])]
         .sort((a, b) => a.sort_order - b.sort_order)
         .find(item => item.services?.image_url)?.services?.image_url ?? null,
+    cities: Array.from(
+      new Set((r.itinerary_items ?? []).map(item => item.services?.city).filter((c): c is string => !!c))
+    ).sort(),
   }));
 };
 

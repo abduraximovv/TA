@@ -50,7 +50,7 @@ const FALLBACK_LIST = [
 // is itself a broken/nonexistent Unsplash ID -- see note to the user about fixing that at the source too.
 const FALLBACK_IMAGES: Record<string, string> = {
   Tashkent: "https://images.unsplash.com/photo-1715966743489-0ac1138420a5?q=80&w=800",
-  Samarkand: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=800",
+  Samarkand: "https://images.unsplash.com/photo-1733586092622-1b3201e802a5?q=80&w=800",
   Bukhara: "https://images.unsplash.com/photo-1601918774946-25832a4be0d6?q=80&w=800",
   Khiva: "https://images.unsplash.com/photo-1601918774946-25832a4be0d6?q=80&w=800",
   Chimgan: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=800",
@@ -76,12 +76,14 @@ export function KnowTheDestinationsSection({ destinations }: Props) {
           tags: d.region || FALLBACK_LIST[i % FALLBACK_LIST.length].tags,
           temp: FALLBACK_LIST[i % FALLBACK_LIST.length].temp,
           image: d.image_url,
+          description: d.description,
           lat: d.latitude ?? KNOWN_COORDS[d.name]?.lat ?? null,
           lng: d.longitude ?? KNOWN_COORDS[d.name]?.lng ?? null,
         }))
       : FALLBACK_LIST.map((f) => ({
           ...f,
           image: null as string | null,
+          description: null as string | null,
           lat: KNOWN_COORDS[f.name]?.lat ?? null,
           lng: KNOWN_COORDS[f.name]?.lng ?? null,
         }));
@@ -90,7 +92,14 @@ export function KnowTheDestinationsSection({ destinations }: Props) {
     () =>
       list
         .filter((item): item is typeof item & { lat: number; lng: number } => item.lat !== null && item.lng !== null)
-        .map((item, i) => ({ name: item.name, lat: item.lat, lng: item.lng, featured: i < 3, image: getValidImage(item.name, item.image) })),
+        .map((item, i) => ({
+          name: item.name,
+          lat: item.lat,
+          lng: item.lng,
+          featured: i < 3,
+          image: getValidImage(item.name, item.image),
+          description: item.description,
+        })),
     [list, failedImages]
   );
 
@@ -109,15 +118,15 @@ export function KnowTheDestinationsSection({ destinations }: Props) {
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "400px 1fr", gap: 32 }}>
-        {/* Left: scrollable destination list with large cards */}
+      <div style={{ display: "grid", gridTemplateColumns: "360px 1fr", gap: 32 }}>
+        {/* Left: scrollable destination list with full-size photo cards */}
         <div
           className="scrollbar-hide"
           style={{
             display: "flex",
             flexDirection: "column",
-            gap: 24,
-            maxHeight: 640,
+            gap: 18,
+            maxHeight: 700,
             overflowY: "auto",
             paddingRight: 8,
           }}
@@ -142,18 +151,18 @@ export function KnowTheDestinationsSection({ destinations }: Props) {
               <div
                 style={{
                   width: "100%",
-                  height: 200,
+                  height: 220,
                   position: "relative",
                   background: "#EFEDE7",
                 }}
               >
                 {item.image || FALLBACK_IMAGES[item.name] ? (
-                  <Image 
-                    src={getValidImage(item.name, item.image)} 
-                    alt={item.name} 
-                    fill 
-                    className="object-cover" 
-                    sizes="400px" 
+                  <Image
+                    src={getValidImage(item.name, item.image)}
+                    alt={item.name}
+                    fill
+                    className="object-cover"
+                    sizes="360px"
                     onError={() => {
                       setFailedImages(prev => new Set(prev).add(item.name));
                     }}
@@ -164,7 +173,7 @@ export function KnowTheDestinationsSection({ destinations }: Props) {
                   </div>
                 )}
               </div>
-              <div style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: 12 }}>
+              <div style={{ padding: "18px 20px", display: "flex", flexDirection: "column", gap: 10 }}>
                 <div
                   style={{
                     display: "flex",
@@ -202,7 +211,7 @@ export function KnowTheDestinationsSection({ destinations }: Props) {
                 <div
                   style={{
                     fontFamily: "'Playfair Display', serif",
-                    fontSize: 24,
+                    fontSize: 22,
                     fontWeight: 700,
                     color: "#0A2320",
                   }}
@@ -218,10 +227,13 @@ export function KnowTheDestinationsSection({ destinations }: Props) {
         <div
           style={{
             position: "relative",
+            // Establishes a new stacking context so Leaflet's internal z-index (its zoom
+            // controls run up to 1000) can never render above the site's fixed navbar.
+            zIndex: 0,
             borderRadius: 24,
             overflow: "hidden",
             background: "#E5E3DD",
-            minHeight: 640,
+            minHeight: 700,
             border: "1px solid #EFEDE7",
           }}
         >

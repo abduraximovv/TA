@@ -568,8 +568,8 @@ const DESTINATIONS = [
     region: "Samarkand Region",
     description: "The jewel of the Silk Road, home to the turquoise domes of Registan Square.",
     body: "Samarkand has drawn travelers along the Silk Road for over two thousand years. Its Registan Square, framed by three monumental madrasas, is one of the most photographed sights in Central Asia, but the city rewards slower exploration too: the Shah-i-Zinda necropolis, the Gur-e-Amir mausoleum, and the working silk paper mills just outside town. Mornings are best spent wandering the old quarter before the day-trip crowds arrive; evenings bring the Registan's light show and the smell of fresh non bread from neighborhood tandirs.",
-    image_url: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=1200",
-    hero_image_url: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=1800",
+    image_url: "https://images.unsplash.com/photo-1733586092622-1b3201e802a5?q=80&w=1200",
+    hero_image_url: "https://images.unsplash.com/photo-1733586092622-1b3201e802a5?q=80&w=1800",
     gallery_images: [
       "https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?q=80&w=1200",
       "https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=1200",
@@ -600,7 +600,7 @@ const DESTINATIONS = [
     description: "A fortified desert city where the entire walled inner town is a UNESCO site.",
     body: "Khiva's Ichan-Kala is the most complete example of a fortified Central Asian city, its mudbrick walls enclosing minarets, madrasas, and palaces largely unchanged since the 19th century. It's small enough to explore fully on foot in a day, but the light at sunrise and sunset over the Kalta Minor minaret is worth staying an extra night for. Just outside the walls, Khorezm's carpet weavers still work traditional looms passed down through generations.",
     image_url: "https://images.unsplash.com/photo-1601918774946-25832a4be0d6?q=80&w=1200",
-    hero_image_url: "https://images.unsplash.com/photo-1591901206811-cb341f9e6da8?q=80&w=1800",
+    hero_image_url: "https://images.unsplash.com/photo-1601918774946-25832a4be0d6?q=80&w=1800",
     gallery_images: [
       "https://images.unsplash.com/photo-1528747045269-390fe33c19f2?q=80&w=1200",
     ],
@@ -613,8 +613,8 @@ const DESTINATIONS = [
     region: "Tashkent",
     description: "Uzbekistan's modern capital, blending Soviet-era metro art with a rebuilt old town.",
     body: "Tashkent is where most journeys through Uzbekistan begin and end, and it's worth more than a layover. The Tashkent Metro doubles as an underground art gallery, each station themed around a different piece of the country's history. Chorsu Bazaar's blue-domed hall is one of the best places in the country to see Uzbek daily life up close, and the Museum of Applied Arts gives useful context before heading out to Samarkand or Bukhara.",
-    image_url: "https://images.unsplash.com/photo-1596401057633-54ceb50f7e33?q=80&w=1200",
-    hero_image_url: "https://images.unsplash.com/photo-1596401057633-54ceb50f7e33?q=80&w=1800",
+    image_url: "https://images.unsplash.com/photo-1715966743489-0ac1138420a5?q=80&w=1200",
+    hero_image_url: "https://images.unsplash.com/photo-1715966743489-0ac1138420a5?q=80&w=1800",
     gallery_images: [
       "https://images.unsplash.com/photo-1483728642387-6c3bdd6c93e5?q=80&w=1200",
     ],
@@ -627,7 +627,7 @@ const DESTINATIONS = [
     region: "Navoi Region",
     description: "Desert camps, camel treks, and the surprising blue of man-made Lake Aydarkul.",
     body: "Nurata sits at the edge of the Kyzylkum Desert, historically a waypoint for caravans and pilgrims visiting the Nur-Ota spring. Today it's the easiest access point to yurt camps out on the desert steppe, where nights bring some of the clearest stargazing in the country. Lake Aydarkul, formed by an irrigation accident in the 1960s, now supports flamingos, pelicans, and a small fishing community alongside the tourist camps.",
-    image_url: "https://images.unsplash.com/photo-1541364501234-7096e2ccb898?q=80&w=1200",
+    image_url: "https://images.unsplash.com/photo-1694167232441-fd7a2c238d19?q=80&w=1200",
     hero_image_url: "https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?q=80&w=1800",
     gallery_images: [
       "https://images.unsplash.com/photo-1439066615861-d1af74d74000?q=80&w=1200",

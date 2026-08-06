@@ -20,7 +20,7 @@ const FALLBACK_EVENTS = [
     start_date: "2026-08-24",
     end_date: "2026-08-28",
     image_url:
-      "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=900",
+      "https://images.unsplash.com/photo-1733586092622-1b3201e802a5?q=80&w=900",
     ticket_url: "/discover",
   },
   {

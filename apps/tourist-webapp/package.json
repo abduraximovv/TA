@@ -37,6 +37,7 @@
   },
   "devDependencies": {
     "@repo/config": "workspace:*",
+    "@types/geojson": "^7946.0.16",
     "@types/leaflet": "^1.9.22",
     "@types/mapbox-gl": "^3.5.0",
     "@types/node": "^20.11.0",

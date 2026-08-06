@@ -1,11 +1,14 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import type { ItineraryWithMeta } from "@repo/database";
-import { Package, Calendar, ArrowRight } from "lucide-react";
+import { Package, Calendar, ArrowRight, Search, Check, SlidersHorizontal } from "lucide-react";
+import { Breadcrumb } from "@/components/navigation/Breadcrumb";
+import { PageHero } from "@/components/PageHero";
+import { PackageFiltersModal, type AppliedPackageFilters } from "@/components/packages/PackageFiltersModal";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -25,55 +28,207 @@ const FALLBACK_IMAGES = [
 ];
 
 export function PackagesClient({ itineraries }: { itineraries: ItineraryWithMeta[] }) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedDestination, setSelectedDestination] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [advancedFilters, setAdvancedFilters] = useState<AppliedPackageFilters | null>(null);
+
+  // Destinations covered, derived from the real itineraries' own services -- never hardcoded.
+  const destinations = React.useMemo(
+    () => Array.from(new Set(itineraries.flatMap((i) => i.cities))).sort(),
+    [itineraries]
+  );
+
+  const activeAdvancedCount = advancedFilters
+    ? (advancedFilters.agencies.length > 0 ? 1 : 0) + (advancedFilters.budgetActive ? 1 : 0)
+    : 0;
+
+  const filteredItineraries = React.useMemo(() => {
+    return itineraries.filter((itin) => {
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const matchesTitle = itin.title.toLowerCase().includes(query);
+        const matchesDescription = itin.description?.toLowerCase().includes(query) || false;
+        const matchesAgency = itin.agency_name?.toLowerCase().includes(query) || false;
+        if (!matchesTitle && !matchesDescription && !matchesAgency) return false;
+      }
+
+      if (selectedDestination && !itin.cities.includes(selectedDestination)) return false;
+
+      if (advancedFilters) {
+        if (advancedFilters.agencies.length > 0 && (!itin.agency_name || !advancedFilters.agencies.includes(itin.agency_name))) {
+          return false;
+        }
+        const price = Number(itin.total_price) || 0;
+        if (price < advancedFilters.budget.min || price > advancedFilters.budget.max) return false;
+      }
+
+      return true;
+    });
+  }, [itineraries, searchQuery, selectedDestination, advancedFilters]);
+
   return (
-    <main style={{ minHeight: "100vh", paddingTop: 112, paddingBottom: 96, background: "#F9F8F5" }}>
+    <main style={{ minHeight: "100vh", paddingBottom: 96, background: "#F9F8F5" }}>
       <div style={{ maxWidth: 1600, margin: "0 auto", padding: "0 56px" }}>
+        <Breadcrumb items={[{ label: "Packages" }]} style={{ marginBottom: 20, paddingTop: 112 }} />
+
+        <PageHero
+          title="Packages"
+          eyebrow="Curated by Verified Agencies"
+          image="https://images.unsplash.com/photo-1733586092622-1b3201e802a5?q=80&w=2000"
+          alt="Registan Square, Samarkand"
+        />
+
         <motion.header
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-          style={{ marginBottom: 48 }}
+          style={{ marginBottom: 32 }}
         >
-          <div
-            style={{
-              fontFamily: "'JetBrains Mono', monospace",
-              fontSize: 12,
-              letterSpacing: "0.1em",
-              textTransform: "uppercase",
-              color: "#006B70",
-              marginBottom: 14,
-            }}
-          >
-            Curated by Verified Agencies
-          </div>
-          <h1
-            style={{
-              fontFamily: "'Playfair Display', serif",
-              fontSize: 48,
-              fontWeight: 600,
-              color: "#0A2320",
-              lineHeight: 1.1,
-              marginBottom: 12,
-            }}
-          >
-            Tour <span className="text-gold-400">Packages</span>
-          </h1>
           <p style={{ fontSize: 17, color: "rgba(10,35,32,0.6)", maxWidth: 560 }}>
             Curated multi-day itineraries crafted by verified travel agencies.
           </p>
         </motion.header>
 
-        {itineraries.length > 0 ? (
+        {/* Search + Filters */}
+        <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 12, marginBottom: 40 }}>
+          <div style={{ position: "relative" }}>
+            <Search size={16} color="rgba(10,35,32,0.4)" style={{ position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)" }} />
+            <input
+              type="text"
+              placeholder="Search packages"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{
+                padding: "12px 16px 12px 40px",
+                borderRadius: 12,
+                border: "1px solid transparent",
+                background: "#FFFFFF",
+                fontSize: 14,
+                width: 240,
+                outline: "none",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+              }}
+            />
+          </div>
+
+          <button
+            onClick={() => setIsModalOpen(true)}
+            style={{
+              position: "relative",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "12px 24px",
+              borderRadius: 12,
+              border: "none",
+              background: "#006B70",
+              color: "#FFFFFF",
+              fontSize: 14,
+              fontWeight: 600,
+              cursor: "pointer",
+            }}
+          >
+            <SlidersHorizontal size={16} /> Filters
+            {activeAdvancedCount > 0 && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: -6,
+                  right: -6,
+                  background: "#C1592A",
+                  color: "#FFF",
+                  fontSize: 10,
+                  fontWeight: 700,
+                  width: 18,
+                  height: 18,
+                  borderRadius: "50%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                {activeAdvancedCount}
+              </div>
+            )}
+          </button>
+
+          {/* Destination chips -- real cities covered by published packages */}
+          <button
+            onClick={() => setSelectedDestination(null)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "12px 20px",
+              borderRadius: 12,
+              border: selectedDestination === null ? "1px solid #0A2320" : "1px solid #EFEDE7",
+              background: "#FFFFFF",
+              color: selectedDestination === null ? "#0A2320" : "rgba(10,35,32,0.6)",
+              fontSize: 14,
+              fontWeight: selectedDestination === null ? 600 : 500,
+              cursor: "pointer",
+            }}
+          >
+            {selectedDestination === null && <Check size={14} />}
+            All
+          </button>
+          {destinations.map((city) => {
+            const isActive = selectedDestination === city;
+            return (
+              <button
+                key={city}
+                onClick={() => setSelectedDestination(isActive ? null : city)}
+                style={{
+                  padding: "12px 20px",
+                  borderRadius: 12,
+                  border: isActive ? "1px solid #0A2320" : "1px solid #EFEDE7",
+                  background: "#FFFFFF",
+                  color: isActive ? "#0A2320" : "rgba(10,35,32,0.6)",
+                  fontSize: 14,
+                  fontWeight: isActive ? 600 : 500,
+                  cursor: "pointer",
+                }}
+              >
+                {city}
+              </button>
+            );
+          })}
+        </div>
+
+        {filteredItineraries.length > 0 ? (
           <motion.div
             initial="hidden"
             animate="visible"
             variants={staggerContainer}
             style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(360px, 1fr))", gap: 28 }}
           >
-            {itineraries.map((itin, i) => (
+            {filteredItineraries.map((itin, i) => (
               <PackageCard key={itin.id} itinerary={itin} fallback={FALLBACK_IMAGES[i % FALLBACK_IMAGES.length]} />
             ))}
           </motion.div>
+        ) : itineraries.length > 0 ? (
+          <div
+            style={{
+              width: "100%",
+              padding: "80px 24px",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              border: "1px dashed rgba(10,35,32,0.15)",
+              borderRadius: 8,
+              background: "#FFFFFF",
+            }}
+          >
+            <Package style={{ width: 40, height: 40, color: "rgba(10,35,32,0.2)", marginBottom: 16 }} />
+            <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 600, color: "#0A2320", marginBottom: 8 }}>
+              No packages match your filters
+            </h2>
+            <p style={{ color: "rgba(10,35,32,0.5)", fontSize: 14, textAlign: "center" }}>
+              Try clearing a filter or searching for something else.
+            </p>
+          </div>
         ) : (
           <div
             style={{
@@ -101,6 +256,13 @@ export function PackagesClient({ itineraries }: { itineraries: ItineraryWithMeta
           </div>
         )}
       </div>
+
+      <PackageFiltersModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onApply={(filters) => setAdvancedFilters(filters)}
+        itineraries={itineraries}
+      />
     </main>
   );
 }

@@ -7,6 +7,8 @@ import { Textarea } from "@repo/ui/src/components/textarea";
 import { Button } from "@repo/ui/src/components/Button";
 import { submitContactMessage } from "./actions";
 import { Footer } from "@/components/landing/Footer";
+import { Breadcrumb } from "@/components/navigation/Breadcrumb";
+import { PageHero } from "@/components/PageHero";
 
 export default function ContactPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -44,15 +46,23 @@ export default function ContactPage() {
 
       <main className="flex-grow pt-32 pb-24 relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          
+          <Breadcrumb items={[{ label: "Contact" }]} style={{ marginBottom: 20 }} />
+
+          <PageHero
+            title="Contact"
+            eyebrow="We're Here to Help"
+            image="https://images.unsplash.com/photo-1764423075260-cfa7908758eb?q=80&w=2000"
+            alt="Uzbek craftsmanship"
+          />
+
           {/* Header Section */}
           <div className="text-center mb-20 max-w-3xl mx-auto">
-            <h1 className="text-5xl md:text-6xl font-serif font-bold text-[#0A2320] mb-6 leading-tight">
+            <h2 className="text-5xl md:text-6xl font-serif font-bold text-[#0A2320] mb-6 leading-tight">
               Let's Connect on the <br/>
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#78006E] to-[#C5A880]">
                 Silk Road
               </span>
-            </h1>
+            </h2>
             <p className="text-lg md:text-xl text-[#0A2320]/70 font-sans">
               Whether you need help planning your journey through ancient cities or have a specific inquiry, our dedicated team is here to assist you.
             </p>

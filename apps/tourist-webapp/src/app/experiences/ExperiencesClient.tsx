@@ -4,82 +4,53 @@ import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Search, MapPin, Check, ChevronDown, SlidersHorizontal } from "lucide-react";
+import { Search, Check, ChevronDown, SlidersHorizontal } from "lucide-react";
 import type { Service } from "@repo/database";
 import { Footer } from "@/components/landing/Footer";
 
-import { FiltersModal } from "@/components/experiences/FiltersModal";
+import { FiltersModal, type AppliedFilters } from "@/components/experiences/FiltersModal";
+import { Breadcrumb } from "@/components/navigation/Breadcrumb";
+import { PageHero } from "@/components/PageHero";
 
 interface ExperiencesClientProps {
   experiences: Service[];
 }
 
-const MOCK_EXPERIENCES: Partial<Service>[] = [
-  {
-    id: "mock-1",
-    title: "Hiking Bani Quraydha Volcano Guided Experience",
-    city: "Medina",
-    category: "Experience",
-    price: 350,
-    currency: "UZS",
-    image_url: "https://images.unsplash.com/photo-1541845157-a6d2d100c931?q=80&w=800",
-  },
-  {
-    id: "mock-2",
-    title: "Camel Farm and Desert Dinner Storytelling",
-    city: "Riyadh",
-    category: "Attraction",
-    price: 600,
-    currency: "UZS",
-    image_url: "https://images.unsplash.com/photo-1548232979-6c557ee14752?q=80&w=800",
-  },
-  {
-    id: "mock-3",
-    title: "15-Day Ultimate Local Experience",
-    city: "Jeddah",
-    category: "Event",
-    price: 5283,
-    currency: "UZS",
-    image_url: "https://images.unsplash.com/photo-1582558661609-02685764e565?q=80&w=800",
-  },
-  {
-    id: "mock-4",
-    title: "4-Day Tour: City & Coast Inclusive",
-    city: "Jeddah",
-    category: "Experience",
-    price: 5434,
-    currency: "UZS",
-    image_url: "https://images.unsplash.com/photo-1582201942988-13e60cb6733f?q=80&w=800",
-  },
-  {
-    id: "mock-5",
-    title: "Traditional Samarkand Bread Making Class",
-    city: "Samarkand",
-    category: "Attraction",
-    price: 150,
-    currency: "UZS",
-    image_url: "https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=800",
-  },
-];
+function capitalize(s: string) {
+  return s.length ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+}
 
 export function ExperiencesClient({ experiences }: ExperiencesClientProps) {
-  // Combine real database data with mock data so that category filters are never empty for testing
-  const displayExperiences = [...experiences, ...(MOCK_EXPERIENCES as Service[])];
-
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState("All");
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [selectedDestination, setSelectedDestination] = useState<string | null>(null);
-  
+
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [advancedFilters, setAdvancedFilters] = useState<any>(null);
+  const [advancedFilters, setAdvancedFilters] = useState<AppliedFilters | null>(null);
 
-  const filters = ["All", "Destinations", "Attraction", "Experience", "Event", "Categories"];
+  // Real cities/categories from the services table -- the quick-filter chips are never hardcoded.
+  const destinations = React.useMemo(
+    () => Array.from(new Set(experiences.map((e) => e.city).filter((c): c is string => !!c))).sort(),
+    [experiences]
+  );
+  const categories = React.useMemo(
+    () => Array.from(new Set(experiences.map((e) => e.category).filter((c): c is string => !!c))).sort(),
+    [experiences]
+  );
+  const filters = ["All", "Destinations", ...categories];
 
-  // Fast client-side filtering without lag
+  const activeAdvancedCount = advancedFilters
+    ? (advancedFilters.destinations.length > 0 ? 1 : 0) +
+      (advancedFilters.categories.length > 0 ? 1 : 0) +
+      (advancedFilters.showFreeEntryOnly ? 1 : 0) +
+      (advancedFilters.budgetActive ? 1 : 0)
+    : 0;
+
+  // Fast client-side filtering, entirely against the real experiences passed in from the database.
   const filteredExperiences = React.useMemo(() => {
-    return displayExperiences.filter((exp) => {
+    return experiences.filter((exp) => {
       // 1. Search Query Filter
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
@@ -88,50 +59,55 @@ export function ExperiencesClient({ experiences }: ExperiencesClientProps) {
         if (!matchesTitle && !matchesCity) return false;
       }
 
-      // 2. Category Filter (Simple Top Chips)
-      if (activeFilter === "Destinations" && selectedDestination) {
-        if (exp.city !== selectedDestination) return false;
-      } else if (activeFilter !== "All" && activeFilter !== "Destinations" && activeFilter !== "Categories") {
-        if (exp.category?.toLowerCase() !== activeFilter.toLowerCase()) {
-          return false;
-        }
+      // 2. Quick Filter Chips (destination or category, both sourced from real data)
+      if (activeFilter === "Destinations") {
+        if (selectedDestination && exp.city !== selectedDestination) return false;
+      } else if (activeFilter !== "All") {
+        if (exp.category !== activeFilter) return false;
       }
 
       // 3. Advanced Modal Filters
       if (advancedFilters) {
-        if (advancedFilters.type !== "All" && exp.category?.toLowerCase() !== advancedFilters.type.toLowerCase()) {
-          return false;
-        }
         if (advancedFilters.destinations.length > 0 && (!exp.city || !advancedFilters.destinations.includes(exp.city))) {
           return false;
         }
-        if (advancedFilters.categories.length > 0 && (!exp.category || !advancedFilters.categories.includes(exp.category))) {
+        if (advancedFilters.categories.length > 0 && !advancedFilters.categories.includes(exp.category)) {
+          return false;
+        }
+        if (advancedFilters.showFreeEntryOnly && exp.price > 0) {
+          return false;
+        }
+        if (exp.price < advancedFilters.budget.min || exp.price > advancedFilters.budget.max) {
           return false;
         }
       }
 
       return true;
     });
-  }, [displayExperiences, searchQuery, activeFilter, selectedDestination, advancedFilters]);
+  }, [experiences, searchQuery, activeFilter, selectedDestination, advancedFilters]);
 
   return (
     <main className="min-h-screen bg-sand-50 font-sans">
       <div style={{ maxWidth: 1440, margin: "0 auto", padding: "120px 56px 96px" }}>
-        
-        {/* Page Title */}
-        <h1 className="font-serif text-[64px] font-bold text-[#111111] mb-10 tracking-tight">
-          Things to do
-        </h1>
+        <Breadcrumb items={[{ label: "Experiences" }]} style={{ marginBottom: 20 }} />
+
+        <PageHero
+          title="Things To Do"
+          eyebrow="Browse by Interest"
+          image="https://images.unsplash.com/photo-1757005550139-e05b63ec88d9?q=80&w=2000"
+          alt="Things to do in Uzbekistan"
+          style={{ marginBottom: 40 }}
+        />
 
         {/* Filter Bar */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 16, marginBottom: 48 }}>
-          
+
           <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
             {/* Search Input */}
             <div style={{ position: "relative" }}>
               <Search
                 size={16}
-                color="#888"
+                color="rgba(10,35,32,0.4)"
                 style={{ position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)" }}
               />
               <input
@@ -142,10 +118,9 @@ export function ExperiencesClient({ experiences }: ExperiencesClientProps) {
                 style={{
                   padding: "12px 16px 12px 40px",
                   borderRadius: 12,
-                  border: "1px solid transparent", // matching screenshot's flat look
+                  border: "1px solid transparent",
                   background: "#FFFFFF",
                   fontSize: 14,
-
                   width: 240,
                   outline: "none",
                   boxShadow: "0 2px 8px rgba(0,0,0,0.04)"
@@ -153,7 +128,7 @@ export function ExperiencesClient({ experiences }: ExperiencesClientProps) {
               />
             </div>
 
-            {/* Filters Button (Purple) */}
+            {/* Filters Button */}
             <button
               onClick={() => setIsModalOpen(true)}
               style={{
@@ -164,7 +139,7 @@ export function ExperiencesClient({ experiences }: ExperiencesClientProps) {
                 padding: "12px 24px",
                 borderRadius: 12,
                 border: "none",
-                background: "#82165b", // matching the purple in the screenshot
+                background: "#006B70",
                 color: "#FFFFFF",
                 fontSize: 14,
                 fontWeight: 600,
@@ -172,37 +147,35 @@ export function ExperiencesClient({ experiences }: ExperiencesClientProps) {
               }}
             >
               <SlidersHorizontal size={16} /> Filters
-              <div
-                style={{
-                  position: "absolute",
-                  top: -6,
-                  right: -6,
-                  background: "#e3007b", // bright pink badge
-                  color: "#FFF",
-                  fontSize: 10,
-                  fontWeight: 700,
-                  width: 18,
-                  height: 18,
-                  borderRadius: "50%",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                1
-              </div>
+              {activeAdvancedCount > 0 && (
+                <div
+                  style={{
+                    position: "absolute",
+                    top: -6,
+                    right: -6,
+                    background: "#C1592A",
+                    color: "#FFF",
+                    fontSize: 10,
+                    fontWeight: 700,
+                    width: 18,
+                    height: 18,
+                    borderRadius: "50%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  {activeAdvancedCount}
+                </div>
+              )}
             </button>
 
-            {/* Filter Chips */}
+            {/* Filter Chips -- "All", a "Destinations" dropdown, then one chip per real category */}
             {filters.map((filter) => {
-              const hasDropdown = filter === "Destinations" || filter === "Categories";
+              const hasDropdown = filter === "Destinations";
               const isActive = activeFilter === filter;
               const isDropdownOpen = activeDropdown === filter;
-              
-              // Example dropdown options
-              const dropdownOptions = 
-                filter === "Destinations" ? ["All Destinations", "Tashkent", "Samarkand", "Bukhara", "Khiva", "Riyadh", "Medina", "Jeddah"] :
-                filter === "Categories" ? ["All Categories", "Tour", "Workshop", "Culinary"] : [];
+              const label = filter === "All" || filter === "Destinations" ? filter : capitalize(filter);
 
               return (
                 <div key={filter} style={{ position: "relative" }}>
@@ -225,28 +198,27 @@ export function ExperiencesClient({ experiences }: ExperiencesClientProps) {
                       gap: 6,
                       padding: "12px 20px",
                       borderRadius: 12,
-                      border: (isActive || isDropdownOpen) ? "1px solid #111" : "1px solid #EAEAEA",
+                      border: (isActive || isDropdownOpen) ? "1px solid #0A2320" : "1px solid #EFEDE7",
                       background: "#FFFFFF",
-                      color: (isActive || isDropdownOpen) ? "#111" : "#555",
+                      color: (isActive || isDropdownOpen) ? "#0A2320" : "rgba(10,35,32,0.6)",
                       fontSize: 14,
                       fontWeight: (isActive || isDropdownOpen) ? 600 : 500,
                       cursor: "pointer",
-    
                       transition: "all 0.2s",
                     }}
                   >
                     {isActive && !hasDropdown && filter === "All" && <Check size={14} />}
-                    {filter === "Destinations" && selectedDestination ? selectedDestination : filter}
+                    {filter === "Destinations" && selectedDestination ? selectedDestination : label}
                     {hasDropdown && (
-                      <ChevronDown 
-                        size={14} 
-                        color={(isActive || isDropdownOpen) ? "#111" : "#888"} 
+                      <ChevronDown
+                        size={14}
+                        color={(isActive || isDropdownOpen) ? "#0A2320" : "rgba(10,35,32,0.4)"}
                         style={{ transform: isDropdownOpen ? "rotate(180deg)" : "none", transition: "transform 0.2s" }}
                       />
                     )}
                   </button>
 
-                  {/* Dropdown Menu */}
+                  {/* Dropdown Menu -- real cities from the services table */}
                   {isDropdownOpen && hasDropdown && (
                     <div
                       style={{
@@ -254,7 +226,7 @@ export function ExperiencesClient({ experiences }: ExperiencesClientProps) {
                         top: "calc(100% + 8px)",
                         left: 0,
                         background: "#FFFFFF",
-                        border: "1px solid #EAEAEA",
+                        border: "1px solid #EFEDE7",
                         borderRadius: 12,
                         boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
                         minWidth: 200,
@@ -264,14 +236,34 @@ export function ExperiencesClient({ experiences }: ExperiencesClientProps) {
                         padding: 8,
                       }}
                     >
-                      {dropdownOptions.map((option) => (
+                      <button
+                        onClick={() => {
+                          setSelectedDestination(null);
+                          setActiveFilter("Destinations");
+                          setActiveDropdown(null);
+                        }}
+                        style={{
+                          padding: "10px 16px",
+                          textAlign: "left",
+                          background: "transparent",
+                          border: "none",
+                          fontSize: 14,
+                          fontWeight: 500,
+                          color: "#0A2320",
+                          cursor: "pointer",
+                          borderRadius: 8,
+                        }}
+                        onMouseEnter={(e) => (e.currentTarget.style.background = "#EFEDE7")}
+                        onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                      >
+                        All Destinations
+                      </button>
+                      {destinations.map((option) => (
                         <button
                           key={option}
                           onClick={() => {
-                            if (filter === "Destinations") {
-                              setSelectedDestination(option.startsWith("All") ? null : option);
-                              setActiveFilter("Destinations");
-                            }
+                            setSelectedDestination(option);
+                            setActiveFilter("Destinations");
                             setActiveDropdown(null);
                           }}
                           style={{
@@ -281,17 +273,19 @@ export function ExperiencesClient({ experiences }: ExperiencesClientProps) {
                             border: "none",
                             fontSize: 14,
                             fontWeight: 500,
-                            color: "#333",
+                            color: "#0A2320",
                             cursor: "pointer",
                             borderRadius: 8,
-          
                           }}
-                          onMouseEnter={(e) => (e.currentTarget.style.background = "#F5F5F5")}
+                          onMouseEnter={(e) => (e.currentTarget.style.background = "#EFEDE7")}
                           onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                         >
                           {option}
                         </button>
                       ))}
+                      {destinations.length === 0 && (
+                        <span style={{ padding: "10px 16px", fontSize: 13, color: "rgba(10,35,32,0.4)" }}>No destinations yet.</span>
+                      )}
                     </div>
                   )}
                 </div>
@@ -307,9 +301,9 @@ export function ExperiencesClient({ experiences }: ExperiencesClientProps) {
               gap: 8,
               padding: "12px 24px",
               borderRadius: 12,
-              border: "1px solid #EAEAEA",
+              border: "1px solid #EFEDE7",
               background: "#FFFFFF",
-              color: "#111",
+              color: "#0A2320",
               fontSize: 14,
               fontWeight: 600,
               cursor: "pointer",
@@ -337,7 +331,7 @@ export function ExperiencesClient({ experiences }: ExperiencesClientProps) {
               >
                 <Link href={`/service/${exp.id}`} style={{ textDecoration: "none" }}>
                   <div style={{ display: "flex", flexDirection: "column", gap: 12, cursor: "pointer" }}>
-                    
+
                     {/* Thumbnail */}
                     <div
                       style={{
@@ -346,7 +340,7 @@ export function ExperiencesClient({ experiences }: ExperiencesClientProps) {
                         aspectRatio: "1/1",
                         borderRadius: 20,
                         overflow: "hidden",
-                        backgroundColor: "#EAEAEA"
+                        backgroundColor: "#EFEDE7"
                       }}
                     >
                       <Image
@@ -363,11 +357,11 @@ export function ExperiencesClient({ experiences }: ExperiencesClientProps) {
                       <div className="font-mono text-[10px] text-teal-700 font-semibold uppercase tracking-widest">
                         {exp.city?.toUpperCase() || "TASHKENT"}
                       </div>
-                      
+
                       <h3 className="font-serif text-[18px] font-bold text-emerald-950 leading-[1.3] line-clamp-2">
                         {exp.title}
                       </h3>
-                      
+
                       <div className="mt-2 font-mono text-[15px] font-bold text-emerald-950 flex items-baseline gap-1">
                         {exp.price?.toLocaleString() || "350,000"} <span className="text-[9px] text-gray-400">{exp.currency === "UZS" ? "UZS" : "$"}</span>
                       </div>
@@ -378,22 +372,20 @@ export function ExperiencesClient({ experiences }: ExperiencesClientProps) {
               </motion.div>
             ))
           ) : (
-            <div style={{ gridColumn: "1 / -1", padding: 64, textAlign: "center", color: "#888" }}>
+            <div style={{ gridColumn: "1 / -1", padding: 64, textAlign: "center", color: "rgba(10,35,32,0.4)" }}>
               No experiences found.
             </div>
           )}
         </div>
       </div>
-      
+
       <Footer />
 
-      <FiltersModal 
+      <FiltersModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onApply={(filters) => {
-          setAdvancedFilters(filters);
-          // Optional: sync top chips with modal
-        }}
+        onApply={(filters) => setAdvancedFilters(filters)}
+        experiences={experiences}
       />
     </main>
   );
