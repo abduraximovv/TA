@@ -97,12 +97,14 @@ export function PackagesSection({ itineraries }: Props) {
       style={{ padding: "0 0 88px", background: "#FFFFFF" }}
     >
       {/* Header */}
-      <div style={{ padding: "88px 56px 40px" }}>
+      <div style={{ padding: "clamp(56px, 10vw, 88px) var(--section-padding-x) 40px" }}>
         <div
           style={{
             display: "flex",
             alignItems: "flex-end",
             justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: 16,
             marginBottom: 4,
           }}
         >
@@ -122,7 +124,7 @@ export function PackagesSection({ itineraries }: Props) {
             <div
               style={{
                 fontFamily: "'Playfair Display', serif",
-                fontSize: 36,
+                fontSize: "var(--text-h2)",
                 fontWeight: 600,
                 color: "#0A2320",
               }}
@@ -152,7 +154,7 @@ export function PackagesSection({ itineraries }: Props) {
         style={{
           display: "flex",
           gap: 24,
-          padding: "16px 56px 28px",
+          padding: "16px var(--section-padding-x) 28px",
           overflowX: "auto",
           overflowY: "hidden",
           scrollbarWidth: "none",

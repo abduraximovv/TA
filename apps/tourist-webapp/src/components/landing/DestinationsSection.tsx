@@ -56,16 +56,18 @@ export function DestinationsSection({ destinations }: Props) {
   };
 
   return (
-    <section id="destinations" style={{ padding: "96px 0 80px", background: "#F9F8F5" }}>
+    <section id="destinations" style={{ padding: "clamp(56px, 10vw, 96px) 0 clamp(48px, 8vw, 80px)", background: "#F9F8F5" }}>
       {/* Section header */}
       <div
         style={{
           display: "flex",
           alignItems: "flex-end",
           justifyContent: "space-between",
+          flexWrap: "wrap",
+          gap: 16,
           marginBottom: 40,
-          paddingLeft: 56,
-          paddingRight: 56,
+          paddingLeft: "var(--section-padding-x)",
+          paddingRight: "var(--section-padding-x)",
         }}
       >
         <div>
@@ -84,7 +86,7 @@ export function DestinationsSection({ destinations }: Props) {
           <div
             style={{
               fontFamily: "'Playfair Display', serif",
-              fontSize: 36,
+              fontSize: "var(--text-h2)",
               fontWeight: 600,
               color: "#0A2320",
             }}
@@ -116,9 +118,9 @@ export function DestinationsSection({ destinations }: Props) {
             gap: 24,
             paddingTop: 16,
             paddingBottom: 28,
-            paddingLeft: 56,
-            paddingRight: 56,
-            scrollPaddingLeft: 56,
+            paddingLeft: "var(--section-padding-x)",
+            paddingRight: "var(--section-padding-x)",
+            scrollPaddingLeft: "var(--section-padding-x)",
             overflowX: "auto",
             overflowY: "hidden",
           }}

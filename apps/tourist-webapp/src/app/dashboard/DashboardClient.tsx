@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Map, MessageSquare, Compass, Bell } from "lucide-react";
+import { Map, Compass, Bell } from "lucide-react";
 import { useAuth } from "@repo/auth";
 import type { Destination } from "@repo/database";
 
@@ -97,7 +97,6 @@ export function DashboardClient({ trendingDestinations }: { trendingDestinations
           </h2>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 }}>
             <ToolCard href="/map" icon={Map} label="Interactive Map" />
-            <ToolCard href="/translator" icon={MessageSquare} label="Translator" />
           </div>
         </section>
 

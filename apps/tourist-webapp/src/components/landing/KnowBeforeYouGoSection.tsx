@@ -14,7 +14,7 @@ const GUIDES = [
 
 export function KnowBeforeYouGoSection() {
   return (
-    <section style={{ position: "relative", padding: "88px 56px 96px", background: "#FFFFFF", overflow: "hidden" }}>
+    <section style={{ position: "relative", padding: "clamp(56px, 10vw, 88px) var(--section-padding-x) clamp(56px, 10vw, 96px)", background: "#FFFFFF", overflow: "hidden" }}>
       {/* Faint arabesque watermark bleeding from the corner */}
       <div
         className="pattern-watermark"
@@ -45,7 +45,7 @@ export function KnowBeforeYouGoSection() {
         <div
           style={{
             fontFamily: "'Playfair Display', serif",
-            fontSize: 36,
+            fontSize: "var(--text-h2)",
             fontWeight: 600,
             color: "#0A2320",
           }}
@@ -54,7 +54,7 @@ export function KnowBeforeYouGoSection() {
         </div>
       </div>
 
-      <div style={{ position: "relative", display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 32 }}>
+      <div className="responsive-grid-4" style={{ position: "relative" }}>
         {GUIDES.map((g, i) => {
           const Icon = g.icon;
           return (

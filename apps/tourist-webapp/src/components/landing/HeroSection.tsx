@@ -145,8 +145,8 @@ export function HeroSection() {
           left: 0,
           bottom: 128,
           zIndex: 2,
-          maxWidth: "38%",
-          padding: "0 56px",
+          width: "min(92vw, 560px)",
+          padding: "0 clamp(20px, 6vw, 56px)",
         }}
       >
         <AnimatePresence mode="wait">
@@ -174,7 +174,7 @@ export function HeroSection() {
               style={{
                 fontFamily: "var(--font-serif), serif",
                 fontWeight: 600,
-                fontSize: 44,
+                fontSize: "clamp(28px, 4vw + 16px, 44px)",
                 lineHeight: 1.15,
                 color: "#FFFFFF",
                 margin: "0 0 18px",
@@ -313,7 +313,7 @@ export function HeroSection() {
           right: 0,
           bottom: 0,
           zIndex: 2,
-          padding: "0 56px 28px",
+          padding: "0 clamp(20px, 6vw, 56px) 28px",
         }}
       >
         <div

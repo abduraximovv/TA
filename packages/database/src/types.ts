@@ -86,6 +86,8 @@ export interface Service {
   is_available: boolean;
   city: string | null;
   region: string | null;
+  latitude: number | null;
+  longitude: number | null;
   rating_avg: number;
   rating_count: number;
   is_featured: boolean;
@@ -105,6 +107,7 @@ export function formatDuration(minutes: number | null): string | null {
 
 export interface Event {
   id: string;
+  slug: string | null;
   title: string;
   description: string | null;
   location: string | null;
@@ -115,6 +118,8 @@ export interface Event {
   event_type: string;
   is_featured: boolean;
   ticket_url: string | null;
+  latitude: number | null;
+  longitude: number | null;
 }
 
 export interface Database {
@@ -292,6 +297,8 @@ export interface Database {
           max_guests?: number | null;
           city?: string | null;
           region?: string | null;
+          latitude?: number | null;
+          longitude?: number | null;
           rating_avg?: number;
           rating_count?: number;
           created_at?: string;
@@ -313,6 +320,8 @@ export interface Database {
           max_guests?: number | null;
           city?: string | null;
           region?: string | null;
+          latitude?: number | null;
+          longitude?: number | null;
           rating_avg?: number;
           rating_count?: number;
           created_at?: string;

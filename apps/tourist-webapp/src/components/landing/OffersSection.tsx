@@ -53,12 +53,14 @@ const OFFERS = [
 
 export function OffersSection() {
   return (
-    <section style={{ padding: "88px 56px 96px", background: "#F9F8F5" }}>
+    <section style={{ padding: "clamp(56px, 10vw, 88px) var(--section-padding-x) clamp(56px, 10vw, 96px)", background: "#F9F8F5" }}>
       <div
         style={{
           display: "flex",
           alignItems: "flex-end",
           justifyContent: "space-between",
+          flexWrap: "wrap",
+          gap: 16,
           marginBottom: 40,
         }}
       >
@@ -78,7 +80,7 @@ export function OffersSection() {
           <div
             style={{
               fontFamily: "'Playfair Display', serif",
-              fontSize: 36,
+              fontSize: "var(--text-h2)",
               fontWeight: 600,
               color: "#0A2320",
             }}
@@ -100,13 +102,7 @@ export function OffersSection() {
         </Link>
       </div>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(4, 1fr)",
-          gap: 24,
-        }}
-      >
+      <div className="responsive-grid-4">
         {OFFERS.map((offer, i) => (
           <motion.div
             key={offer.id}

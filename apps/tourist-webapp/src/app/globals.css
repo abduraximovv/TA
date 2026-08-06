@@ -24,28 +24,52 @@
     --color-rose: #A63446;
     --color-gold: #C5A880;
 
-    /* Spacing */
+    /* Spacing -- fluid so the same token collapses to the spec's 16px mobile margin instead of
+       carrying the desktop 56px gutter onto a 375px screen. */
     --section-padding-y: 6rem;
-    --section-padding-x: 3.5rem;
+    --section-padding-x: clamp(16px, 5vw, 56px);
 
     /* Navbar */
     --navbar-height: 0px;
+    --bottom-nav-height: 64px;
 
     /* Fonts */
     --font-serif: 'Playfair Display', serif;
     --font-mono: 'JetBrains Mono', monospace;
+
+    /* Device safe areas (notches, home indicators) -- 0px on devices/browsers without them */
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-left: env(safe-area-inset-left, 0px);
+    --safe-right: env(safe-area-inset-right, 0px);
+
+    /* Fluid type scale -- clamp(min, viewport-relative, max) so headings scale smoothly between
+       a 375px phone and a 1440px+ desktop instead of jumping at breakpoints. */
+    --text-display: clamp(2.5rem, 1.6rem + 4.5vw, 5.25rem);
+    --text-h1: clamp(1.875rem, 1.4rem + 2.4vw, 3rem);
+    --text-h2: clamp(1.5rem, 1.2rem + 1.5vw, 2.25rem);
+    --text-h3: clamp(1.125rem, 1rem + 0.6vw, 1.5rem);
+    --text-body: clamp(0.9375rem, 0.9rem + 0.15vw, 1rem);
   }
 
   html {
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    /* Stops the whole page from rubber-banding vertically on mobile, which reads as broken
+       whenever a bottom tab bar or sticky footer sits right at the viewport edge. */
+    overscroll-behavior-y: none;
   }
 
   body {
     margin: 0;
     color: var(--color-text);
     background-color: #F9F8F5;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  a, button, [role="button"] {
+    -webkit-tap-highlight-color: transparent;
   }
 
   @media (min-width: 1024px) {
@@ -117,6 +141,88 @@
   .snap-x-mandatory {
     scroll-snap-type: x mandatory;
     -webkit-overflow-scrolling: touch;
+  }
+
+  /* Guarantees the 44x44px minimum touch target on any element sized smaller by its content. */
+  .tap-target {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  /* Subtle native-app press feedback -- pair with any tappable card/button/link on touch UIs.
+     Respects reduced-motion so it doesn't fight a user's OS-level preference. */
+  .tap-active {
+    transition: transform 0.12s ease, opacity 0.12s ease;
+  }
+  .tap-active:active {
+    transform: scale(0.96);
+    opacity: 0.85;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .tap-active {
+      transition: opacity 0.12s ease;
+    }
+    .tap-active:active {
+      transform: none;
+    }
+  }
+
+  /* ── Homepage grid sections that can't collapse via clamp() alone (discrete column counts,
+     not fluid spacing) -- each gets a real breakpoint stack on narrow screens. ── */
+
+  /* Know the Destinations: 360px list + map -> stacks to a single column. */
+  .know-destinations-grid {
+    display: grid;
+    grid-template-columns: 360px 1fr;
+    gap: 32px;
+  }
+  .know-destinations-list {
+    max-height: 700px;
+    overflow-y: auto;
+  }
+  @media (max-width: 860px) {
+    .know-destinations-grid {
+      grid-template-columns: 1fr;
+    }
+    .know-destinations-list {
+      max-height: none;
+      overflow-y: visible;
+    }
+  }
+
+  /* Offers / Know Before You Go: fixed 4-column grids -> auto-fit so the browser collapses
+     column count on its own as width shrinks, no breakpoint bookkeeping needed. */
+  .responsive-grid-4 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 32px;
+  }
+
+  /* Stats: fixed 5-column grid -> same auto-fit treatment, slightly narrower minimum since
+     each card is content-light (a number + a label). */
+  .responsive-grid-5 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 20px;
+  }
+
+  /* Footer link columns: 1.2fr + 3x 1fr -> stacks on mobile instead of squeezing 4 columns
+     into a 375px screen. */
+  .footer-columns-grid {
+    display: grid;
+    grid-template-columns: 1.2fr repeat(3, 1fr);
+    gap: 48px;
+  }
+  @media (max-width: 860px) {
+    .footer-columns-grid {
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+    }
+  }
+  @media (max-width: 500px) {
+    .footer-columns-grid {
+      grid-template-columns: 1fr;
+    }
   }
 
   .font-serif-display {
@@ -318,3 +424,7 @@
   }
 
 }
+
+/* Shared by EventCard (homepage "What's On" carousel + /events collection) */
+.event-card-img { transition: transform 0.7s ease-out; }
+.event-card:hover .event-card-img { transform: scale(1.05); }

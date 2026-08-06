@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { MapContainer, TileLayer, Marker, Popup, GeoJSON, useMap } from "react-leaflet";
 import L from "leaflet";
 import type { GeoJsonObject } from "geojson";
@@ -25,7 +25,7 @@ interface Props {
 // Circular, fixed size, solid brand-colored border, with the destination's photo as the
 // background image -- swap the border/background colors here to re-theme the pins.
 function pinIcon(imageUrl: string | null, active: boolean) {
-  const size = active ? 56 : 44;
+  const size = active ? 64 : 48;
   const imgHtml = imageUrl ? `<img src="${imageUrl}" style="width:100%;height:100%;object-fit:cover;" />` : "";
   return L.divIcon({
     className: "",
@@ -91,12 +91,53 @@ function CountryBorder({ url }: { url: string }) {
   );
 }
 
+// Memoized per-pin so hovering one destination doesn't recompute every other marker's icon.
+// pinIcon() builds a brand-new L.divIcon each call; without this, react-leaflet would call
+// marker.setIcon() on all six markers on every hover, which makes Leaflet tear down and
+// rebuild each <img> from scratch -- restarting (and sometimes never finishing) its load.
+const PinMarker = React.memo(function PinMarker({
+  pin,
+  active,
+  onHoverPin,
+}: {
+  pin: MapPinData;
+  active: boolean;
+  onHoverPin: (name: string | null) => void;
+}) {
+  const icon = useMemo(() => pinIcon(pin.image, active), [pin.image, active]);
+
+  return (
+    <Marker
+      position={[pin.lat, pin.lng]}
+      icon={icon}
+      eventHandlers={{
+        mouseover: () => onHoverPin(pin.name),
+        mouseout: () => onHoverPin(null),
+      }}
+      zIndexOffset={active ? 1000 : 0}
+    >
+      <Popup className="destinations-map-popup" closeButton={false}>
+        <div style={{ minWidth: 180, maxWidth: 220 }}>
+          <div style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: 16, color: "#0A2320", marginBottom: pin.description ? 4 : 0 }}>
+            {pin.name}
+          </div>
+          {pin.description && (
+            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12.5, lineHeight: 1.45, color: "rgba(10,35,32,0.65)" }}>
+              {pin.description}
+            </div>
+          )}
+        </div>
+      </Popup>
+    </Marker>
+  );
+});
+
 export function DestinationsMap({ pins, hovered, onHoverPin }: Props) {
   return (
     <MapContainer
       center={[41.3, 64.5]}
       zoom={6}
-      scrollWheelZoom={false}
+      scrollWheelZoom={true}
       style={{ width: "100%", height: "100%", background: "#F3F1EA" }}
       attributionControl={false}
     >
@@ -114,29 +155,7 @@ export function DestinationsMap({ pins, hovered, onHoverPin }: Props) {
           `pins` is populated from real destinations (see KnowTheDestinationsSection.tsx);
           swap the source array for any {name, lat, lng, image, description} list. */}
       {pins.map((pin) => (
-        <Marker
-          key={pin.name}
-          position={[pin.lat, pin.lng]}
-          icon={pinIcon(pin.image, hovered === pin.name)}
-          eventHandlers={{
-            mouseover: () => onHoverPin(pin.name),
-            mouseout: () => onHoverPin(null),
-          }}
-          zIndexOffset={hovered === pin.name ? 1000 : 0}
-        >
-          <Popup className="destinations-map-popup" closeButton={false}>
-            <div style={{ minWidth: 180, maxWidth: 220 }}>
-              <div style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: 16, color: "#0A2320", marginBottom: pin.description ? 4 : 0 }}>
-                {pin.name}
-              </div>
-              {pin.description && (
-                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12.5, lineHeight: 1.45, color: "rgba(10,35,32,0.65)" }}>
-                  {pin.description}
-                </div>
-              )}
-            </div>
-          </Popup>
-        </Marker>
+        <PinMarker key={pin.name} pin={pin} active={hovered === pin.name} onHoverPin={onHoverPin} />
       ))}
     </MapContainer>
   );

@@ -29,7 +29,9 @@ export const metadata = {
 };
 
 export const viewport = {
-  themeColor: "#006B70",
+  // Matches the navbar's actual solid background (rgba(10,35,32,...)) and manifest.ts's
+  // theme_color, so the OS status bar / PWA chrome never clashes with the header underneath it.
+  themeColor: "#0A2320",
   viewportFit: "cover",
 };
 

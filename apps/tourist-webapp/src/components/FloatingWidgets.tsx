@@ -1,18 +1,17 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import Link from "next/link";
-import { MessageCircleQuestion, X, Send } from "lucide-react";
+import { Send } from "lucide-react";
 import { Modal } from "@repo/ui/src/components/Modal";
 import { Input } from "@repo/ui/src/components/input";
 import { Textarea } from "@repo/ui/src/components/textarea";
 import { Button } from "@repo/ui/src/components/Button";
 import { submitContactMessage } from "../app/contact/actions";
+import { AIAssistantWidget } from "./ai-assistant/AIAssistantWidget";
 
 // Persistent floating elements, present on every page — mirrors the assistant-bubble +
 // vertical feedback-tab pattern used sitewide on visitsaudi.com, restyled in brand teal/gold.
 export function FloatingWidgets() {
-  const [expanded, setExpanded] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -48,7 +47,7 @@ export function FloatingWidgets() {
           position: "fixed",
           right: 0,
           top: "50%",
-          transform: "translateY(-50%) rotate(180deg)",
+          transform: "translateY(-50%)",
           writingMode: "vertical-rl",
           background: "#006B70",
           color: "#FFFFFF",
@@ -132,57 +131,7 @@ export function FloatingWidgets() {
         )}
       </Modal>
 
-      {/* AI assistant bubble — bottom-right, expands into a greeting card */}
-      <div style={{ position: "fixed", right: 24, bottom: 24, zIndex: 46 }}>
-        {expanded && (
-          <div
-            style={{
-              position: "absolute",
-              bottom: 64,
-              right: 0,
-              width: 240,
-              background: "#FFFFFF",
-              borderRadius: 14,
-              padding: 16,
-              boxShadow: "0 16px 40px rgba(10,35,32,0.25)",
-              border: "1px solid #EFEDE7",
-            }}
-          >
-            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 14.5, fontWeight: 600, color: "#0A2320", marginBottom: 6 }}>
-              Assalomu alaykum! 👋
-            </div>
-            <p style={{ fontSize: 12.5, color: "rgba(10,35,32,0.6)", lineHeight: 1.5, marginBottom: 12 }}>
-              I&rsquo;m Zarina, your Silk Road guide. Need a phrase translated or a route planned?
-            </p>
-            <Link
-              href="/translator"
-              className="btn-pill-primary"
-              style={{ textDecoration: "none", fontSize: 12, padding: "8px 16px", display: "inline-flex" }}
-            >
-              Open Translator
-            </Link>
-          </div>
-        )}
-        <button
-          onClick={() => setExpanded((v) => !v)}
-          aria-label={expanded ? "Close assistant" : "Open assistant"}
-          style={{
-            width: 56,
-            height: 56,
-            borderRadius: "50%",
-            background: "linear-gradient(135deg, #006B70 0%, #0A2320 100%)",
-            border: "none",
-            color: "#FFFFFF",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            cursor: "pointer",
-            boxShadow: "0 10px 28px rgba(10,35,32,0.35)",
-          }}
-        >
-          {expanded ? <X size={22} /> : <MessageCircleQuestion size={22} />}
-        </button>
-      </div>
+      <AIAssistantWidget />
     </div>
   );
 }

@@ -41,6 +41,59 @@ const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
 // Mock data
 // ---------------------------------------------------------------------------
 
+// Real, approximate town-center coordinates -- gives every service/event/destination a real
+// lat/lng for the /map page instead of leaving it to guess. Multiple pins in the same town get a
+// small deterministic offset (jitterCoords) so they fan out instead of stacking exactly.
+const CITY_COORDS = {
+  Tashkent: { lat: 41.2995, lng: 69.2401 },
+  Samarkand: { lat: 39.627, lng: 66.975 },
+  Bukhara: { lat: 39.7747, lng: 64.4286 },
+  Khiva: { lat: 41.3783, lng: 60.3639 },
+  Urgut: { lat: 39.4, lng: 67.2333 },
+  Rishtan: { lat: 40.3581, lng: 71.2814 },
+  Fergana: { lat: 40.3894, lng: 71.7869 },
+  Margilan: { lat: 40.4721, lng: 71.7247 },
+  Nurata: { lat: 40.5675, lng: 65.6892 },
+  Chimgan: { lat: 41.6167, lng: 70.0333 },
+  Zaamin: { lat: 39.9522, lng: 68.405 },
+  Sentob: { lat: 40.65, lng: 66.2 },
+  Moynaq: { lat: 43.7667, lng: 59.02 },
+  Boysun: { lat: 38.2064, lng: 67.2003 },
+};
+
+// A few destination names don't match a CITY_COORDS key exactly (they describe a wider region) --
+// map those explicitly.
+const DESTINATION_COORDS = {
+  Samarkand: CITY_COORDS.Samarkand,
+  Bukhara: CITY_COORDS.Bukhara,
+  Khiva: CITY_COORDS.Khiva,
+  Tashkent: CITY_COORDS.Tashkent,
+  "Nurata & the Kyzylkum Desert": CITY_COORDS.Nurata,
+  "Chimgan Highlands": CITY_COORDS.Chimgan,
+  "Fergana Valley": CITY_COORDS.Fergana,
+  "Moynaq & the Aral Sea": CITY_COORDS.Moynaq,
+};
+
+// Deterministic (not random) per-index offset -- re-running the seed script must keep producing
+// the same coordinates every time, or every re-seed would silently shuffle the map.
+function jitterCoords(base, index) {
+  if (!base) return { lat: null, lng: null };
+  const angle = (index * 47) % 360; // spread indexes around a circle, not a line
+  const radius = 0.01 + (index % 3) * 0.006; // roughly 1-2.5km
+  const rad = (angle * Math.PI) / 180;
+  return {
+    lat: Number((base.lat + radius * Math.cos(rad)).toFixed(6)),
+    lng: Number((base.lng + radius * Math.sin(rad)).toFixed(6)),
+  };
+}
+
+// Events' `location` field is sometimes just "City" and sometimes "Town, Region" -- match on the
+// part before the comma.
+function coordsForLocation(location, index) {
+  const city = (location || "").split(",")[0].trim();
+  return jitterCoords(CITY_COORDS[city] ?? null, index);
+}
+
 const PROVIDERS = [
   {
     email: "provider1@ta-demo.uz",
@@ -70,7 +123,7 @@ const PROVIDERS = [
         max_guests: 12,
         city: "Samarkand",
         region: "Samarkand Region",
-        image_url: "https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?q=80&w=1200",
+        image_url: "https://images.unsplash.com/photo-1733586092622-1b3201e802a5?q=80&w=1200",
         is_featured: false,
         rating_avg: 4.7,
         rating_count: 31,
@@ -84,7 +137,7 @@ const PROVIDERS = [
         max_guests: 10,
         city: "Samarkand",
         region: "Samarkand Region",
-        image_url: "https://images.unsplash.com/photo-1465447142348-e9952c393450?q=80&w=1200",
+        image_url: "https://images.unsplash.com/photo-1528459801416-a9e53bbf4e17?q=80&w=1200",
         is_featured: false,
         rating_avg: 4.6,
         rating_count: 9,
@@ -571,9 +624,9 @@ const DESTINATIONS = [
     image_url: "https://images.unsplash.com/photo-1733586092622-1b3201e802a5?q=80&w=1200",
     hero_image_url: "https://images.unsplash.com/photo-1733586092622-1b3201e802a5?q=80&w=1800",
     gallery_images: [
-      "https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?q=80&w=1200",
+      "https://images.unsplash.com/photo-1629649407271-2dac934c1f1b?q=80&w=1200",
       "https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=1200",
-      "https://images.unsplash.com/photo-1465447142348-e9952c393450?q=80&w=1200",
+      "https://images.unsplash.com/photo-1764423075260-cfa7908758eb?q=80&w=1200",
     ],
     is_featured: true,
     display_order: 1,
@@ -874,28 +927,33 @@ async function main() {
     const providerId = await createAccount(p.email, "provider", p.full_name);
     await approveVerification(providerId, "provider", p.business_name, p.email);
 
-    const rows = p.services.map((s) => ({
-      provider_id: providerId,
-      title: s.title,
-      description: s.description,
-      category: s.category,
-      price: s.price,
-      currency: "UZS",
-      image_url: s.image_url,
-      duration_minutes: s.duration_minutes,
-      max_guests: s.max_guests,
-      is_available: true,
-      is_featured: s.is_featured,
-      city: s.city,
-      region: s.region,
-      location: s.city,
-      is_rural_provider: true,
-      provider_name: p.business_name,
-      rating_avg: s.rating_avg,
-      rating_count: s.rating_count,
-      avg_rating: s.rating_avg,
-      reviews_count: s.rating_count,
-    }));
+    const rows = p.services.map((s, i) => {
+      const coords = jitterCoords(CITY_COORDS[s.city] ?? null, i);
+      return {
+        provider_id: providerId,
+        title: s.title,
+        description: s.description,
+        category: s.category,
+        price: s.price,
+        currency: "UZS",
+        image_url: s.image_url,
+        duration_minutes: s.duration_minutes,
+        max_guests: s.max_guests,
+        is_available: true,
+        is_featured: s.is_featured,
+        city: s.city,
+        region: s.region,
+        latitude: coords.lat,
+        longitude: coords.lng,
+        location: s.city,
+        is_rural_provider: true,
+        provider_name: p.business_name,
+        rating_avg: s.rating_avg,
+        rating_count: s.rating_count,
+        avg_rating: s.rating_avg,
+        reviews_count: s.rating_count,
+      };
+    });
 
     const { data: inserted, error } = await supabase.from("services").insert(rows).select("id, title");
     if (error) throw new Error(`services insert failed for ${p.business_name}: ${error.message}`);
@@ -956,6 +1014,8 @@ async function main() {
         image_url: d.image_url,
         hero_image_url: d.hero_image_url,
         gallery_images: d.gallery_images,
+        latitude: DESTINATION_COORDS[d.name]?.lat ?? null,
+        longitude: DESTINATION_COORDS[d.name]?.lng ?? null,
         is_featured: d.is_featured,
         display_order: d.display_order,
       })
@@ -1029,7 +1089,7 @@ async function main() {
       start_date: "2026-08-24",
       end_date: "2026-08-28",
       image_url: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=900",
-      ticket_url: "/discover",
+      ticket_url: null,
       is_featured: true,
     },
     {
@@ -1040,7 +1100,7 @@ async function main() {
       start_date: "2026-09-01",
       end_date: "2026-09-05",
       image_url: "https://images.unsplash.com/photo-1459749411175-04bf5292ceea?q=80&w=900",
-      ticket_url: "/discover",
+      ticket_url: null,
       is_featured: true,
     },
     {
@@ -1051,7 +1111,7 @@ async function main() {
       start_date: "2026-09-15",
       end_date: "2026-09-18",
       image_url: "https://images.unsplash.com/photo-1601963404496-e6fcffa44f71?q=80&w=900",
-      ticket_url: "/discover",
+      ticket_url: null,
       is_featured: true,
     },
     {
@@ -1062,7 +1122,7 @@ async function main() {
       start_date: "2026-10-10",
       end_date: "2026-10-12",
       image_url: "https://images.unsplash.com/photo-1623065078802-8595aa906f86?q=80&w=900",
-      ticket_url: "/discover",
+      ticket_url: null,
       is_featured: true,
     },
     {
@@ -1073,7 +1133,7 @@ async function main() {
       start_date: "2026-11-01",
       end_date: "2026-11-07",
       image_url: "https://images.unsplash.com/photo-1544967082-d9d25d867d66?q=80&w=900",
-      ticket_url: "/discover",
+      ticket_url: null,
       is_featured: true,
     },
     {
@@ -1084,13 +1144,38 @@ async function main() {
       start_date: "2026-12-05",
       end_date: "2026-12-07",
       image_url: "https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?q=80&w=900",
-      ticket_url: "/discover",
+      ticket_url: null,
       is_featured: true,
     },
   ];
 
+  // Same real city -> destination mapping used by the /discover/[slug] "Upcoming Events" module --
+  // kept in sync by hand since it's presentation logic, not a schema fact.
+  const EVENT_CITY_TO_DESTINATION_SLUG = {
+    Samarkand: "samarkand",
+    Tashkent: "tashkent",
+    Bukhara: "bukhara",
+    Rishtan: "fergana-valley",
+  };
+  const destinationIdBySlug = Object.fromEntries(DESTINATIONS.map((d, i) => [d.slug, destinationIds[i]]));
+  const slugify = (title) =>
+    title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+
+  const eventsWithCoords = eventsData.map((e, i) => {
+    const coords = coordsForLocation(e.location, i);
+    const city = (e.location || "").split(",")[0].trim();
+    const destSlug = EVENT_CITY_TO_DESTINATION_SLUG[city];
+    return {
+      ...e,
+      slug: slugify(e.title),
+      latitude: coords.lat,
+      longitude: coords.lng,
+      destination_id: destSlug ? destinationIdBySlug[destSlug] ?? null : null,
+    };
+  });
+
   await supabase.from("events").delete().neq("id", "00000000-0000-0000-0000-000000000000");
-  const { error: evErr } = await supabase.from("events").insert(eventsData);
+  const { error: evErr } = await supabase.from("events").insert(eventsWithCoords);
   if (evErr) console.warn("  Events seed warning:", evErr.message);
   else console.log(`  ${eventsData.length} events seeded`);
 

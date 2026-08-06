@@ -104,12 +104,12 @@ export function KnowTheDestinationsSection({ destinations }: Props) {
   );
 
   return (
-    <section style={{ padding: "88px 56px 96px", background: "#FFFFFF" }}>
+    <section style={{ padding: "clamp(56px, 10vw, 88px) var(--section-padding-x) clamp(56px, 10vw, 96px)", background: "#FFFFFF" }}>
       <div style={{ marginBottom: 40 }}>
         <div
           style={{
             fontFamily: "'Playfair Display', serif",
-            fontSize: 42,
+            fontSize: "var(--text-h1)",
             fontWeight: 700,
             color: "#0A2320",
           }}
@@ -118,16 +118,14 @@ export function KnowTheDestinationsSection({ destinations }: Props) {
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "360px 1fr", gap: 32 }}>
+      <div className="know-destinations-grid">
         {/* Left: scrollable destination list with full-size photo cards */}
         <div
-          className="scrollbar-hide"
+          className="scrollbar-hide know-destinations-list"
           style={{
             display: "flex",
             flexDirection: "column",
             gap: 18,
-            maxHeight: 700,
-            overflowY: "auto",
             paddingRight: 8,
           }}
         >
@@ -139,6 +137,10 @@ export function KnowTheDestinationsSection({ destinations }: Props) {
               style={{
                 display: "flex",
                 flexDirection: "column",
+                // Without this, flexbox shrinks every card to fit the list's maxHeight
+                // before overflow-y:auto gets a chance to scroll the excess -- that's what
+                // was crushing the 220px photos down to ~1px.
+                flexShrink: 0,
                 borderRadius: 16,
                 overflow: "hidden",
                 border: hovered === item.name ? "1px solid #006B70" : "1px solid #EFEDE7",
@@ -152,6 +154,7 @@ export function KnowTheDestinationsSection({ destinations }: Props) {
                 style={{
                   width: "100%",
                   height: 220,
+                  flexShrink: 0,
                   position: "relative",
                   background: "#EFEDE7",
                 }}
@@ -233,7 +236,7 @@ export function KnowTheDestinationsSection({ destinations }: Props) {
             borderRadius: 24,
             overflow: "hidden",
             background: "#E5E3DD",
-            minHeight: 700,
+            minHeight: "clamp(360px, 65vw, 700px)",
             border: "1px solid #EFEDE7",
           }}
         >

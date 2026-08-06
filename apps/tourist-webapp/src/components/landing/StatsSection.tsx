@@ -22,7 +22,7 @@ const TOP_STORIES = [
 
 export function StatsSection() {
   return (
-    <section style={{ padding: "88px 56px 96px", background: "#F9F8F5" }}>
+    <section style={{ padding: "clamp(56px, 10vw, 88px) var(--section-padding-x) clamp(56px, 10vw, 96px)", background: "#F9F8F5" }}>
       <div style={{ marginBottom: 40 }}>
         <div
           style={{
@@ -39,7 +39,7 @@ export function StatsSection() {
         <div
           style={{
             fontFamily: "'Playfair Display', serif",
-            fontSize: 36,
+            fontSize: "var(--text-h2)",
             fontWeight: 600,
             color: "#0A2320",
           }}
@@ -48,7 +48,7 @@ export function StatsSection() {
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 20 }}>
+      <div className="responsive-grid-5">
         {STATS.map((stat, i) => {
           const Icon = stat.icon;
           return (
@@ -67,7 +67,7 @@ export function StatsSection() {
                 display: "flex",
                 flexDirection: "column",
                 gap: 14,
-                height: 168,
+                minHeight: 168,
               }}
             >
               <div
@@ -124,7 +124,10 @@ export function StatsSection() {
           transition={{ duration: 0.5, delay: 0.32 }}
           className="ribbon-card"
           style={{
-            gridColumn: "span 5",
+            // "1 / -1" (always every current track) instead of "span 5" -- auto-fit means the
+            // grid's actual column count varies by width, and "span 5" was forcing 5 tracks to
+            // exist (each >=150px) even on a 338px-wide mobile grid, blowing out the page width.
+            gridColumn: "1 / -1",
             borderRadius: 14,
             background: "#FFFFFF",
             border: "1px solid #EFEDE7",
@@ -142,7 +145,7 @@ export function StatsSection() {
           >
             204+ Stories to Inspire You
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 16 }}>
+          <div className="responsive-grid-5" style={{ gap: 16 }}>
             {TOP_STORIES.map((title, i) => (
               <Link
                 key={title}

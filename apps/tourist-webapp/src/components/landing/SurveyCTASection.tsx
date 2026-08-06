@@ -7,7 +7,7 @@ import { MessageCircle } from "lucide-react";
 
 export function SurveyCTASection() {
   return (
-    <section style={{ padding: "0 56px 96px", background: "#FFFFFF" }}>
+    <section style={{ padding: "0 var(--section-padding-x) 96px", background: "#FFFFFF" }}>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -18,15 +18,16 @@ export function SurveyCTASection() {
           borderRadius: 20,
           background: "#F9F8F5",
           border: "1px solid #EFEDE7",
-          padding: "48px 56px",
+          padding: "clamp(28px, 5vw, 48px) clamp(24px, 5vw, 56px)",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
+          flexWrap: "wrap",
           gap: 32,
           overflow: "hidden",
         }}
       >
-        <div style={{ maxWidth: 480 }}>
+        <div style={{ maxWidth: 480, minWidth: 240 }}>
           <div
             style={{
               fontFamily: "'Playfair Display', serif",
@@ -61,8 +62,8 @@ export function SurveyCTASection() {
         <div
           style={{
             flexShrink: 0,
-            width: 120,
-            height: 120,
+            width: 96,
+            height: 96,
             borderRadius: "50%",
             background: "#EFEDE7",
             display: "flex",
@@ -71,7 +72,7 @@ export function SurveyCTASection() {
             color: "#006B70",
           }}
         >
-          <MessageCircle size={44} strokeWidth={1.4} />
+          <MessageCircle size={38} strokeWidth={1.4} />
         </div>
       </motion.div>
     </section>

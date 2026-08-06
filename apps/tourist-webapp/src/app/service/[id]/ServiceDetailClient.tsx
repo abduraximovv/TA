@@ -36,7 +36,11 @@ export function ServiceDetailClient({ service, reviews, isLoggedIn }: ServiceDet
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-        
+        {/* Top scrim -- the gradient above fades to fully transparent at the top edge, so on a
+            bright photo (sky, snow, light stone) the back button and breadcrumb lose all
+            contrast. This keeps the top nav readable regardless of the photo behind it. */}
+        <div className="absolute top-0 left-0 w-full h-40 bg-gradient-to-b from-black/55 to-transparent pointer-events-none" />
+
         {/* Top Nav Overlay */}
         <div className="absolute top-0 left-0 w-full p-6 md:p-10 flex items-center gap-4 z-10">
           <Link

@@ -67,7 +67,10 @@ export default function ContactPage() {
               </div>
             ) : (
               <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
-                <input type="hidden" name="type" value="booking_inquiry" />
+                {/* contact_messages.type only allows 'contact' | 'feedback' -- "Booking Inquiry"
+                    lives in subject instead, where the admin inbox can actually show it. */}
+                <input type="hidden" name="type" value="contact" />
+                <input type="hidden" name="subject" value="Booking Inquiry" />
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="flex flex-col gap-2">

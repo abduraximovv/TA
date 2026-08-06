@@ -11,6 +11,9 @@ interface PageHeroProps {
   alt: string;
   height?: number;
   style?: React.CSSProperties;
+  /** Hide the bottom mosaic strip -- e.g. on pages whose own header content (a chip, a badge)
+   * already sits right below the hero, where the strip reads as a redundant second divider. */
+  hideMosaicStrip?: boolean;
 }
 
 const MOSAIC_STRIP =
@@ -20,7 +23,7 @@ const MOSAIC_STRIP =
  * Shared full-bleed page hero: photo settles in first, then the title fades up,
  * then the mosaic strip unrolls -- used at the top of every top-level content page.
  */
-export function PageHero({ title, eyebrow, image, alt, height = 520, style }: PageHeroProps) {
+export function PageHero({ title, eyebrow, image, alt, height = 520, style, hideMosaicStrip }: PageHeroProps) {
   return (
     <div
       style={{
@@ -73,22 +76,24 @@ export function PageHero({ title, eyebrow, image, alt, height = 520, style }: Pa
         <h1 className="font-serif text-[84px] font-bold text-white m-0 tracking-tight">{title}</h1>
       </motion.div>
 
-      <motion.div
-        initial={{ opacity: 0, scaleX: 0 }}
-        animate={{ opacity: 1, scaleX: 1 }}
-        transition={{ delay: 0.7, duration: 0.5, ease: "easeOut" }}
-        style={{
-          position: "absolute",
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: 16,
-          transformOrigin: "left center",
-          backgroundImage: MOSAIC_STRIP,
-          backgroundRepeat: "repeat-x",
-          backgroundSize: "auto 100%",
-        }}
-      />
+      {!hideMosaicStrip && (
+        <motion.div
+          initial={{ opacity: 0, scaleX: 0 }}
+          animate={{ opacity: 1, scaleX: 1 }}
+          transition={{ delay: 0.7, duration: 0.5, ease: "easeOut" }}
+          style={{
+            position: "absolute",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: 16,
+            transformOrigin: "left center",
+            backgroundImage: MOSAIC_STRIP,
+            backgroundRepeat: "repeat-x",
+            backgroundSize: "auto 100%",
+          }}
+        />
+      )}
     </div>
   );
 }

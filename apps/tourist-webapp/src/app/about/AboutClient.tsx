@@ -3,7 +3,7 @@
 import React from "react";
 import { motion, Variants } from "framer-motion";
 import { Footer } from "@/components/landing/Footer";
-import { Globe, Users, ShieldCheck, Map, Compass, Sparkles, type LucideIcon } from "lucide-react";
+import { Globe, Users, ShieldCheck, Map, Compass, Sparkles, Languages, UtensilsCrossed, LifeBuoy, Route, type LucideIcon } from "lucide-react";
 import { Breadcrumb } from "@/components/navigation/Breadcrumb";
 import { PageHero } from "@/components/PageHero";
 import type { SiteStats } from "@repo/database";
@@ -73,6 +73,13 @@ export function AboutClient({ stats }: { stats: SiteStats }) {
     { title: "Local Provider App", icon: Users, gradient: GOLD_GRADIENT, desc: "A mobile-first tool empowering rural artisans and guides to list services, manage bookings, and enter the formal economy." },
     { title: "Agency Portal", icon: Map, gradient: DARK_GRADIENT, desc: "A comprehensive B2B dashboard for global travel agencies to curate and manage group tours at scale." },
     { title: "Admin Portal", icon: ShieldCheck, gradient: TERRACOTTA_GRADIENT, desc: "The central nervous system ensuring quality control, verification, and seamless ecosystem orchestration." },
+  ];
+
+  const aiFeatures = [
+    { title: "Real-Time Translation", icon: Languages, gradient: TEAL_GRADIENT, desc: "Menus, street signs, and bargaining phrases translated instantly — with the cultural context a generic translate app misses." },
+    { title: "Food Safety Checks", icon: UtensilsCrossed, gradient: GOLD_GRADIENT, desc: "Every dish explained before it's ordered blind — ingredients, allergens, and what it actually is." },
+    { title: "Emergency Assistance", icon: LifeBuoy, gradient: TERRACOTTA_GRADIENT, desc: "Verified embassy, police, and hospital contacts surfaced instantly, right when a traveler needs them most." },
+    { title: "AI Trip Planner", icon: Route, gradient: DARK_GRADIENT, desc: "A personalized, day-by-day itinerary in seconds — then connected directly to real, bookable local providers." },
   ];
 
   const impact = [
@@ -241,6 +248,103 @@ export function AboutClient({ stats }: { stats: SiteStats }) {
                 </div>
               </div>
             ))}
+          </div>
+        </motion.div>
+      </section>
+
+      {/* AI Assistant showcase -- "Zarina," the flagship differentiator: verified, trusted answers
+          in a market where language and digitization are the two biggest barriers travelers face. */}
+      <section style={{ position: "relative", padding: "0 5% 140px", maxWidth: 1440, margin: "0 auto" }}>
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={fadeUpVariant}
+          style={{
+            position: "relative",
+            backgroundColor: "#0A2320",
+            borderRadius: 32,
+            padding: "88px 5%",
+            overflow: "hidden",
+          }}
+        >
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              backgroundImage: "radial-gradient(circle at 88% 8%, rgba(197,168,128,0.16), transparent 55%)",
+              pointerEvents: "none",
+            }}
+          />
+          <Watermark opacity={0.05} />
+
+          <div style={{ position: "relative", textAlign: "center", maxWidth: 720, margin: "0 auto 64px" }}>
+            <div
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                marginBottom: 20,
+                padding: "5px 14px",
+                borderRadius: 999,
+                background: "rgba(197,168,128,0.14)",
+                border: "1px solid rgba(197,168,128,0.35)",
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: 11.5,
+                fontWeight: 700,
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+                color: "#C5A880",
+              }}
+            >
+              <Sparkles size={12} /> Flagship Feature · In Development
+            </div>
+            <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(2.5rem, 4vw, 3.5rem)", fontWeight: 700, color: "#FFFFFF", marginBottom: 20, lineHeight: 1.15 }}>
+              Meet Zarina — an AI built for Uzbekistan&rsquo;s streets
+            </h2>
+            <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 18, lineHeight: 1.65, color: "rgba(249,248,245,0.7)" }}>
+              Outside a handful of historic hubs, trustworthy travel information in Uzbekistan is scarce
+              and locked behind a language barrier. Zarina is our answer: an AI assistant that only ever
+              answers from verified local sources — never a guess.
+            </p>
+          </div>
+
+          <motion.div
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-50px" }}
+            style={{ position: "relative", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: 24 }}
+          >
+            {aiFeatures.map((feature, idx) => (
+              <motion.div
+                key={idx}
+                variants={fadeUpVariant}
+                style={{
+                  position: "relative",
+                  padding: 32,
+                  backgroundColor: "rgba(249,248,245,0.04)",
+                  borderRadius: 22,
+                  border: "1px solid rgba(249,248,245,0.1)",
+                  overflow: "hidden",
+                }}
+              >
+                <IconBadge icon={feature.icon} gradient={feature.gradient} />
+                <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 19, fontWeight: 700, color: "#FFFFFF", marginBottom: 10 }}>
+                  {feature.title}
+                </h3>
+                <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 14, lineHeight: 1.6, color: "rgba(249,248,245,0.6)" }}>
+                  {feature.desc}
+                </p>
+              </motion.div>
+            ))}
+          </motion.div>
+
+          <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 48 }}>
+            <ShieldCheck size={15} color="#C5A880" />
+            <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 13.5, color: "rgba(249,248,245,0.55)" }}>
+              Every answer traceable to a verified source — no invented facts, ever.
+            </span>
           </div>
         </motion.div>
       </section>

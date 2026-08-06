@@ -16,6 +16,7 @@ function SafeImage({ src, fallback, alt, ...props }: any) {
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { useSearchParams } from "next/navigation";
 import { Compass, Sun, Search, Check, SlidersHorizontal } from "lucide-react";
 import type { Destination } from "@repo/database";
 import { Footer } from "@/components/landing/Footer";
@@ -28,7 +29,10 @@ interface DiscoverClientProps {
 }
 
 export function DiscoverClient({ destinations }: DiscoverClientProps) {
-  const [searchQuery, setSearchQuery] = useState("");
+  // Picks up ?q= from the mobile header's quick-search flyout so a search there lands on
+  // real, pre-filtered results instead of just navigating to a blank listing page.
+  const initialQuery = useSearchParams().get("q") || "";
+  const [searchQuery, setSearchQuery] = useState(initialQuery);
   const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [advancedFilters, setAdvancedFilters] = useState<AppliedDestinationFilters | null>(null);

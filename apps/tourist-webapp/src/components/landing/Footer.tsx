@@ -2,7 +2,13 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Instagram, Send, Facebook, Phone } from "lucide-react";
+import { subscribeToNewsletter } from "@/app/actions/newsletter";
+
+// The /map page is a full-viewport, edge-to-edge experience -- a footer below it would only be
+// reachable by scrolling past the map itself, which doesn't scroll. Hide it there.
+const HIDE_FOOTER_ON = ["/map"];
 
 const COLUMNS = [
   {
@@ -11,14 +17,13 @@ const COLUMNS = [
       { label: "Destinations", href: "/discover" },
       { label: "Things To Do", href: "/service" },
       { label: "Packages", href: "/packages" },
-      { label: "Events Calendar", href: "/discover" },
+      { label: "Events Calendar", href: "/events" },
     ],
   },
   {
     title: "Plan Your Trip",
     links: [
       { label: "Survival Map", href: "/map" },
-      { label: "Contextual Translator", href: "/translator" },
       { label: "Hotels", href: "/hotels" },
       { label: "Flights", href: "/flights" },
     ],
@@ -36,6 +41,26 @@ const COLUMNS = [
 
 export function Footer() {
   const [email, setEmail] = useState("");
+  const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const pathname = usePathname();
+
+  if (HIDE_FOOTER_ON.includes(pathname)) return null;
+
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (status === "submitting") return;
+    setStatus("submitting");
+    const result = await subscribeToNewsletter(email);
+    if (result.success) {
+      setStatus("success");
+      setStatusMessage(result.alreadySubscribed ? "You're already on the list." : "Subscribed — thank you!");
+      setEmail("");
+    } else {
+      setStatus("error");
+      setStatusMessage(result.error || "Something went wrong.");
+    }
+  };
 
   return (
     <footer className="bg-emerald-950">
@@ -47,7 +72,7 @@ export function Footer() {
         style={{
           maxWidth: 1600,
           margin: "0 auto",
-          padding: "40px 56px",
+          padding: "clamp(24px, 5vw, 40px) var(--section-padding-x)",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
@@ -89,43 +114,56 @@ export function Footer() {
           </div>
         </div>
 
-        <form
-          onSubmit={(e) => e.preventDefault()}
-          style={{ display: "flex", alignItems: "center", gap: 8 }}
-        >
-          <input
-            type="email"
-            required
-            placeholder="Your email address"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            style={{
-              padding: "11px 16px",
-              borderRadius: 100,
-              border: "1px solid rgba(255,255,255,0.25)",
-              background: "rgba(255,255,255,0.06)",
-              color: "#FFFFFF",
-              fontSize: 13,
-              fontFamily: "'Inter', sans-serif",
-              outline: "none",
-              width: 220,
-            }}
-          />
-          <button type="submit" className="btn-pill-primary">
-            Join
-          </button>
-        </form>
+        <div>
+          <form onSubmit={handleSubscribe} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <input
+              type="email"
+              required
+              placeholder="Your email address"
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (status !== "idle") setStatus("idle");
+              }}
+              disabled={status === "submitting"}
+              style={{
+                padding: "11px 16px",
+                borderRadius: 100,
+                border: "1px solid rgba(255,255,255,0.25)",
+                background: "rgba(255,255,255,0.06)",
+                color: "#FFFFFF",
+                fontSize: 13,
+                fontFamily: "'Inter', sans-serif",
+                outline: "none",
+                width: 220,
+              }}
+            />
+            <button type="submit" className="btn-pill-primary" disabled={status === "submitting"} style={{ opacity: status === "submitting" ? 0.7 : 1 }}>
+              {status === "submitting" ? "Joining…" : "Join"}
+            </button>
+          </form>
+          {statusMessage && (
+            <div
+              style={{
+                marginTop: 8,
+                fontSize: 12.5,
+                fontFamily: "'Inter', sans-serif",
+                color: status === "error" ? "#E38B6E" : "#8FD4C8",
+              }}
+            >
+              {statusMessage}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Main footer body */}
       <div
+        className="footer-columns-grid"
         style={{
           maxWidth: 1600,
           margin: "0 auto",
-          padding: "56px 56px",
-          display: "grid",
-          gridTemplateColumns: "1.2fr repeat(3, 1fr)",
-          gap: 48,
+          padding: "clamp(40px, 8vw, 56px) var(--section-padding-x)",
         }}
       >
         <div>
@@ -216,7 +254,7 @@ export function Footer() {
       <div
         style={{
           borderTop: "1px solid rgba(255,255,255,0.08)",
-          padding: "20px 56px",
+          padding: "20px var(--section-padding-x)",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",

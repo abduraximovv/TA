@@ -24,6 +24,8 @@ export function Sidebar() {
     { label: "Events", href: "/events" },
     { label: "Providers", href: "/providers" },
     { label: "Agencies", href: "/agencies" },
+    { label: "Messages", href: "/messages" },
+    { label: "Newsletter", href: "/newsletter" },
     { label: "Analytics", href: "/analytics" },
     { label: "Settings", href: "/settings" },
   ];

@@ -140,8 +140,8 @@ export function ThingsToDoSection({ experiences }: Props) {
   }, [experiences, active]);
 
   return (
-    <section style={{ padding: "88px 0 100px", background: "#FFFFFF" }}>
-      <div style={{ marginBottom: 8, paddingLeft: 56, paddingRight: 56 }}>
+    <section style={{ padding: "clamp(56px, 10vw, 88px) 0 clamp(64px, 11vw, 100px)", background: "#FFFFFF" }}>
+      <div style={{ marginBottom: 8, paddingLeft: "var(--section-padding-x)", paddingRight: "var(--section-padding-x)" }}>
         <div
           style={{
             fontFamily: "'JetBrains Mono', monospace",
@@ -157,7 +157,7 @@ export function ThingsToDoSection({ experiences }: Props) {
         <div
           style={{
             fontFamily: "'Playfair Display', serif",
-            fontSize: 36,
+            fontSize: "var(--text-h2)",
             fontWeight: 600,
             color: "#0A2320",
             marginBottom: 32,
@@ -166,8 +166,9 @@ export function ThingsToDoSection({ experiences }: Props) {
           Things To Do
         </div>
 
-        {/* Filter chips */}
-        <div style={{ display: "flex", gap: 64, flexWrap: "wrap", justifyContent: "center" }}>
+        {/* Filter chips -- horizontally scrollable on narrow screens instead of wrapping into an
+            awkward multi-row grid with 64px gaps. */}
+        <div className="scrollbar-hide" style={{ display: "flex", gap: "clamp(28px, 5vw, 64px)", overflowX: "auto", paddingBottom: 4 }}>
           {FILTERS.map((f) => {
             const Icon = f.icon;
             const isActive = active === f.key;
@@ -175,6 +176,7 @@ export function ThingsToDoSection({ experiences }: Props) {
               <button
                 key={f.key}
                 onClick={() => setActive(f.key)}
+                className="tap-active"
                 style={{
                   display: "flex",
                   flexDirection: "column",
@@ -183,12 +185,13 @@ export function ThingsToDoSection({ experiences }: Props) {
                   background: "none",
                   border: "none",
                   padding: 0,
+                  flexShrink: 0,
                   cursor: "pointer",
                   fontFamily: "'Inter', sans-serif",
                 }}
               >
                 <Icon
-                  size={60}
+                  size={46}
                   strokeWidth={1.15}
                   color={isActive ? "#006B70" : "rgba(10,35,32,0.55)"}
                 />
@@ -218,13 +221,17 @@ export function ThingsToDoSection({ experiences }: Props) {
           observer
           observeParents
           centeredSlides
-          spaceBetween={20}
-          slidesPerView={2.1}
+          spaceBetween={14}
+          slidesPerView={1.15}
+          breakpoints={{
+            640: { slidesPerView: 1.6, spaceBetween: 16 },
+            1024: { slidesPerView: 2.1, spaceBetween: 20 },
+          }}
         >
           {tiles.map((tile) => (
             <SwiperSlide key={tile.id}>
               <Link href={tile.href} style={{ textDecoration: "none", display: "block" }}>
-                <div style={{ position: "relative", height: 500, borderRadius: 20, overflow: "hidden" }} className="discover-card">
+                <div style={{ position: "relative", height: "clamp(320px, 62vw, 500px)", borderRadius: 20, overflow: "hidden" }} className="discover-card">
                   <Image
                     src={tile.image}
                     alt={tile.title}

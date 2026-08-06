@@ -86,6 +86,44 @@ export async function getUpcomingEvents(limit = 6): Promise<Event[]> {
 }
 
 /**
+ * Fetch a single event by its slug, for the /events/[slug] detail page.
+ */
+export async function getEventBySlug(slug: string): Promise<Event | null> {
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from("events")
+    .select("*")
+    .eq("slug", slug)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Error fetching event by slug:", error);
+    return null;
+  }
+
+  return data ? (data as Event) : null;
+}
+
+/**
+ * Fetch every event (not just upcoming/featured) -- used by the /map page, which plots
+ * everything on the calendar rather than just the homepage's featured/future subset.
+ */
+export async function getAllEvents(): Promise<Event[]> {
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from("events")
+    .select("*")
+    .order("start_date", { ascending: true });
+
+  if (error) {
+    console.error("Error fetching all events:", error);
+    return [];
+  }
+
+  return (data as Event[]) || [];
+}
+
+/**
  * Fetch all destinations (featured + non-featured).
  */
 export async function getAllDestinations(): Promise<Destination[]> {
@@ -101,6 +139,26 @@ export async function getAllDestinations(): Promise<Destination[]> {
   }
 
   return (data as Destination[]) || [];
+}
+
+/**
+ * Fetch a single destination by id -- used by the /events/[slug] detail page to resolve an
+ * event's linked destination_id back into a full destination for cross-linking.
+ */
+export async function getDestinationById(id: string): Promise<Destination | null> {
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from("destinations")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Error fetching destination by id:", error);
+    return null;
+  }
+
+  return data ? (data as Destination) : null;
 }
 
 /**
