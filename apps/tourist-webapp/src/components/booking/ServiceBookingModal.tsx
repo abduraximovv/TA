@@ -97,67 +97,74 @@ export function ServiceBookingModal({
 
   return (
     <>
-      <Button
-        className="px-8 h-12 text-base font-semibold shadow-lg shadow-primary/20"
+      <button
         onClick={handleOpen}
+        className="w-full bg-[#0A2320] text-white px-8 h-14 rounded-full font-sans font-medium text-lg hover:bg-black transition-colors shadow-lg shadow-black/10 flex items-center justify-center gap-2"
       >
         Request Booking
-      </Button>
+      </button>
 
       <Modal open={open} onOpenChange={setOpen} title="Book Experience">
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-5 p-2">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Catalog / Options</label>
+            <label className="block text-sm font-medium text-gray-600 mb-1.5 ml-1">Catalog / Options</label>
             <Select 
               value={catalogOption} 
               onChange={(e) => setCatalogOption(e.target.value)}
-              className="w-full"
+              className="w-full h-14 rounded-2xl bg-gray-50/50 border-gray-200 focus:border-[#0A2320] focus:ring-[#0A2320]/20 px-4 text-base"
             >
               {CATALOG_OPTIONS.map(opt => (
                 <option key={opt.value} value={opt.value}>{opt.label}</option>
               ))}
             </Select>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-5">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+              <label className="block text-sm font-medium text-gray-600 mb-1.5 ml-1">Date</label>
               <Input 
                 type="date" 
                 required 
                 value={date} 
                 onChange={(e) => setDate(e.target.value)} 
+                className="h-14 rounded-2xl bg-gray-50/50 border-gray-200 focus:border-[#0A2320] focus:ring-[#0A2320]/20 px-4"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Time</label>
+              <label className="block text-sm font-medium text-gray-600 mb-1.5 ml-1">Time</label>
               <Input 
                 type="time" 
                 required 
                 value={time} 
                 onChange={(e) => setTime(e.target.value)} 
+                className="h-14 rounded-2xl bg-gray-50/50 border-gray-200 focus:border-[#0A2320] focus:ring-[#0A2320]/20 px-4"
               />
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Guests</label>
+            <label className="block text-sm font-medium text-gray-600 mb-1.5 ml-1">Guests</label>
             <Input 
               type="number" 
               min="1" 
               required 
               value={guestCount} 
               onChange={(e) => setGuestCount(parseInt(e.target.value) || 1)} 
+              className="h-14 rounded-2xl bg-gray-50/50 border-gray-200 focus:border-[#0A2320] focus:ring-[#0A2320]/20 px-4"
             />
           </div>
-          <div className="pt-4 flex justify-between items-center border-t border-gray-100">
+          <div className="pt-6 mt-2 flex justify-between items-center border-t border-gray-100">
             <div>
-              <p className="text-sm text-gray-500">Total Price</p>
-              <p className="font-bold text-lg">
+              <p className="text-sm text-gray-500 font-medium">Total Price</p>
+              <p className="font-bold text-2xl text-[#0A2320]">
                 {(Number(totalPrice) || 0).toLocaleString("en-US").replace(/,/g, " ")} {currency}
               </p>
             </div>
-            <Button type="submit" disabled={isSubmitting || !date || !time}>
+            <button 
+              type="submit" 
+              disabled={isSubmitting || !date || !time}
+              className="bg-[#0A2320] text-white px-8 h-14 rounded-full font-sans font-medium hover:bg-black transition-colors disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed flex items-center justify-center"
+            >
               {isSubmitting ? "Submitting..." : "Confirm Booking"}
-            </Button>
+            </button>
           </div>
         </form>
       </Modal>

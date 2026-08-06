@@ -112,27 +112,28 @@ export function PackageBookingModal({
 
   return (
     <>
-      <Button
-        className="px-8 h-12 text-base font-semibold shadow-lg shadow-primary/20"
+      <button
         onClick={handleOpen}
+        className="w-full bg-[#0A2320] text-white px-8 h-14 rounded-full font-sans font-medium text-lg hover:bg-black transition-colors shadow-lg shadow-black/10 flex items-center justify-center gap-2"
       >
         Book Now
-      </Button>
+      </button>
 
       <Modal open={isOpen} onOpenChange={setIsOpen} title="Book Package">
-        <form onSubmit={handleSubmit} className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
-          <div className="grid grid-cols-2 gap-4">
+        <form onSubmit={handleSubmit} className="space-y-5 max-h-[70vh] overflow-y-auto pr-2 pb-4">
+          <div className="grid grid-cols-2 gap-5">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+              <label className="block text-sm font-medium text-gray-600 mb-1.5 ml-1">Start Date</label>
               <Input 
                 type="date" 
                 required 
                 value={date} 
                 onChange={(e) => setDate(e.target.value)} 
+                className="h-14 rounded-2xl bg-gray-50/50 border-gray-200 focus:border-[#0A2320] focus:ring-[#0A2320]/20 px-4"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Number of Guests</label>
+              <label className="block text-sm font-medium text-gray-600 mb-1.5 ml-1">Number of Guests</label>
               <Input 
                 type="number" 
                 min="1" 
@@ -140,58 +141,66 @@ export function PackageBookingModal({
                 required 
                 value={guestCount} 
                 onChange={(e) => handleGuestCountChange(parseInt(e.target.value) || 1)} 
+                className="h-14 rounded-2xl bg-gray-50/50 border-gray-200 focus:border-[#0A2320] focus:ring-[#0A2320]/20 px-4"
               />
             </div>
           </div>
 
-          <div className="border-t border-gray-100 pt-4">
-            <h3 className="font-semibold text-gray-900 mb-3">Passenger Details</h3>
-            <div className="space-y-3">
+          <div className="border-t border-gray-100 pt-5">
+            <h3 className="font-semibold text-gray-900 mb-3 ml-1">Passenger Details</h3>
+            <div className="space-y-4">
               {manifest.map((name, i) => (
                 <div key={i}>
-                  <label className="block text-xs font-medium text-gray-500 mb-1">Passenger {i + 1} Name</label>
+                  <label className="block text-xs font-bold tracking-[0.1em] uppercase text-gray-500 mb-1.5 ml-1">Passenger {i + 1} Name</label>
                   <Input 
                     type="text" 
                     placeholder={`e.g. John Doe`}
                     required 
                     value={name} 
                     onChange={(e) => handleManifestChange(i, e.target.value)} 
+                    className="h-14 rounded-2xl bg-gray-50/50 border-gray-200 focus:border-[#0A2320] focus:ring-[#0A2320]/20 px-4"
                   />
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="border-t border-gray-100 pt-4 space-y-4">
+          <div className="border-t border-gray-100 pt-5 space-y-5">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Pickup Location</label>
+              <label className="block text-sm font-medium text-gray-600 mb-1.5 ml-1">Pickup Location</label>
               <Input 
                 type="text" 
                 placeholder="Hotel name or address in the starting city"
                 value={pickupLocation}
                 onChange={(e) => setPickupLocation(e.target.value)}
+                className="h-14 rounded-2xl bg-gray-50/50 border-gray-200 focus:border-[#0A2320] focus:ring-[#0A2320]/20 px-4"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Dietary Preferences</label>
+              <label className="block text-sm font-medium text-gray-600 mb-1.5 ml-1">Dietary Preferences</label>
               <Textarea 
                 placeholder="Vegetarian, Halal, Kosher, allergies, etc."
                 value={dietaryPreferences}
                 onChange={(e) => setDietaryPreferences(e.target.value)}
+                className="rounded-2xl bg-gray-50/50 border-gray-200 focus:border-[#0A2320] focus:ring-[#0A2320]/20 p-4"
               />
             </div>
           </div>
 
-          <div className="pt-4 mt-6 flex justify-between items-center border-t border-gray-100 sticky bottom-0 bg-white pb-2">
+          <div className="pt-6 mt-4 flex justify-between items-center border-t border-gray-100 sticky bottom-0 bg-white z-10 pb-2">
             <div>
-              <p className="text-sm text-gray-500">Total Price</p>
-              <p className="font-bold text-lg text-emerald-950">
+              <p className="text-sm text-gray-500 font-medium">Total Price</p>
+              <p className="font-bold text-2xl text-[#0A2320]">
                 {(Number(price * guestCount) || 0).toLocaleString("en-US").replace(/,/g, " ")} {currency}
               </p>
             </div>
-            <Button type="submit" disabled={isSubmitting || !date}>
+            <button 
+              type="submit" 
+              disabled={isSubmitting || !date}
+              className="bg-[#0A2320] text-white px-8 h-14 rounded-full font-sans font-medium hover:bg-black transition-colors disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed flex items-center justify-center"
+            >
               {isSubmitting ? "Submitting..." : "Confirm Booking"}
-            </Button>
+            </button>
           </div>
         </form>
       </Modal>

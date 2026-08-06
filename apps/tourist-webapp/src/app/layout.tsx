@@ -7,6 +7,7 @@ import { InstallPrompt } from "@repo/ui";
 import { BottomNav } from "@/components/BottomNav";
 import { FloatingWidgets } from "@/components/FloatingWidgets";
 import { Navbar } from "@/components/navigation/Navbar";
+import { Footer } from "@/components/landing/Footer";
 import { RealtimeNotifications } from "@/components/providers/RealtimeNotifications";
 
 const fontSans = Inter({ subsets: ["latin"], variable: "--font-sans", display: "swap" });
@@ -49,6 +50,7 @@ export default function RootLayout({
           <div className="md:hidden">
             <BottomNav />
           </div>
+          <Footer />
           <InstallPrompt />
           <FloatingWidgets />
         </SessionProvider>

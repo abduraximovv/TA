@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowLeft, Package, Calendar, Star } from "lucide-react";
+import { ArrowLeft, Package, Calendar, Star, MapPin, CheckCircle2 } from "lucide-react";
 import { PackageBookingModal } from "@/components/booking/PackageBookingModal";
 import type { ItineraryDetail, ReviewWithAuthor } from "@repo/database";
 import { Breadcrumb } from "@/components/navigation/Breadcrumb";
@@ -27,226 +27,189 @@ export function PackageDetailClient({ itinerary, reviews, isLoggedIn }: PackageD
         ).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}`
       : null;
 
+  // Extract a hero image from items, or use a default
+  const heroImage =
+    itinerary.items.find((item) => item.service_image)?.service_image ||
+    "/images/registan_4k.png";
+
   return (
-    <main style={{ minHeight: "100vh", background: "#F9F8F5", paddingBottom: 120 }}>
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        style={{ background: "#0A2320", color: "#FFFFFF", paddingTop: 112, paddingBottom: 48 }}
-      >
-        <div style={{ maxWidth: 900, margin: "0 auto", padding: "0 56px" }}>
-          <Breadcrumb light items={[{ label: "Packages", href: "/packages" }, { label: itinerary.title }]} style={{ padding: 0, marginBottom: 16 }} />
+    <main className="min-h-screen bg-[#F9F8F5] pb-24 text-[#0A2320]">
+      <div className="max-w-[1400px] mx-auto px-6 lg:px-12 pt-32 lg:pt-40">
+        
+        {/* Top Breadcrumb */}
+        <div className="mb-12">
           <Link
             href="/packages"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 8,
-              color: "rgba(249,248,245,0.7)",
-              fontSize: 14,
-              fontWeight: 500,
-              textDecoration: "none",
-              marginBottom: 24,
-            }}
+            className="inline-flex items-center gap-2 text-gray-500 hover:text-[#0A2320] text-sm font-medium transition-colors mb-6"
           >
-            <ArrowLeft style={{ width: 16, height: 16 }} /> Back to Packages
+            <ArrowLeft className="w-4 h-4" /> Back to all packages
           </Link>
+          <Breadcrumb 
+            items={[{ label: "Packages", href: "/packages" }, { label: itinerary.title }]} 
+            className="!p-0"
+          />
+        </div>
 
-          {itinerary.agency_name && (
-            <div
-              style={{
-                fontFamily: "'JetBrains Mono', monospace",
-                fontSize: 11,
-                letterSpacing: "0.08em",
-                textTransform: "uppercase",
-                color: "#C5A880",
-                marginBottom: 10,
-              }}
-            >
-              by {itinerary.agency_name}
-            </div>
-          )}
-
-          <h1
-            style={{
-              fontFamily: "'Playfair Display', serif",
-              fontSize: 34,
-              fontWeight: 600,
-              lineHeight: 1.15,
-              marginBottom: 16,
-            }}
+        <div className="flex flex-col lg:flex-row gap-16 lg:gap-24 relative items-start">
+          
+          {/* Left Column (Sticky Details) */}
+          <motion.div 
+            className="w-full lg:w-[45%] lg:sticky lg:top-32"
+            initial="hidden"
+            animate="visible"
+            variants={fadeUp}
           >
-            {itinerary.title}
-          </h1>
-
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 18, fontSize: 14, color: "rgba(249,248,245,0.75)" }}>
-            {dateRange && (
-              <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <Calendar style={{ width: 15, height: 15 }} /> {dateRange}
-              </span>
+            {itinerary.agency_name && (
+              <div className="inline-block px-4 py-1.5 bg-[#C5A880]/10 rounded-full text-[11px] font-bold uppercase tracking-wider text-[#8A6D3B] font-mono mb-6">
+                Curated by {itinerary.agency_name}
+              </div>
             )}
-            <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <Package style={{ width: 15, height: 15 }} /> {itinerary.items.length} item{itinerary.items.length !== 1 ? "s" : ""}
-            </span>
-          </div>
-        </div>
-      </motion.div>
 
-      <motion.div
-        initial="hidden"
-        animate="visible"
-        variants={fadeUp}
-        style={{ maxWidth: 900, margin: "0 auto", padding: "28px 56px 0" }}
-      >
-        {itinerary.description && (
-          <div
-            style={{
-              background: "#FFFFFF",
-              borderRadius: 8,
-              padding: 24,
-              boxShadow: "0 1px 3px rgba(10,35,32,0.06)",
-              border: "1px solid rgba(10,35,32,0.05)",
-              marginBottom: 20,
-            }}
-          >
-            <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 600, color: "#0A2320", marginBottom: 10 }}>
-              Overview
-            </h2>
-            <p style={{ color: "rgba(10,35,32,0.7)", lineHeight: 1.7 }}>{itinerary.description}</p>
-          </div>
-        )}
+            <h1 className="text-5xl lg:text-7xl font-serif font-semibold leading-[1.05] tracking-tight text-[#0A2320] mb-8">
+              {itinerary.title}
+            </h1>
 
-        <div
-          style={{
-            background: "#FFFFFF",
-            borderRadius: 8,
-            padding: 24,
-            boxShadow: "0 1px 3px rgba(10,35,32,0.06)",
-            border: "1px solid rgba(10,35,32,0.05)",
-            marginBottom: 20,
-          }}
-        >
-          <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 600, color: "#0A2320", marginBottom: 14 }}>
-            Included in this package
-          </h2>
-
-          {itinerary.items.length > 0 ? (
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {itinerary.items.map((item, idx) => (
-                <div
-                  key={item.id}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    padding: 14,
-                    background: "#F9F8F5",
-                    borderRadius: 6,
-                    border: "1px solid rgba(10,35,32,0.05)",
-                  }}
-                >
-                  <div
-                    style={{
-                      width: 36,
-                      height: 36,
-                      borderRadius: 6,
-                      background: "rgba(197,168,128,0.16)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      color: "#8A6D3B",
-                      fontWeight: 700,
-                      fontSize: 13,
-                      marginRight: 14,
-                      flexShrink: 0,
-                    }}
-                  >
-                    {idx + 1}
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <h3 style={{ fontWeight: 600, color: "#0A2320", fontSize: 14 }} className="truncate">
-                      {item.service_title ?? item.title ?? "Custom Item"}
-                    </h3>
-                  </div>
-                  {item.price != null && (
-                    <span style={{ color: "#0A2320", fontWeight: 700, fontSize: 13, marginLeft: 14, flexShrink: 0 }}>
-                      {(Number(item.price) || 0).toLocaleString("en-US").replace(/,/g, " ")}{" "}
-                      <span style={{ fontSize: 10, color: "rgba(10,35,32,0.4)", fontWeight: 600 }}>UZS</span>
-                    </span>
-                  )}
+            <div className="flex flex-wrap gap-6 text-[15px] text-gray-600 font-sans mb-10 pb-10 border-b border-[#0A2320]/10">
+              {dateRange && (
+                <div className="flex items-center gap-2.5">
+                  <Calendar className="w-5 h-5 text-[#C5A880]" />
+                  <span>{dateRange}</span>
                 </div>
-              ))}
+              )}
+              <div className="flex items-center gap-2.5">
+                <Package className="w-5 h-5 text-[#C5A880]" />
+                <span>{itinerary.items.length} Curated Experiences</span>
+              </div>
             </div>
-          ) : (
-            <p style={{ fontSize: 14, color: "rgba(10,35,32,0.5)" }}>No items in this package yet.</p>
-          )}
-        </div>
 
-        {reviews.length > 0 && (
-          <div
-            style={{
-              background: "#FFFFFF",
-              borderRadius: 8,
-              padding: 24,
-              boxShadow: "0 1px 3px rgba(10,35,32,0.06)",
-              border: "1px solid rgba(10,35,32,0.05)",
-              marginBottom: 20,
-            }}
+            {itinerary.description && (
+              <div className="mb-12">
+                <h2 className="text-xl font-serif font-semibold mb-4 text-[#0A2320]">Overview</h2>
+                <p className="text-gray-600 leading-relaxed text-[15.5px] font-sans">
+                  {itinerary.description}
+                </p>
+              </div>
+            )}
+
+            <div className="bg-white p-8 rounded-[32px] shadow-sm border border-gray-100/50">
+              <p className="text-sm font-medium text-gray-500 mb-1">Total Package Price</p>
+              <div className="text-4xl font-serif font-bold text-[#0A2320] mb-6">
+                {(Number(itinerary.total_price) || 0).toLocaleString("en-US").replace(/,/g, " ")} 
+                <span className="text-lg font-medium text-gray-400 ml-2">{itinerary.currency}</span>
+              </div>
+              
+              <PackageBookingModal 
+                itineraryId={itinerary.id} 
+                price={itinerary.total_price} 
+                currency={itinerary.currency} 
+                isLoggedIn={isLoggedIn} 
+              />
+            </div>
+          </motion.div>
+
+          {/* Right Column (Hero Collage + Timeline) */}
+          <motion.div 
+            className="w-full lg:w-[55%] flex flex-col gap-16"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
           >
-            <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 600, color: "#0A2320", marginBottom: 14 }}>
-              Reviews ({reviews.length})
-            </h2>
-            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              {reviews.slice(0, 5).map((review) => (
-                <div key={review.id} style={{ padding: 16, background: "#F9F8F5", borderRadius: 6, border: "1px solid rgba(10,35,32,0.05)" }}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-                    <span style={{ fontWeight: 600, color: "#0A2320", fontSize: 14 }}>{review.author_name ?? "Anonymous"}</span>
-                    <div style={{ display: "flex", gap: 2 }}>
-                      {Array.from({ length: review.rating }).map((_, i) => (
-                        <Star key={i} style={{ width: 14, height: 14, color: "#C5A880", fill: "#C5A880" }} />
-                      ))}
-                    </div>
-                  </div>
-                  {review.comment && <p style={{ fontSize: 14, color: "rgba(10,35,32,0.7)" }}>{review.comment}</p>}
-                  {review.response && (
-                    <div style={{ marginTop: 12, paddingLeft: 14, borderLeft: "2px solid rgba(197,168,128,0.4)" }}>
-                      <p style={{ fontSize: 12, fontWeight: 700, color: "#006B70", marginBottom: 3 }}>Agency Reply</p>
-                      <p style={{ fontSize: 14, color: "rgba(10,35,32,0.7)" }}>{review.response}</p>
-                    </div>
-                  )}
-                </div>
-              ))}
+            
+            {/* Hero Image / Collage */}
+            <div className="w-full h-[500px] lg:h-[650px] rounded-[32px] overflow-hidden relative shadow-lg">
+              <img 
+                src={heroImage} 
+                alt={itinerary.title} 
+                className="w-full h-full object-cover" 
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
             </div>
-          </div>
-        )}
-      </motion.div>
 
-      {/* Fixed bottom action bar */}
-      <div
-        style={{
-          position: "fixed",
-          bottom: 0,
-          left: 0,
-          right: 0,
-          background: "#FFFFFF",
-          borderTop: "1px solid rgba(10,35,32,0.08)",
-          padding: "16px 24px calc(16px + env(safe-area-inset-bottom))",
-          boxShadow: "0 -4px 20px rgba(10,35,32,0.08)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          zIndex: 50,
-        }}
-      >
-        <div>
-          <div style={{ fontSize: 12, color: "rgba(10,35,32,0.5)", fontWeight: 500 }}>Total price</div>
-          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 600, color: "#0A2320" }}>
-            {(Number(itinerary.total_price) || 0).toLocaleString("en-US").replace(/,/g, " ")}{" "}
-            <span style={{ fontSize: 14, fontWeight: 400, color: "rgba(10,35,32,0.5)" }}>{itinerary.currency}</span>
-          </div>
+            {/* Journey Timeline */}
+            <div>
+              <h2 className="text-3xl font-serif font-semibold text-[#0A2320] mb-10">
+                Your Journey
+              </h2>
+              
+              {itinerary.items.length > 0 ? (
+                <div className="relative pl-6 md:pl-8 border-l-2 border-[#C5A880]/30 space-y-12">
+                  {itinerary.items.map((item, idx) => (
+                    <div key={item.id} className="relative">
+                      {/* Timeline Node */}
+                      <div className="absolute -left-[35px] md:-left-[43px] top-1 w-6 h-6 rounded-full bg-[#F9F8F5] border-4 border-[#C5A880] shadow-sm" />
+                      
+                      <div className="bg-white rounded-[24px] overflow-hidden shadow-sm border border-gray-100 flex flex-col sm:flex-row">
+                        {item.service_image && (
+                          <div className="w-full sm:w-48 h-40 sm:h-auto shrink-0 relative">
+                            <img src={item.service_image} alt="Service" className="w-full h-full object-cover" />
+                          </div>
+                        )}
+                        <div className="p-6 flex-1 flex flex-col justify-center">
+                          <div className="text-[11px] font-bold uppercase tracking-wider text-gray-400 font-mono mb-2">
+                            Stop {idx + 1}
+                          </div>
+                          <h3 className="text-xl font-serif font-semibold text-[#0A2320] mb-2 leading-snug">
+                            {item.service_title ?? item.title ?? "Custom Experience"}
+                          </h3>
+                          {item.price != null && (
+                            <div className="text-sm font-semibold text-[#006B70] mt-auto">
+                              Value: {(Number(item.price) || 0).toLocaleString("en-US").replace(/,/g, " ")} {itinerary.currency}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500 text-[15px]">No specific items detailed for this package.</p>
+              )}
+            </div>
+
+            {/* Reviews Section */}
+            {reviews.length > 0 && (
+              <div>
+                <h2 className="text-3xl font-serif font-semibold text-[#0A2320] mb-8">
+                  Traveler Reviews
+                </h2>
+                <div className="space-y-6">
+                  {reviews.slice(0, 5).map((review) => (
+                    <div key={review.id} className="bg-white p-8 rounded-[24px] shadow-sm border border-gray-100">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-[#0A2320] text-white flex items-center justify-center font-serif font-semibold">
+                            {(review.author_name || "A")[0]}
+                          </div>
+                          <span className="font-semibold text-[#0A2320]">
+                            {review.author_name ?? "Anonymous"}
+                          </span>
+                        </div>
+                        <div className="flex gap-1">
+                          {Array.from({ length: review.rating }).map((_, i) => (
+                            <Star key={i} className="w-4 h-4 text-[#C5A880] fill-[#C5A880]" />
+                          ))}
+                        </div>
+                      </div>
+                      {review.comment && (
+                        <p className="text-gray-600 leading-relaxed text-[15px] mt-4">{review.comment}</p>
+                      )}
+                      {review.response && (
+                        <div className="mt-6 p-5 bg-[#F9F8F5] rounded-2xl border-l-4 border-[#C5A880]">
+                          <div className="flex items-center gap-2 mb-2">
+                            <CheckCircle2 className="w-4 h-4 text-[#C5A880]" />
+                            <span className="text-xs font-bold uppercase tracking-wider text-[#C5A880] font-mono">Agency Response</span>
+                          </div>
+                          <p className="text-gray-600 text-[14.5px] leading-relaxed">{review.response}</p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+          </motion.div>
         </div>
-        <PackageBookingModal itineraryId={itinerary.id} price={itinerary.total_price} currency={itinerary.currency} isLoggedIn={isLoggedIn} />
       </div>
     </main>
   );

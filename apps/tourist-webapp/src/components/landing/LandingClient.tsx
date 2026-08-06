@@ -11,7 +11,6 @@ import { PackagesSection } from "./PackagesSection";
 import { StatsSection } from "./StatsSection";
 import { KnowBeforeYouGoSection } from "./KnowBeforeYouGoSection";
 import { SurveyCTASection } from "./SurveyCTASection";
-import { Footer } from "./Footer";
 import type { Destination, Service, Event } from "@repo/database";
 import type { Itinerary } from "@repo/types";
 
@@ -59,9 +58,6 @@ export function LandingClient({
 
       {/* Survey CTA */}
       <SurveyCTASection />
-
-      {/* Footer */}
-      <Footer />
     </div>
   );
 }
