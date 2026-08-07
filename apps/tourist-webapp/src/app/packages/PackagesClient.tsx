@@ -69,7 +69,7 @@ export function PackagesClient({ itineraries }: { itineraries: ItineraryWithMeta
 
   return (
     <main style={{ minHeight: "100vh", paddingBottom: 96, background: "#F9F8F5" }}>
-      <div style={{ maxWidth: 1600, margin: "0 auto", padding: "0 56px" }}>
+      <div style={{ maxWidth: 1600, margin: "0 auto", padding: "0 24px" }}>
         <Breadcrumb items={[{ label: "Packages" }]} style={{ marginBottom: 20, paddingTop: 112 }} />
 
         <PageHero
@@ -91,7 +91,7 @@ export function PackagesClient({ itineraries }: { itineraries: ItineraryWithMeta
         </motion.header>
 
         {/* Search + Filters */}
-        <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 12, marginBottom: 40 }}>
+        <div className="flex items-center gap-3 mb-10 overflow-x-auto scrollbar-hide flex-nowrap md:flex-wrap pb-4 md:pb-0 [&>*]:shrink-0">
           <div style={{ position: "relative" }}>
             <Search size={16} color="rgba(10,35,32,0.4)" style={{ position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)" }} />
             <input
@@ -201,7 +201,7 @@ export function PackagesClient({ itineraries }: { itineraries: ItineraryWithMeta
             initial="hidden"
             animate="visible"
             variants={staggerContainer}
-            style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(360px, 1fr))", gap: 28 }}
+            style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 360px), 1fr))", gap: "48px 32px" }}
           >
             {filteredItineraries.map((itin, i) => (
               <PackageCard key={itin.id} itinerary={itin} fallback={FALLBACK_IMAGES[i % FALLBACK_IMAGES.length]} />
@@ -281,18 +281,14 @@ function PackageCard({ itinerary, fallback }: { itinerary: ItineraryWithMeta; fa
         <div
           className="package-card"
           style={{
-            background: "#FFFFFF",
-            borderRadius: 22,
-            border: "1px solid rgba(10,35,32,0.08)",
-            boxShadow: "0 20px 40px -28px rgba(10,35,32,0.35)",
-            height: "100%",
             display: "flex",
             flexDirection: "column",
-            padding: 16,
+            gap: 16,
+            height: "100%",
           }}
         >
-          {/* Inset photo, framed by card padding */}
-          <div style={{ position: "relative", height: 230, borderRadius: 16, overflow: "hidden" }}>
+          {/* Inset photo */}
+          <div style={{ position: "relative", height: 260, borderRadius: 20, overflow: "hidden", width: "100%" }}>
             <Image
               src={itinerary.image_url || fallback}
               alt={itinerary.title}
@@ -320,7 +316,7 @@ function PackageCard({ itinerary, fallback }: { itinerary: ItineraryWithMeta; fa
             )}
           </div>
 
-          <div style={{ padding: "20px 8px 6px", display: "flex", flexDirection: "column", flex: 1 }}>
+          <div style={{ display: "flex", flexDirection: "column", flex: 1, padding: "4px 4px 0" }}>
             {itinerary.agency_name && (
               <div
                 style={{
@@ -340,9 +336,9 @@ function PackageCard({ itinerary, fallback }: { itinerary: ItineraryWithMeta; fa
               style={{
                 fontFamily: "'Playfair Display', serif",
                 fontWeight: 600,
-                fontSize: 21,
+                fontSize: 24,
                 color: "#0A2320",
-                lineHeight: 1.3,
+                lineHeight: 1.2,
                 marginBottom: 8,
               }}
               className="line-clamp-2"
@@ -377,8 +373,6 @@ function PackageCard({ itinerary, fallback }: { itinerary: ItineraryWithMeta; fa
                 display: "flex",
                 alignItems: "flex-end",
                 justifyContent: "space-between",
-                paddingTop: 16,
-                borderTop: "1px solid rgba(10,35,32,0.08)",
                 marginTop: dateRange ? 0 : "auto",
               }}
             >

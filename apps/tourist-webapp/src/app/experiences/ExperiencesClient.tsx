@@ -88,7 +88,7 @@ export function ExperiencesClient({ experiences }: ExperiencesClientProps) {
 
   return (
     <main className="min-h-screen bg-sand-50 font-sans">
-      <div style={{ maxWidth: 1440, margin: "0 auto", padding: "120px 56px 96px" }}>
+      <div style={{ maxWidth: 1440, margin: "0 auto", padding: "120px 24px 96px" }}>
         <Breadcrumb items={[{ label: "Experiences" }]} style={{ marginBottom: 20 }} />
 
         <PageHero
@@ -100,9 +100,8 @@ export function ExperiencesClient({ experiences }: ExperiencesClientProps) {
         />
 
         {/* Filter Bar */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 16, marginBottom: 48 }}>
-
-          <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+        <div className="flex items-center justify-between mb-12 flex-nowrap md:flex-wrap gap-4">
+          <div className="flex items-center gap-3 overflow-x-auto scrollbar-hide flex-nowrap md:flex-wrap pb-4 md:pb-0 [&>*]:shrink-0 flex-1 w-full max-w-full">
             {/* Search Input */}
             <div style={{ position: "relative" }}>
               <Search
@@ -330,14 +329,14 @@ export function ExperiencesClient({ experiences }: ExperiencesClientProps) {
                 transition={{ duration: 0.5, delay: (i % 8) * 0.05 }}
               >
                 <Link href={`/service/${exp.id}`} style={{ textDecoration: "none" }}>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 12, cursor: "pointer" }}>
+                  <div className="experience-card" style={{ display: "flex", flexDirection: "column", gap: 16, cursor: "pointer" }}>
 
                     {/* Thumbnail */}
                     <div
                       style={{
                         position: "relative",
                         width: "100%",
-                        aspectRatio: "1/1",
+                        aspectRatio: "3/2",
                         borderRadius: 20,
                         overflow: "hidden",
                         backgroundColor: "#EFEDE7"
@@ -347,23 +346,25 @@ export function ExperiencesClient({ experiences }: ExperiencesClientProps) {
                         src={exp.image_url || "https://images.unsplash.com/photo-1541845157-a6d2d100c931?q=80&w=800"}
                         alt={exp.title}
                         fill
-                        className="object-cover"
-                        sizes="(max-width: 1440px) 25vw, 300px"
+                        className="object-cover experience-card-img transition-transform duration-700 hover:scale-105"
+                        sizes="(max-width: 1440px) 33vw, 400px"
                       />
                     </div>
 
                     {/* Meta */}
-                    <div className="flex flex-col gap-1.5 px-1 py-1">
-                      <div className="font-mono text-[10px] text-teal-700 font-semibold uppercase tracking-widest">
-                        {exp.city?.toUpperCase() || "TASHKENT"}
+                    <div className="flex flex-col gap-2.5 px-1 py-1">
+                      <div className="flex justify-between items-center">
+                        <div className="font-mono text-[11px] text-teal-700 font-semibold uppercase tracking-widest">
+                          {exp.city?.toUpperCase() || "TASHKENT"}
+                        </div>
                       </div>
 
-                      <h3 className="font-serif text-[18px] font-bold text-emerald-950 leading-[1.3] line-clamp-2">
+                      <h3 className="font-serif text-[24px] font-bold text-emerald-950 leading-tight line-clamp-2">
                         {exp.title}
                       </h3>
 
-                      <div className="mt-2 font-mono text-[15px] font-bold text-emerald-950 flex items-baseline gap-1">
-                        {exp.price?.toLocaleString() || "350,000"} <span className="text-[9px] text-gray-400">{exp.currency === "UZS" ? "UZS" : "$"}</span>
+                      <div className="font-mono text-[15px] font-bold text-emerald-950 flex items-baseline gap-1">
+                        {exp.price?.toLocaleString() || "350,000"} <span className="text-[10px] text-gray-400 font-semibold">{exp.currency === "UZS" ? "UZS" : "$"}</span>
                       </div>
                     </div>
 

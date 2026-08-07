@@ -23,16 +23,12 @@ const MOSAIC_STRIP =
  * Shared full-bleed page hero: photo settles in first, then the title fades up,
  * then the mosaic strip unrolls -- used at the top of every top-level content page.
  */
-export function PageHero({ title, eyebrow, image, alt, height = 520, style, hideMosaicStrip }: PageHeroProps) {
+export function PageHero({ title, eyebrow, image, alt, height, style, hideMosaicStrip }: PageHeroProps) {
   return (
     <div
+      className={`relative w-full rounded-[24px] overflow-hidden mb-8 md:mb-12 ${height ? '' : 'h-[360px] md:h-[520px]'}`}
       style={{
-        position: "relative",
-        width: "100%",
-        height,
-        borderRadius: 24,
-        overflow: "hidden",
-        marginBottom: 48,
+        ...(height ? { height } : {}),
         boxShadow: "0 24px 48px -12px rgba(10,35,32,0.25)",
         ...style,
       }}
@@ -57,23 +53,16 @@ export function PageHero({ title, eyebrow, image, alt, height = 520, style, hide
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.45, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-        style={{ position: "absolute", bottom: 56, left: 48 }}
+        className="absolute bottom-10 left-6 md:bottom-14 md:left-12 pr-6 md:pr-12"
       >
         {eyebrow && (
-          <div
-            style={{
-              fontFamily: "'JetBrains Mono', monospace",
-              fontSize: 12,
-              letterSpacing: "0.1em",
-              textTransform: "uppercase",
-              color: "#C5A880",
-              marginBottom: 12,
-            }}
-          >
+          <div className="font-mono text-[10px] md:text-[12px] tracking-[0.1em] uppercase text-[#C5A880] mb-2 md:mb-3">
             {eyebrow}
           </div>
         )}
-        <h1 className="font-serif text-[84px] font-bold text-white m-0 tracking-tight">{title}</h1>
+        <h1 className="font-serif text-5xl md:text-[84px] font-bold text-white m-0 tracking-tight leading-[1.1]">
+          {title}
+        </h1>
       </motion.div>
 
       {!hideMosaicStrip && (

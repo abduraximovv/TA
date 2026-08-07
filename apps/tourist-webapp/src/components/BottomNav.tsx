@@ -16,10 +16,8 @@ const navItems = [
 export function BottomNav() {
   const pathname = usePathname();
 
-  // Hidden on auth pages (no chrome during sign-in/registration) and on the landing page
-  // itself, where the full-bleed hero is meant to read as an immersive, chrome-free moment —
-  // matches Navbar's own transparent-over-hero treatment on "/".
-  if (pathname === "/" || pathname.startsWith("/auth")) {
+  // Hidden on auth pages (no chrome during sign-in/registration).
+  if (pathname.startsWith("/auth")) {
     return null;
   }
 

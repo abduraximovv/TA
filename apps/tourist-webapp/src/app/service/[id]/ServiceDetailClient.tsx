@@ -52,7 +52,6 @@ export function ServiceDetailClient({ service, reviews, isLoggedIn }: ServiceDet
           <Breadcrumb 
             light 
             items={[{ label: "Experiences", href: "/service" }, { label: service.title }]} 
-            className="!p-0"
           />
         </div>
 

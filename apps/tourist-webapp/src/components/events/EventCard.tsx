@@ -40,15 +40,13 @@ export function EventCard({ event, width = 400, imageHeight = 340, theme = "ligh
       className="event-card"
       style={{
         width,
-        borderRadius: 20,
-        background: dark ? "#0A2320" : "#FFFFFF",
-        border: dark ? "1px solid rgba(255,255,255,0.10)" : "1px solid #EFEDE7",
-        boxShadow: dark ? "0 20px 40px -24px rgba(0,0,0,0.5)" : "0 8px 24px -12px rgba(10,35,32,0.12)",
-        padding: 16,
+        display: "flex",
+        flexDirection: "column",
+        gap: 16,
         opacity: isPast ? 0.6 : 1,
       }}
     >
-      <div style={{ position: "relative", height: imageHeight, borderRadius: 14, overflow: "hidden" }}>
+      <div style={{ position: "relative", height: imageHeight, borderRadius: 20, overflow: "hidden", width: "100%" }}>
         <Image
           src={event.image_url || "https://images.unsplash.com/photo-1601963404496-e6fcffa44f71?q=80&w=900"}
           alt={event.title}
@@ -101,7 +99,7 @@ export function EventCard({ event, width = 400, imageHeight = 340, theme = "ligh
         )}
       </div>
 
-      <div style={{ padding: "20px 8px 6px" }}>
+      <div style={{ display: "flex", flexDirection: "column", padding: "4px 4px 0" }}>
         <div style={{ height: 104, overflow: "hidden" }}>
           <div
             style={{

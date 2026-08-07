@@ -81,7 +81,7 @@ export function DiscoverClient({ destinations }: DiscoverClientProps) {
         <PageHero title="Destinations" image="https://images.unsplash.com/photo-1541845157-a6d2d100c931?q=80&w=2000" alt="Uzbekistan Destinations" />
 
         {/* Search + Filters */}
-        <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 12, marginBottom: 40 }}>
+        <div className="flex items-center gap-3 mb-10 overflow-x-auto scrollbar-hide flex-nowrap md:flex-wrap pb-4 md:pb-0 [&>*]:shrink-0">
           <div style={{ position: "relative" }}>
             <Search size={16} color="rgba(10,35,32,0.4)" style={{ position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)" }} />
             <input
@@ -228,7 +228,7 @@ export function DiscoverClient({ destinations }: DiscoverClientProps) {
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(420px, 1fr))",
+              gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 360px), 1fr))",
               gap: "48px 32px",
             }}
           >

@@ -57,7 +57,7 @@ export function EventsClient({ events }: Props) {
 
   return (
     <main className="min-h-screen bg-sand-50 font-sans">
-      <div style={{ maxWidth: 1440, margin: "0 auto", padding: "120px 56px 96px" }}>
+      <div style={{ maxWidth: 1440, margin: "0 auto", padding: "120px 24px 96px" }}>
         <Breadcrumb items={[{ label: "Events" }]} style={{ marginBottom: 20 }} />
 
         <div style={{ position: "relative" }}>
@@ -92,7 +92,7 @@ export function EventsClient({ events }: Props) {
         </div>
 
         {/* Filter Bar */}
-        <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 12, marginBottom: 48 }}>
+        <div className="flex items-center gap-3 mb-10 overflow-x-auto scrollbar-hide flex-nowrap md:flex-wrap pb-4 md:pb-0 [&>*]:shrink-0">
           <div style={{ position: "relative" }}>
             <Search size={16} color="rgba(10,35,32,0.4)" style={{ position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)" }} />
             <input
@@ -178,7 +178,7 @@ export function EventsClient({ events }: Props) {
             <div className="scrollbar-hide" style={{ display: "flex", gap: 20, overflowX: "auto", paddingBottom: 8 }}>
               {upcoming.slice(0, 3).map((e) => (
                 <div key={e.id} style={{ flexShrink: 0 }}>
-                  <EventCard event={e} />
+                  <EventCard event={e} width="min(85vw, 400px)" />
                 </div>
               ))}
             </div>
@@ -191,11 +191,19 @@ export function EventsClient({ events }: Props) {
             <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 28, fontWeight: 600, color: "#0A2320", marginBottom: 24 }}>
               All Upcoming Events
             </h2>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 24 }}>
-              {upcoming.slice(3).map((e) => (
+            <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 340px), 1fr))",
+              gap: "40px 24px",
+            }}
+          >{upcoming.slice(3).map((e) => (
                 <EventCard key={e.id} event={e} width="100%" imageHeight={260} />
               ))}
-            </div>
+            </motion.div>
           </div>
         )}
 
@@ -211,7 +219,7 @@ export function EventsClient({ events }: Props) {
             <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 600, color: "rgba(10,35,32,0.5)", marginBottom: 24 }}>
               Past Events
             </h2>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 24 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 340px), 1fr))", gap: 24 }}>
               {past.map((e) => (
                 <EventCard key={e.id} event={e} width="100%" imageHeight={220} />
               ))}

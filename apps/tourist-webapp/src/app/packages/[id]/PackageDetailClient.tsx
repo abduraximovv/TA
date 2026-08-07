@@ -46,7 +46,6 @@ export function PackageDetailClient({ itinerary, reviews, isLoggedIn }: PackageD
           </Link>
           <Breadcrumb 
             items={[{ label: "Packages", href: "/packages" }, { label: itinerary.title }]} 
-            className="!p-0"
           />
         </div>
 
