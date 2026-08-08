@@ -99,75 +99,34 @@ export function ExperiencesClient({ experiences }: ExperiencesClientProps) {
           style={{ marginBottom: 40 }}
         />
 
-        {/* Filter Bar */}
-        <div className="flex items-center justify-between mb-12 flex-nowrap md:flex-wrap gap-4">
-          <div className="flex items-center gap-3 overflow-x-auto scrollbar-hide flex-nowrap md:flex-wrap pb-4 md:pb-0 [&>*]:shrink-0 flex-1 w-full max-w-full">
-            {/* Search Input */}
-            <div style={{ position: "relative" }}>
-              <Search
-                size={16}
-                color="rgba(10,35,32,0.4)"
-                style={{ position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)" }}
-              />
+        {/* Search + Filters */}
+        <div className="flex flex-col mb-12 gap-6">
+          <div className="flex items-center gap-4">
+            <div className="relative flex-1">
+              <Search size={20} color="rgba(10,35,32,0.4)" className="absolute left-4 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
-                placeholder="Search"
+                placeholder="Search experiences"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                style={{
-                  padding: "12px 16px 12px 40px",
-                  borderRadius: 12,
-                  border: "1px solid transparent",
-                  background: "#FFFFFF",
-                  fontSize: 14,
-                  width: 240,
-                  outline: "none",
-                  boxShadow: "0 2px 8px rgba(0,0,0,0.04)"
-                }}
+                className="w-full pl-12 pr-4 py-4 rounded-2xl border-none outline-none text-[15px] shadow-sm bg-white text-[#0A2320]"
               />
             </div>
 
-            {/* Filters Button */}
             <button
               onClick={() => setIsModalOpen(true)}
-              style={{
-                position: "relative",
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                padding: "12px 24px",
-                borderRadius: 12,
-                border: "none",
-                background: "#006B70",
-                color: "#FFFFFF",
-                fontSize: 14,
-                fontWeight: 600,
-                cursor: "pointer",
-              }}
+              className="w-14 h-14 rounded-2xl bg-[#0A2320] flex items-center justify-center shrink-0 relative"
             >
-              <SlidersHorizontal size={16} /> Filters
+              <SlidersHorizontal size={20} color="#FFFFFF" />
               {activeAdvancedCount > 0 && (
-                <div
-                  style={{
-                    position: "absolute",
-                    top: -6,
-                    right: -6,
-                    background: "#C1592A",
-                    color: "#FFF",
-                    fontSize: 10,
-                    fontWeight: 700,
-                    width: 18,
-                    height: 18,
-                    borderRadius: "50%",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
+                <div className="absolute -top-1.5 -right-1.5 bg-[#C1592A] text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">
                   {activeAdvancedCount}
                 </div>
               )}
             </button>
+          </div>
+
+          <div className="flex items-center gap-3 overflow-x-auto scrollbar-hide pb-2 [&>*]:shrink-0 w-full max-w-full">
 
             {/* Filter Chips -- "All", a "Destinations" dropdown, then one chip per real category */}
             {filters.map((filter) => {
@@ -290,34 +249,35 @@ export function ExperiencesClient({ experiences }: ExperiencesClientProps) {
                 </div>
               );
             })}
+            
+            {/* Sort Dropdown */}
+            <button
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                padding: "12px 24px",
+                borderRadius: 12,
+                border: "1px solid #EFEDE7",
+                background: "#FFFFFF",
+                color: "#0A2320",
+                fontSize: 14,
+                fontWeight: 600,
+                cursor: "pointer",
+                flexShrink: 0
+              }}
+            >
+              Default
+            </button>
           </div>
-
-          {/* Sort Dropdown */}
-          <button
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              padding: "12px 24px",
-              borderRadius: 12,
-              border: "1px solid #EFEDE7",
-              background: "#FFFFFF",
-              color: "#0A2320",
-              fontSize: 14,
-              fontWeight: 600,
-              cursor: "pointer",
-            }}
-          >
-            Default
-          </button>
         </div>
 
         {/* Experiences Grid */}
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-            gap: "40px 24px",
+            gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
+            gap: "16px",
           }}
         >
           {filteredExperiences.length > 0 ? (
@@ -329,45 +289,44 @@ export function ExperiencesClient({ experiences }: ExperiencesClientProps) {
                 transition={{ duration: 0.5, delay: (i % 8) * 0.05 }}
               >
                 <Link href={`/service/${exp.id}`} style={{ textDecoration: "none" }}>
-                  <div className="experience-card" style={{ display: "flex", flexDirection: "column", gap: 16, cursor: "pointer" }}>
-
-                    {/* Thumbnail */}
+                  <div
+                    className="experience-card"
+                    style={{
+                      position: "relative",
+                      borderRadius: 20,
+                      overflow: "hidden",
+                      aspectRatio: "3/4",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <Image
+                      src={exp.image_url || "https://images.unsplash.com/photo-1541845157-a6d2d100c931?q=80&w=800"}
+                      alt={exp.title}
+                      fill
+                      className="object-cover experience-card-img transition-transform duration-700 hover:scale-105"
+                      sizes="(max-width: 768px) 50vw, (max-width: 1280px) 33vw, 25vw"
+                    />
+                    {/* Gradient overlay */}
                     <div
                       style={{
-                        position: "relative",
-                        width: "100%",
-                        aspectRatio: "3/2",
-                        borderRadius: 20,
-                        overflow: "hidden",
-                        backgroundColor: "#EFEDE7"
+                        position: "absolute",
+                        inset: 0,
+                        background: "linear-gradient(to top, rgba(10,35,32,0.9) 0%, rgba(10,35,32,0.3) 45%, transparent 65%)",
                       }}
-                    >
-                      <Image
-                        src={exp.image_url || "https://images.unsplash.com/photo-1541845157-a6d2d100c931?q=80&w=800"}
-                        alt={exp.title}
-                        fill
-                        className="object-cover experience-card-img transition-transform duration-700 hover:scale-105"
-                        sizes="(max-width: 1440px) 33vw, 400px"
-                      />
+                    />
+                    {/* Price badge */}
+                    <div className="absolute top-3 left-3 bg-[#0A2320]/70 backdrop-blur-sm text-white text-[12px] font-bold px-3 py-1.5 rounded-full font-mono">
+                      {exp.price?.toLocaleString() || "350,000"} <span className="text-[9px] text-white/60">{exp.currency === "UZS" ? "UZS" : "$"}</span>
                     </div>
-
-                    {/* Meta */}
-                    <div className="flex flex-col gap-2.5 px-1 py-1">
-                      <div className="flex justify-between items-center">
-                        <div className="font-mono text-[11px] text-teal-700 font-semibold uppercase tracking-widest">
-                          {exp.city?.toUpperCase() || "TASHKENT"}
-                        </div>
-                      </div>
-
-                      <h3 className="font-serif text-[24px] font-bold text-emerald-950 leading-tight line-clamp-2">
+                    {/* Text overlay */}
+                    <div className="absolute bottom-0 left-0 right-0 p-4">
+                      <h3 className="font-serif text-[16px] md:text-[20px] font-bold text-white leading-tight mb-1 line-clamp-2">
                         {exp.title}
                       </h3>
-
-                      <div className="font-mono text-[15px] font-bold text-emerald-950 flex items-baseline gap-1">
-                        {exp.price?.toLocaleString() || "350,000"} <span className="text-[10px] text-gray-400 font-semibold">{exp.currency === "UZS" ? "UZS" : "$"}</span>
+                      <div className="font-mono text-[10px] text-white/60 uppercase tracking-widest">
+                        {exp.city || "Tashkent"}
                       </div>
                     </div>
-
                   </div>
                 </Link>
               </motion.div>

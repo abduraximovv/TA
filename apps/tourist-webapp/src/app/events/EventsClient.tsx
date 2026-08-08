@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState } from "react";
 import { Search } from "lucide-react";
+import { motion } from "framer-motion";
 import type { Event } from "@repo/database";
 import { Breadcrumb } from "@/components/navigation/Breadcrumb";
 import { PageHero } from "@/components/PageHero";
@@ -92,27 +93,20 @@ export function EventsClient({ events }: Props) {
         </div>
 
         {/* Filter Bar */}
-        <div className="flex items-center gap-3 mb-10 overflow-x-auto scrollbar-hide flex-nowrap md:flex-wrap pb-4 md:pb-0 [&>*]:shrink-0">
-          <div style={{ position: "relative" }}>
-            <Search size={16} color="rgba(10,35,32,0.4)" style={{ position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)" }} />
+        <div className="flex items-center gap-4 mb-6">
+          <div className="relative flex-1">
+            <Search size={20} color="rgba(10,35,32,0.4)" className="absolute left-4 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               placeholder="Search events"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              style={{
-                padding: "12px 16px 12px 40px",
-                borderRadius: 12,
-                border: "1px solid transparent",
-                background: "#FFFFFF",
-                fontSize: 14,
-                width: 240,
-                outline: "none",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
-              }}
+              className="w-full pl-12 pr-4 py-4 rounded-2xl border-none outline-none text-[15px] shadow-sm bg-white text-[#0A2320]"
             />
           </div>
+        </div>
 
+        <div className="flex items-center gap-3 mb-10 overflow-x-auto scrollbar-hide pb-2 [&>*]:shrink-0">
           <button
             onClick={() => setActiveType(null)}
             style={{
@@ -175,11 +169,15 @@ export function EventsClient({ events }: Props) {
             <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 28, fontWeight: 600, color: "#0A2320", marginBottom: 24 }}>
               Happening Soon
             </h2>
-            <div className="scrollbar-hide" style={{ display: "flex", gap: 20, overflowX: "auto", paddingBottom: 8 }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
+                gap: "16px",
+              }}
+            >
               {upcoming.slice(0, 3).map((e) => (
-                <div key={e.id} style={{ flexShrink: 0 }}>
-                  <EventCard event={e} width="min(85vw, 400px)" />
-                </div>
+                <EventCard key={e.id} event={e} width="100%" />
               ))}
             </div>
           </div>
@@ -191,19 +189,17 @@ export function EventsClient({ events }: Props) {
             <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 28, fontWeight: 600, color: "#0A2320", marginBottom: 24 }}>
               All Upcoming Events
             </h2>
-            <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 340px), 1fr))",
-              gap: "40px 24px",
-            }}
-          >{upcoming.slice(3).map((e) => (
-                <EventCard key={e.id} event={e} width="100%" imageHeight={260} />
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
+                gap: "16px",
+              }}
+            >
+              {upcoming.slice(3).map((e) => (
+                <EventCard key={e.id} event={e} width="100%" />
               ))}
-            </motion.div>
+            </div>
           </div>
         )}
 
@@ -219,9 +215,15 @@ export function EventsClient({ events }: Props) {
             <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 600, color: "rgba(10,35,32,0.5)", marginBottom: 24 }}>
               Past Events
             </h2>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 340px), 1fr))", gap: 24 }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
+                gap: "16px",
+              }}
+            >
               {past.map((e) => (
-                <EventCard key={e.id} event={e} width="100%" imageHeight={220} />
+                <EventCard key={e.id} event={e} width="100%" />
               ))}
             </div>
           </div>

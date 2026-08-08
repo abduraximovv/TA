@@ -25,36 +25,50 @@ const MOSAIC_STRIP =
  */
 export function PageHero({ title, eyebrow, image, alt, height, style, hideMosaicStrip }: PageHeroProps) {
   return (
-    <div
-      className={`relative w-full rounded-[24px] overflow-hidden mb-8 md:mb-12 ${height ? '' : 'h-[360px] md:h-[520px]'}`}
-      style={{
-        ...(height ? { height } : {}),
-        boxShadow: "0 24px 48px -12px rgba(10,35,32,0.25)",
-        ...style,
-      }}
-    >
-      <motion.div
-        initial={{ opacity: 0, scale: 1.08 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-        style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
-      >
-        <Image src={image} alt={alt} fill className="object-cover" priority />
-      </motion.div>
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          background: "linear-gradient(180deg, rgba(10,35,32,0) 30%, rgba(10,35,32,0.6) 70%, rgba(10,35,32,0.95) 100%)",
-        }}
-      />
+    <>
+      {/* Mobile Version (Text Only) */}
+      <div className="md:hidden pt-8 pb-4 pl-4 pr-6">
+        {eyebrow && (
+          <div className="font-mono text-[11px] tracking-[0.1em] uppercase text-[#C5A880] mb-2">
+            {eyebrow}
+          </div>
+        )}
+        <h1 className="font-serif text-[38px] font-bold text-[#0A2320] m-0 tracking-tight leading-[1.1] whitespace-pre-line">
+          {title === "Destinations" ? "Discover\nyour new destination!" : title}
+        </h1>
+      </div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 24 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.45, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-        className="absolute bottom-10 left-6 md:bottom-14 md:left-12 pr-6 md:pr-12"
+      {/* Desktop Version (Full Image Hero) */}
+      <div
+        className={`hidden md:block relative w-full rounded-[24px] overflow-hidden mb-12 ${height ? '' : 'h-[520px]'}`}
+        style={{
+          ...(height ? { height } : {}),
+          boxShadow: "0 24px 48px -12px rgba(10,35,32,0.25)",
+          ...style,
+        }}
       >
+        <motion.div
+          initial={{ opacity: 0, scale: 1.08 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
+        >
+          <Image src={image} alt={alt} fill className="object-cover" priority />
+        </motion.div>
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            background: "linear-gradient(180deg, rgba(10,35,32,0) 30%, rgba(10,35,32,0.6) 70%, rgba(10,35,32,0.95) 100%)",
+          }}
+        />
+
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.45, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          className="absolute bottom-14 left-12 pr-12"
+        >
         {eyebrow && (
           <div className="font-mono text-[10px] md:text-[12px] tracking-[0.1em] uppercase text-[#C5A880] mb-2 md:mb-3">
             {eyebrow}
@@ -84,5 +98,6 @@ export function PageHero({ title, eyebrow, image, alt, height, style, hideMosaic
         />
       )}
     </div>
+    </>
   );
 }

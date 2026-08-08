@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { Button, Input, Modal, Textarea, Toast } from "@repo/ui";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@repo/auth";
+import { ChevronRight } from "lucide-react";
 
 export function PackageBookingModal({
   itineraryId,
@@ -112,12 +113,20 @@ export function PackageBookingModal({
 
   return (
     <>
-      <button
-        onClick={handleOpen}
-        className="w-full bg-[#0A2320] text-white px-8 h-14 rounded-full font-sans font-medium text-lg hover:bg-black transition-colors shadow-lg shadow-black/10 flex items-center justify-center gap-2"
-      >
-        Book Now
-      </button>
+      <div className="fixed bottom-0 left-0 right-0 bg-white p-6 pb-safe z-40 flex items-center justify-between">
+        <div>
+          <div className="text-[13px] text-gray-500 font-medium mb-0.5">Total Price</div>
+          <div className="text-2xl font-bold text-[#0A2320]">
+            ${Number(price || 0).toLocaleString("en-US").replace(/,/g, " ")}
+          </div>
+        </div>
+        <button
+          onClick={handleOpen}
+          className="w-[60px] h-[60px] rounded-full bg-black text-white flex items-center justify-center shadow-[0_4px_14px_rgba(0,0,0,0.25)] hover:scale-105 transition-transform"
+        >
+          <ChevronRight className="w-8 h-8" />
+        </button>
+      </div>
 
       <Modal open={isOpen} onOpenChange={setIsOpen} title="Book Package">
         <form onSubmit={handleSubmit} className="space-y-5 max-h-[70vh] overflow-y-auto pr-2 pb-4">

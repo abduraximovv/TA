@@ -81,69 +81,33 @@ export function DiscoverClient({ destinations }: DiscoverClientProps) {
         <PageHero title="Destinations" image="https://images.unsplash.com/photo-1541845157-a6d2d100c931?q=80&w=2000" alt="Uzbekistan Destinations" />
 
         {/* Search + Filters */}
-        <div className="flex items-center gap-3 mb-10 overflow-x-auto scrollbar-hide flex-nowrap md:flex-wrap pb-4 md:pb-0 [&>*]:shrink-0">
-          <div style={{ position: "relative" }}>
-            <Search size={16} color="rgba(10,35,32,0.4)" style={{ position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)" }} />
+        <div className="flex items-center gap-4 mb-6">
+          <div className="relative flex-1">
+            <Search size={20} color="rgba(10,35,32,0.4)" className="absolute left-4 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               placeholder="Search destinations"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              style={{
-                padding: "12px 16px 12px 40px",
-                borderRadius: 12,
-                border: "1px solid transparent",
-                background: "#FFFFFF",
-                fontSize: 14,
-                width: 240,
-                outline: "none",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
-              }}
+              className="w-full pl-12 pr-4 py-4 rounded-2xl border-none outline-none text-[15px] shadow-sm bg-white text-[#0A2320]"
             />
           </div>
 
           <button
             onClick={() => setIsModalOpen(true)}
-            style={{
-              position: "relative",
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              padding: "12px 24px",
-              borderRadius: 12,
-              border: "none",
-              background: "#006B70",
-              color: "#FFFFFF",
-              fontSize: 14,
-              fontWeight: 600,
-              cursor: "pointer",
-            }}
+            className="w-14 h-14 rounded-2xl bg-[#0A2320] flex items-center justify-center shrink-0 relative"
           >
-            <SlidersHorizontal size={16} /> Filters
+            <SlidersHorizontal size={20} color="#FFFFFF" />
             {activeAdvancedCount > 0 && (
-              <div
-                style={{
-                  position: "absolute",
-                  top: -6,
-                  right: -6,
-                  background: "#C1592A",
-                  color: "#FFF",
-                  fontSize: 10,
-                  fontWeight: 700,
-                  width: 18,
-                  height: 18,
-                  borderRadius: "50%",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
+              <div className="absolute -top-1.5 -right-1.5 bg-[#C1592A] text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">
                 {activeAdvancedCount}
               </div>
             )}
           </button>
+        </div>
 
-          {/* Region chips -- real regions covered by published destinations */}
+        {/* Region chips -- real regions covered by published destinations */}
+        <div className="flex items-center gap-3 mb-10 overflow-x-auto scrollbar-hide pb-2 [&>*]:shrink-0">
           <button
             onClick={() => setSelectedRegion(null)}
             style={{
@@ -228,8 +192,8 @@ export function DiscoverClient({ destinations }: DiscoverClientProps) {
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 360px), 1fr))",
-              gap: "48px 32px",
+              gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
+              gap: "16px",
             }}
           >
             {filteredDestinations.map((d, i) => (
@@ -244,46 +208,48 @@ export function DiscoverClient({ destinations }: DiscoverClientProps) {
                   <div
                     className="discover-card"
                     style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: 16,
+                      position: "relative",
+                      borderRadius: 20,
+                      overflow: "hidden",
+                      aspectRatio: "3/4",
                       cursor: "pointer",
                     }}
                   >
+                    <SafeImage
+                      src={
+                        d.image_url ||
+                        "https://images.unsplash.com/photo-1733586092622-1b3201e802a5?q=80&w=800"
+                      }
+                      fallback="https://images.unsplash.com/photo-1733586092622-1b3201e802a5?q=80&w=800"
+                      alt={d.name}
+                      fill
+                      className="object-cover discover-card-img transition-transform duration-700 hover:scale-105"
+                      sizes="(max-width: 768px) 50vw, (max-width: 1280px) 33vw, 25vw"
+                    />
+                    {/* Dark gradient overlay at bottom */}
                     <div
                       style={{
-                        borderRadius: 20,
-                        overflow: "hidden",
-                        position: "relative",
-                        aspectRatio: "3/2",
-                        width: "100%",
+                        position: "absolute",
+                        inset: 0,
+                        background: "linear-gradient(to top, rgba(10,35,32,0.85) 0%, rgba(10,35,32,0.3) 40%, transparent 60%)",
                       }}
-                    >
-                      <SafeImage
-                        src={
-                          d.image_url ||
-                          "https://images.unsplash.com/photo-1733586092622-1b3201e802a5?q=80&w=800"
-                        }
-                        fallback="https://images.unsplash.com/photo-1733586092622-1b3201e802a5?q=80&w=800"
-                        alt={d.name}
-                        fill
-                        className="object-cover discover-card-img"
-                        sizes="(max-width: 1280px) 33vw, 400px"
-                      />
-                    </div>
-                    
-                    <div className="flex flex-col gap-2.5 px-1 py-1">
-                      <div className="flex justify-between items-center">
-                        <div className="font-mono text-[11px] text-teal-700 font-semibold uppercase tracking-widest">
-                          {d.region ? d.region.toUpperCase() : "CULTURE & HISTORY"}
-                        </div>
-                        <div className="flex items-center gap-1.5 font-mono text-[14px] font-bold text-emerald-950">
-                          <Sun size={15} /> {22 + (i % 10)}.{i % 10}°C
-                        </div>
+                    />
+                    {/* Service count badge */}
+                    {(d.service_count ?? 0) > 0 && (
+                      <div
+                        className="absolute top-3 right-3 bg-[#0A2320]/70 backdrop-blur-sm text-white text-[11px] font-semibold px-2.5 py-1 rounded-full"
+                      >
+                        {d.service_count} items
                       </div>
-                      <h3 className="font-serif text-[28px] font-bold text-emerald-950 leading-tight">
+                    )}
+                    {/* Text overlay */}
+                    <div className="absolute bottom-0 left-0 right-0 p-4">
+                      <h3 className="font-serif text-[18px] md:text-[22px] font-bold text-white leading-tight mb-1">
                         {d.name}
                       </h3>
+                      <div className="font-mono text-[10px] text-white/60 uppercase tracking-widest">
+                        {d.region || "Uzbekistan"}
+                      </div>
                     </div>
                   </div>
                 </Link>

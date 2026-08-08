@@ -36,116 +36,56 @@ export function EventCard({ event, width = 400, imageHeight = 340, theme = "ligh
   const dark = theme === "dark";
 
   return (
-    <div
-      className="event-card"
-      style={{
-        width,
-        display: "flex",
-        flexDirection: "column",
-        gap: 16,
-        opacity: isPast ? 0.6 : 1,
-      }}
-    >
-      <div style={{ position: "relative", height: imageHeight, borderRadius: 20, overflow: "hidden", width: "100%" }}>
+    <Link href={href} style={{ textDecoration: "none", display: "block", width }}>
+      <div
+        className="event-card"
+        style={{
+          position: "relative",
+          borderRadius: 20,
+          overflow: "hidden",
+          aspectRatio: "3/4",
+          cursor: "pointer",
+          opacity: isPast ? 0.6 : 1,
+        }}
+      >
         <Image
           src={event.image_url || "https://images.unsplash.com/photo-1601963404496-e6fcffa44f71?q=80&w=900"}
           alt={event.title}
           fill
-          className="object-cover event-card-img"
-          sizes={typeof width === "number" ? `${width}px` : "(max-width: 768px) 100vw, 340px"}
+          className="object-cover event-card-img transition-transform duration-700 hover:scale-105"
+          sizes={typeof width === "number" ? `${width}px` : "(max-width: 768px) 50vw, 340px"}
         />
+        {/* Gradient overlay */}
         <div
           style={{
             position: "absolute",
-            top: 18,
-            left: 18,
-            background: "rgba(10,35,32,0.75)",
-            backdropFilter: "blur(8px)",
-            borderRadius: 10,
-            padding: "8px 12px",
-            fontFamily: "'JetBrains Mono', monospace",
-            fontSize: 12,
-            color: "#F9F8F5",
-            lineHeight: 1.7,
+            inset: 0,
+            background: "linear-gradient(to top, rgba(10,35,32,0.9) 0%, rgba(10,35,32,0.3) 45%, transparent 65%)",
           }}
-        >
-          <div>
-            {start.day} / {start.month} / {start.year}
-          </div>
+        />
+        {/* Date badge */}
+        <div className="absolute top-3 left-3 bg-[#0A2320]/70 backdrop-blur-sm text-white text-[11px] font-bold px-3 py-1.5 rounded-lg font-mono leading-relaxed">
+          <div>{start.day} / {start.month}</div>
           {end && (end.day !== start.day || end.month !== start.month) && (
-            <div style={{ color: "rgba(249,248,245,0.6)" }}>
-              {end.day} / {end.month} / {end.year}
-            </div>
+            <div className="text-white/50">{end.day} / {end.month}</div>
           )}
         </div>
+        {/* Past badge */}
         {isPast && (
-          <div
-            style={{
-              position: "absolute",
-              top: 18,
-              right: 18,
-              background: "rgba(0,0,0,0.6)",
-              borderRadius: 999,
-              padding: "5px 12px",
-              fontFamily: "'JetBrains Mono', monospace",
-              fontSize: 10,
-              letterSpacing: "0.06em",
-              textTransform: "uppercase",
-              color: "#F9F8F5",
-            }}
-          >
+          <div className="absolute top-3 right-3 bg-black/60 text-white text-[10px] font-mono uppercase tracking-wider px-2.5 py-1 rounded-full">
             Concluded
           </div>
         )}
-      </div>
-
-      <div style={{ display: "flex", flexDirection: "column", padding: "4px 4px 0" }}>
-        <div style={{ height: 104, overflow: "hidden" }}>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              fontSize: 12.5,
-              letterSpacing: "0.06em",
-              textTransform: "uppercase",
-              color: "#006B70",
-              marginBottom: 10,
-              fontFamily: "'Inter', sans-serif",
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-            }}
-          >
-            <MapPin size={13} style={{ flexShrink: 0 }} />
-            <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {event.location || "Uzbekistan"} | {event.event_type}
-            </span>
-          </div>
-          <div
-            style={{
-              fontFamily: "'Playfair Display', serif",
-              fontSize: 22,
-              fontWeight: 600,
-              color: dark ? "#FFFFFF" : "#0A2320",
-              lineHeight: 1.3,
-              display: "-webkit-box",
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: "vertical",
-              overflow: "hidden",
-            }}
-          >
+        {/* Text overlay */}
+        <div className="absolute bottom-0 left-0 right-0 p-4">
+          <h3 className="font-serif text-[16px] md:text-[20px] font-bold text-white leading-tight mb-1 line-clamp-2">
             {event.title}
+          </h3>
+          <div className="font-mono text-[10px] text-white/60 uppercase tracking-widest">
+            {event.location || "Uzbekistan"}
           </div>
         </div>
-        <Link
-          href={href}
-          className="btn-pill-primary"
-          style={{ textDecoration: "none", fontSize: 13.5, padding: "10px 22px", marginTop: 16, display: "inline-flex" }}
-        >
-          View Details
-        </Link>
       </div>
-    </div>
+    </Link>
   );
 }

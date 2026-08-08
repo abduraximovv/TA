@@ -91,69 +91,33 @@ export function PackagesClient({ itineraries }: { itineraries: ItineraryWithMeta
         </motion.header>
 
         {/* Search + Filters */}
-        <div className="flex items-center gap-3 mb-10 overflow-x-auto scrollbar-hide flex-nowrap md:flex-wrap pb-4 md:pb-0 [&>*]:shrink-0">
-          <div style={{ position: "relative" }}>
-            <Search size={16} color="rgba(10,35,32,0.4)" style={{ position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)" }} />
+        <div className="flex items-center gap-4 mb-6">
+          <div className="relative flex-1">
+            <Search size={20} color="rgba(10,35,32,0.4)" className="absolute left-4 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               placeholder="Search packages"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              style={{
-                padding: "12px 16px 12px 40px",
-                borderRadius: 12,
-                border: "1px solid transparent",
-                background: "#FFFFFF",
-                fontSize: 14,
-                width: 240,
-                outline: "none",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
-              }}
+              className="w-full pl-12 pr-4 py-4 rounded-2xl border-none outline-none text-[15px] shadow-sm bg-white text-[#0A2320]"
             />
           </div>
 
           <button
             onClick={() => setIsModalOpen(true)}
-            style={{
-              position: "relative",
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              padding: "12px 24px",
-              borderRadius: 12,
-              border: "none",
-              background: "#006B70",
-              color: "#FFFFFF",
-              fontSize: 14,
-              fontWeight: 600,
-              cursor: "pointer",
-            }}
+            className="w-14 h-14 rounded-2xl bg-[#0A2320] flex items-center justify-center shrink-0 relative"
           >
-            <SlidersHorizontal size={16} /> Filters
+            <SlidersHorizontal size={20} color="#FFFFFF" />
             {activeAdvancedCount > 0 && (
-              <div
-                style={{
-                  position: "absolute",
-                  top: -6,
-                  right: -6,
-                  background: "#C1592A",
-                  color: "#FFF",
-                  fontSize: 10,
-                  fontWeight: 700,
-                  width: 18,
-                  height: 18,
-                  borderRadius: "50%",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
+              <div className="absolute -top-1.5 -right-1.5 bg-[#C1592A] text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">
                 {activeAdvancedCount}
               </div>
             )}
           </button>
+        </div>
 
-          {/* Destination chips -- real cities covered by published packages */}
+        {/* Agency chips */}
+        <div className="flex items-center gap-3 mb-10 overflow-x-auto scrollbar-hide pb-2 [&>*]:shrink-0">
           <button
             onClick={() => setSelectedDestination(null)}
             style={{
@@ -201,7 +165,11 @@ export function PackagesClient({ itineraries }: { itineraries: ItineraryWithMeta
             initial="hidden"
             animate="visible"
             variants={staggerContainer}
-            style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 360px), 1fr))", gap: "48px 32px" }}
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
+              gap: "16px",
+            }}
           >
             {filteredItineraries.map((itin, i) => (
               <PackageCard key={itin.id} itinerary={itin} fallback={FALLBACK_IMAGES[i % FALLBACK_IMAGES.length]} />
@@ -268,12 +236,7 @@ export function PackagesClient({ itineraries }: { itineraries: ItineraryWithMeta
 }
 
 function PackageCard({ itinerary, fallback }: { itinerary: ItineraryWithMeta; fallback: string }) {
-  const dateRange =
-    itinerary.start_date && itinerary.end_date
-      ? `${new Date(itinerary.start_date).toLocaleDateString("en-GB", { day: "numeric", month: "short" })} — ${new Date(
-          itinerary.end_date
-        ).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}`
-      : null;
+  const priceStr = (Number(itinerary.total_price) || 0).toLocaleString("en-US").replace(/,/g, " ");
 
   return (
     <motion.div variants={fadeUp} whileHover={{ y: -4 }} style={{ height: "100%" }}>
@@ -281,117 +244,49 @@ function PackageCard({ itinerary, fallback }: { itinerary: ItineraryWithMeta; fa
         <div
           className="package-card"
           style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 16,
-            height: "100%",
+            position: "relative",
+            borderRadius: 20,
+            overflow: "hidden",
+            aspectRatio: "3/4",
+            cursor: "pointer",
           }}
         >
-          {/* Inset photo */}
-          <div style={{ position: "relative", height: 260, borderRadius: 20, overflow: "hidden", width: "100%" }}>
-            <Image
-              src={itinerary.image_url || fallback}
-              alt={itinerary.title}
-              fill
-              className="object-cover package-card-img"
-              sizes="(max-width: 768px) 100vw, 360px"
-            />
-            {itinerary.item_count > 0 && (
-              <span
-                style={{
-                  position: "absolute",
-                  top: 14,
-                  right: 14,
-                  fontSize: 11,
-                  fontWeight: 700,
-                  color: "#F9F8F5",
-                  background: "rgba(10,35,32,0.65)",
-                  backdropFilter: "blur(8px)",
-                  padding: "6px 12px",
-                  borderRadius: 100,
-                }}
-              >
-                {itinerary.item_count} item{itinerary.item_count !== 1 ? "s" : ""}
-              </span>
-            )}
+          <Image
+            src={itinerary.image_url || fallback}
+            alt={itinerary.title}
+            fill
+            className="object-cover package-card-img transition-transform duration-700 hover:scale-105"
+            sizes="(max-width: 768px) 50vw, (max-width: 1280px) 33vw, 25vw"
+          />
+          {/* Gradient overlay */}
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              background: "linear-gradient(to top, rgba(10,35,32,0.9) 0%, rgba(10,35,32,0.3) 45%, transparent 65%)",
+            }}
+          />
+          {/* Price badge */}
+          <div className="absolute top-3 left-3 bg-[#0A2320]/70 backdrop-blur-sm text-white text-[12px] font-bold px-3 py-1.5 rounded-full font-mono">
+            {priceStr} <span className="text-[9px] text-white/60">{itinerary.currency}</span>
           </div>
-
-          <div style={{ display: "flex", flexDirection: "column", flex: 1, padding: "4px 4px 0" }}>
-            {itinerary.agency_name && (
-              <div
-                style={{
-                  fontFamily: "'JetBrains Mono', monospace",
-                  fontSize: 10.5,
-                  letterSpacing: "0.08em",
-                  textTransform: "uppercase",
-                  color: "#006B70",
-                  marginBottom: 8,
-                }}
-              >
-                {itinerary.agency_name}
-              </div>
-            )}
-
-            <h3
-              style={{
-                fontFamily: "'Playfair Display', serif",
-                fontWeight: 600,
-                fontSize: 24,
-                color: "#0A2320",
-                lineHeight: 1.2,
-                marginBottom: 8,
-              }}
-              className="line-clamp-2"
-            >
+          {/* Items count badge */}
+          {itinerary.item_count > 0 && (
+            <div className="absolute top-3 right-3 bg-[#0A2320]/70 backdrop-blur-sm text-white text-[11px] font-semibold px-2.5 py-1 rounded-full">
+              {itinerary.item_count} items
+            </div>
+          )}
+          {/* Text overlay */}
+          <div className="absolute bottom-0 left-0 right-0 p-4">
+            <h3 className="font-serif text-[16px] md:text-[20px] font-bold text-white leading-tight mb-1 line-clamp-2">
               {itinerary.title}
             </h3>
-
-            {itinerary.description && (
-              <p style={{ color: "rgba(10,35,32,0.55)", fontSize: 13.5, lineHeight: 1.5, marginBottom: 16 }} className="line-clamp-2">
-                {itinerary.description}
-              </p>
-            )}
-
-            {dateRange && (
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                  fontSize: 12.5,
-                  color: "rgba(10,35,32,0.55)",
-                  marginBottom: 16,
-                  marginTop: "auto",
-                }}
-              >
-                <Calendar style={{ width: 14, height: 14 }} /> {dateRange}
-              </div>
-            )}
-
-            <div
-              style={{
-                display: "flex",
-                alignItems: "flex-end",
-                justifyContent: "space-between",
-                marginTop: dateRange ? 0 : "auto",
-              }}
-            >
-              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 15, color: "#0A2320", fontWeight: 700 }}>
-                {(Number(itinerary.total_price) || 0).toLocaleString("en-US").replace(/,/g, " ")}{" "}
-                <span style={{ fontSize: 10, color: "rgba(10,35,32,0.4)", fontWeight: 600 }}>{itinerary.currency}</span>
-              </span>
-              <span style={{ color: "#006B70", fontSize: 13, fontWeight: 700, display: "flex", alignItems: "center", gap: 4 }}>
-                View Details <ArrowRight style={{ width: 14, height: 14 }} />
-              </span>
+            <div className="font-mono text-[10px] text-white/60 uppercase tracking-widest">
+              {itinerary.agency_name || "Tour Package"}
             </div>
           </div>
         </div>
       </Link>
-
-      <style>{`
-        .package-card-img { transition: transform 0.7s ease-out; }
-        .package-card:hover .package-card-img { transform: scale(1.05); }
-      `}</style>
     </motion.div>
   );
 }

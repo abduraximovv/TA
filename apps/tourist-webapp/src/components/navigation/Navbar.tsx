@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { Map, Search, Menu, X } from "lucide-react";
+import { Map, Search, Menu, X, Bell } from "lucide-react";
 import { useAuth } from "@repo/auth";
 import { AuthModal } from "@/components/auth/AuthModal";
 
@@ -122,6 +122,14 @@ export function Navbar() {
                   style={{ color: "#FFFFFF" }}
                 >
                   <Search className="w-5 h-5" />
+                </button>
+                <button
+                  aria-label="Notifications"
+                  className="tap-target tap-active flex items-center justify-center rounded-full relative"
+                  style={{ color: "#FFFFFF" }}
+                >
+                  <Bell className="w-5 h-5" />
+                  <div className="absolute top-[8px] right-[8px] w-1.5 h-1.5 bg-red-500 rounded-full" />
                 </button>
                 <button
                   onClick={() => setIsMobileMenuOpen(true)}

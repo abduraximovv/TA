@@ -3,15 +3,9 @@
 import React from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowLeft, Package, Calendar, Star, MapPin, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, MapPin, Heart, X, CheckCircle2, XCircle, Star } from "lucide-react";
 import { PackageBookingModal } from "@/components/booking/PackageBookingModal";
 import type { ItineraryDetail, ReviewWithAuthor } from "@repo/database";
-import { Breadcrumb } from "@/components/navigation/Breadcrumb";
-
-const fadeUp = {
-  hidden: { opacity: 0, y: 24 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] as const } },
-};
 
 interface PackageDetailClientProps {
   itinerary: ItineraryDetail;
@@ -20,196 +14,263 @@ interface PackageDetailClientProps {
 }
 
 export function PackageDetailClient({ itinerary, reviews, isLoggedIn }: PackageDetailClientProps) {
-  const dateRange =
-    itinerary.start_date && itinerary.end_date
-      ? `${new Date(itinerary.start_date).toLocaleDateString("en-GB", { day: "numeric", month: "short" })} — ${new Date(
-          itinerary.end_date
-        ).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}`
-      : null;
+  const tourPhotos = itinerary.items
+    .filter((item) => item.service_image)
+    .map((item) => item.service_image!);
+    
+  // Use a fallback for photos to ensure we have exactly 4 for the gallery layout
+  const displayPhotos = [...tourPhotos, "/images/registan_4k.png", "/images/registan_4k.png", "/images/registan_4k.png"].slice(0, 4);
 
-  // Extract a hero image from items, or use a default
-  const heroImage =
-    itinerary.items.find((item) => item.service_image)?.service_image ||
-    "/images/registan_4k.png";
+  const [activeImage, setActiveImage] = React.useState(displayPhotos[0]);
+  const [isFullscreen, setIsFullscreen] = React.useState(false);
+
+  // Calculate duration in days
+  const durationDays =
+    itinerary.start_date && itinerary.end_date
+      ? Math.ceil((new Date(itinerary.end_date).getTime() - new Date(itinerary.start_date).getTime()) / (1000 * 60 * 60 * 24))
+      : 3; // fallback for design
+
+  // Average rating
+  const avgRating = reviews.length > 0 ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1) : "4.8";
 
   return (
-    <main className="min-h-screen bg-[#F9F8F5] pb-24 text-[#0A2320]">
-      <div className="max-w-[1400px] mx-auto px-6 lg:px-12 pt-32 lg:pt-40">
-        
-        {/* Top Breadcrumb */}
-        <div className="mb-12">
-          <Link
-            href="/packages"
-            className="inline-flex items-center gap-2 text-gray-500 hover:text-[#0A2320] text-sm font-medium transition-colors mb-6"
-          >
-            <ArrowLeft className="w-4 h-4" /> Back to all packages
-          </Link>
-          <Breadcrumb 
-            items={[{ label: "Packages", href: "/packages" }, { label: itinerary.title }]} 
-          />
-        </div>
+    <main className="min-h-screen bg-white pb-32 text-[#0A2320]">
+      
+      {/* Fixed Back and Favorite Buttons */}
+      <div className="fixed top-[90px] left-5 right-5 max-w-[900px] mx-auto flex justify-between items-center z-[45] pointer-events-none">
+        <Link
+          href="/packages"
+          className="w-10 h-10 rounded-full bg-[#0A2320] flex items-center justify-center text-white shadow-md hover:bg-black transition-colors pointer-events-auto"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </Link>
+        <button className="w-10 h-10 rounded-full bg-[#0A2320] flex items-center justify-center text-white shadow-md hover:bg-black transition-colors pointer-events-auto">
+          <Heart className="w-5 h-5" />
+        </button>
+      </div>
 
-        <div className="flex flex-col lg:flex-row gap-16 lg:gap-24 relative items-start">
+      {/* Fullscreen Photo Viewer */}
+      {isFullscreen && (
+        <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-md flex flex-col items-center justify-center touch-none">
+          {/* Close button */}
+          <button 
+            onClick={() => setIsFullscreen(false)}
+            className="absolute top-8 right-6 text-white w-12 h-12 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors z-50"
+          >
+            <X className="w-6 h-6" />
+          </button>
           
-          {/* Left Column (Sticky Details) */}
-          <motion.div 
-            className="w-full lg:w-[45%] lg:sticky lg:top-32"
-            initial="hidden"
-            animate="visible"
-            variants={fadeUp}
-          >
-            {itinerary.agency_name && (
-              <div className="inline-block px-4 py-1.5 bg-[#C5A880]/10 rounded-full text-[11px] font-bold uppercase tracking-wider text-[#8A6D3B] font-mono mb-6">
-                Curated by {itinerary.agency_name}
-              </div>
-            )}
+          {/* Main Large Photo */}
+          <div className="w-full px-4 max-h-[70vh] flex items-center justify-center">
+            <motion.img
+              key={activeImage}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.3 }}
+              src={activeImage}
+              alt="Fullscreen View"
+              className="max-w-full max-h-[70vh] object-contain rounded-xl"
+            />
+          </div>
 
-            <h1 className="text-5xl lg:text-7xl font-serif font-semibold leading-[1.05] tracking-tight text-[#0A2320] mb-8">
-              {itinerary.title}
-            </h1>
+          {/* Thumbnails at the bottom */}
+          <div className="absolute bottom-10 left-0 right-0 px-6 flex justify-center gap-3 md:gap-5 overflow-x-auto pb-4 scrollbar-hide">
+            {displayPhotos.map((photo, i) => (
+              <button 
+                key={i}
+                onClick={() => setActiveImage(photo)}
+                className={`w-[70px] h-[70px] md:w-[90px] md:h-[90px] shrink-0 rounded-2xl border-[3px] overflow-hidden shadow-lg transition-all ${
+                  activeImage === photo ? "border-[#48CAE4] scale-105" : "border-white/50 hover:scale-105 opacity-60 hover:opacity-100"
+                }`}
+              >
+                <img src={photo} alt="" className="w-full h-full object-cover" />
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
-            <div className="flex flex-wrap gap-6 text-[15px] text-gray-600 font-sans mb-10 pb-10 border-b border-[#0A2320]/10">
-              {dateRange && (
-                <div className="flex items-center gap-2.5">
-                  <Calendar className="w-5 h-5 text-[#C5A880]" />
-                  <span>{dateRange}</span>
-                </div>
-              )}
-              <div className="flex items-center gap-2.5">
-                <Package className="w-5 h-5 text-[#C5A880]" />
-                <span>{itinerary.items.length} Curated Experiences</span>
-              </div>
-            </div>
-
-            {itinerary.description && (
-              <div className="mb-12">
-                <h2 className="text-xl font-serif font-semibold mb-4 text-[#0A2320]">Overview</h2>
-                <p className="text-gray-600 leading-relaxed text-[15.5px] font-sans">
-                  {itinerary.description}
-                </p>
-              </div>
-            )}
-
-            <div className="bg-white p-8 rounded-[32px] shadow-sm border border-gray-100/50">
-              <p className="text-sm font-medium text-gray-500 mb-1">Total Package Price</p>
-              <div className="text-4xl font-serif font-bold text-[#0A2320] mb-6">
-                {(Number(itinerary.total_price) || 0).toLocaleString("en-US").replace(/,/g, " ")} 
-                <span className="text-lg font-medium text-gray-400 ml-2">{itinerary.currency}</span>
-              </div>
-              
-              <PackageBookingModal 
-                itineraryId={itinerary.id} 
-                price={itinerary.total_price} 
-                currency={itinerary.currency} 
-                isLoggedIn={isLoggedIn} 
-              />
-            </div>
-          </motion.div>
-
-          {/* Right Column (Hero Collage + Timeline) */}
-          <motion.div 
-            className="w-full lg:w-[55%] flex flex-col gap-16"
+      {/* Hero Image Section */}
+      <div className="relative w-full h-[450px] md:h-[500px] mb-12">
+        {/* The curved image container */}
+        <div 
+          className="absolute inset-0 rounded-b-[48px] overflow-hidden bg-gray-900 cursor-pointer"
+          onClick={() => setIsFullscreen(true)}
+        >
+          <motion.img
+            key={activeImage}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-          >
-            
-            {/* Hero Image / Collage */}
-            <div className="w-full h-[500px] lg:h-[650px] rounded-[32px] overflow-hidden relative shadow-lg">
-              <img 
-                src={heroImage} 
-                alt={itinerary.title} 
-                className="w-full h-full object-cover" 
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
-            </div>
+            transition={{ duration: 0.5 }}
+            src={activeImage}
+            alt={itinerary.title}
+            className="w-full h-full object-cover hover:scale-105 transition-transform duration-700"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/20 pointer-events-none" />
+        </div>
 
-            {/* Journey Timeline */}
-            <div>
-              <h2 className="text-3xl font-serif font-semibold text-[#0A2320] mb-10">
-                Your Journey
-              </h2>
-              
-              {itinerary.items.length > 0 ? (
-                <div className="relative pl-6 md:pl-8 border-l-2 border-[#C5A880]/30 space-y-12">
-                  {itinerary.items.map((item, idx) => (
-                    <div key={item.id} className="relative">
-                      {/* Timeline Node */}
-                      <div className="absolute -left-[35px] md:-left-[43px] top-1 w-6 h-6 rounded-full bg-[#F9F8F5] border-4 border-[#C5A880] shadow-sm" />
-                      
-                      <div className="bg-white rounded-[24px] overflow-hidden shadow-sm border border-gray-100 flex flex-col sm:flex-row">
-                        {item.service_image && (
-                          <div className="w-full sm:w-48 h-40 sm:h-auto shrink-0 relative">
-                            <img src={item.service_image} alt="Service" className="w-full h-full object-cover" />
-                          </div>
-                        )}
-                        <div className="p-6 flex-1 flex flex-col justify-center">
-                          <div className="text-[11px] font-bold uppercase tracking-wider text-gray-400 font-mono mb-2">
-                            Stop {idx + 1}
-                          </div>
-                          <h3 className="text-xl font-serif font-semibold text-[#0A2320] mb-2 leading-snug">
-                            {item.service_title ?? item.title ?? "Custom Experience"}
-                          </h3>
-                          {item.price != null && (
-                            <div className="text-sm font-semibold text-[#006B70] mt-auto">
-                              Value: {(Number(item.price) || 0).toLocaleString("en-US").replace(/,/g, " ")} {itinerary.currency}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-gray-500 text-[15px]">No specific items detailed for this package.</p>
-              )}
-            </div>
+        {/* Title & Location (bottom left) */}
+        <div className="absolute bottom-10 left-6 right-[100px] z-20">
+          <h1 className="text-3xl md:text-4xl font-semibold text-white mb-2 leading-tight">
+            {itinerary.title}
+          </h1>
+          <div className="flex items-center gap-1.5 text-white/90">
+            <MapPin className="w-4 h-4" />
+            <span className="text-[13px] font-medium tracking-wide">
+              {itinerary.agency_name ? `${itinerary.agency_name}` : "Uzbekistan"}
+            </span>
+          </div>
+        </div>
 
-            {/* Reviews Section */}
-            {reviews.length > 0 && (
-              <div>
-                <h2 className="text-3xl font-serif font-semibold text-[#0A2320] mb-8">
-                  Traveler Reviews
-                </h2>
-                <div className="space-y-6">
-                  {reviews.slice(0, 5).map((review) => (
-                    <div key={review.id} className="bg-white p-8 rounded-[24px] shadow-sm border border-gray-100">
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-[#0A2320] text-white flex items-center justify-center font-serif font-semibold">
-                            {(review.author_name || "A")[0]}
-                          </div>
-                          <span className="font-semibold text-[#0A2320]">
-                            {review.author_name ?? "Anonymous"}
-                          </span>
-                        </div>
-                        <div className="flex gap-1">
-                          {Array.from({ length: review.rating }).map((_, i) => (
-                            <Star key={i} className="w-4 h-4 text-[#C5A880] fill-[#C5A880]" />
-                          ))}
-                        </div>
-                      </div>
-                      {review.comment && (
-                        <p className="text-gray-600 leading-relaxed text-[15px] mt-4">{review.comment}</p>
-                      )}
-                      {review.response && (
-                        <div className="mt-6 p-5 bg-[#F9F8F5] rounded-2xl border-l-4 border-[#C5A880]">
-                          <div className="flex items-center gap-2 mb-2">
-                            <CheckCircle2 className="w-4 h-4 text-[#C5A880]" />
-                            <span className="text-xs font-bold uppercase tracking-wider text-[#C5A880] font-mono">Agency Response</span>
-                          </div>
-                          <p className="text-gray-600 text-[14.5px] leading-relaxed">{review.response}</p>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-          </motion.div>
+        {/* Vertical Overlapping Photo Gallery */}
+        <div className="absolute right-5 -bottom-10 z-30 flex flex-col gap-3">
+          {displayPhotos.map((photo, i) => (
+            <button 
+              key={i}
+              onClick={() => setActiveImage(photo)}
+              className={`w-[68px] h-[68px] rounded-2xl border-[3px] overflow-hidden shadow-lg bg-gray-200 transition-all cursor-pointer ${
+                activeImage === photo ? "border-[#48CAE4] scale-105" : "border-white hover:scale-105"
+              }`}
+            >
+              <img src={photo} alt="" className="w-full h-full object-cover" />
+            </button>
+          ))}
         </div>
       </div>
+
+      <div className="px-6 max-w-[900px] mx-auto">
+        {/* Stats Chips */}
+        <div className="flex items-center justify-center gap-4 mt-6">
+          <div className="flex-1 flex flex-col items-center justify-center py-4 border border-gray-100 rounded-[24px] shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+            <span className="text-[11px] text-gray-800 font-medium mb-1">Days</span>
+            <span className="text-xl font-bold text-[#48CAE4]">{durationDays}</span>
+          </div>
+          <div className="flex-1 flex flex-col items-center justify-center py-4 border border-gray-100 rounded-[24px] shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+            <span className="text-[11px] text-gray-800 font-medium mb-1">Stops</span>
+            <span className="text-xl font-bold text-[#48CAE4]">{itinerary.items.length || 5}</span>
+          </div>
+          <div className="flex-1 flex flex-col items-center justify-center py-4 border border-gray-100 rounded-[24px] shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+            <span className="text-[11px] text-gray-800 font-medium mb-1">Rating</span>
+            <span className="text-xl font-bold text-[#48CAE4]">{avgRating}</span>
+          </div>
+        </div>
+
+        {/* Description Section */}
+        <div className="mt-8">
+          <h2 className="text-[17px] font-bold text-[#0A2320] mb-3">Description</h2>
+          <p className="text-gray-500 text-[13px] leading-[1.7]">
+            {itinerary.description || "This is one of our most popular packages, combining beautiful nature, rich history, and authentic cultural experiences. Enjoy a carefully crafted itinerary that ensures you see the very best highlights while traveling in comfort."}
+            <span className="text-[#48CAE4] ml-1 font-medium cursor-pointer">Read More</span>
+          </p>
+        </div>
+        
+        {/* Journey Timeline */}
+        {itinerary.items.length > 0 && (
+          <div className="mt-10 mb-8">
+            <h2 className="text-[17px] font-bold text-[#0A2320] mb-5">Your Journey</h2>
+            <div className="space-y-4">
+              {itinerary.items.map((item, idx) => (
+                <div key={item.id} className="flex gap-4 items-start">
+                  <div className="w-8 h-8 rounded-full bg-[#0A2320] text-white flex items-center justify-center text-sm font-bold shrink-0 mt-1">
+                    {idx + 1}
+                  </div>
+                  <div className="flex-1 bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100">
+                    <div className="flex items-center gap-3 p-4">
+                      {item.service_image && (
+                        <div className="w-14 h-14 rounded-xl overflow-hidden shrink-0">
+                          <img src={item.service_image} alt="" className="w-full h-full object-cover" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-[15px] font-semibold text-[#0A2320] truncate">
+                          {item.service_title ?? item.title ?? "Custom Experience"}
+                        </h3>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Information Section */}
+        <div className="mt-10 mb-8">
+          <h2 className="text-[17px] font-bold text-[#0A2320] mb-5">What's Included</h2>
+          <div className="bg-[#F8F9FA] rounded-3xl p-6 border border-gray-100">
+            <ul className="space-y-4">
+              <li className="flex items-center gap-3 text-[14px] text-gray-700 font-medium">
+                <CheckCircle2 className="w-5 h-5 text-[#48CAE4] shrink-0" />
+                Accommodation in premium 4-star hotels
+              </li>
+              <li className="flex items-center gap-3 text-[14px] text-gray-700 font-medium">
+                <CheckCircle2 className="w-5 h-5 text-[#48CAE4] shrink-0" />
+                Daily breakfast and selected dinners
+              </li>
+              <li className="flex items-center gap-3 text-[14px] text-gray-700 font-medium">
+                <CheckCircle2 className="w-5 h-5 text-[#48CAE4] shrink-0" />
+                High-speed train tickets & transportation
+              </li>
+              <li className="flex items-center gap-3 text-[14px] text-gray-700 font-medium">
+                <CheckCircle2 className="w-5 h-5 text-[#48CAE4] shrink-0" />
+                Expert local guides and all entrance fees
+              </li>
+              <div className="h-px bg-gray-200 my-4"></div>
+              <li className="flex items-center gap-3 text-[14px] text-gray-400 font-medium">
+                <XCircle className="w-5 h-5 text-gray-300 shrink-0" />
+                International flights and visa fees
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        {/* Tour Route Map */}
+        <div className="mt-10 mb-12">
+          <h2 className="text-[17px] font-bold text-[#0A2320] mb-5">Tour Route</h2>
+          <div className="rounded-[32px] overflow-hidden border-4 border-white shadow-[0_4px_20px_rgba(0,0,0,0.05)] bg-gray-100 relative h-[250px] md:h-[350px]">
+            <img src="/images/map_placeholder.png" alt="Tour Map Route" className="w-full h-full object-cover" />
+            <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-2xl px-4 py-2 flex items-center gap-2 shadow-sm border border-gray-100">
+              <MapPin className="w-4 h-4 text-[#48CAE4]" />
+              <span className="text-[11px] font-bold text-[#0A2320] uppercase tracking-wider">Uzbekistan</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Reviews */}
+        {reviews.length > 0 && (
+          <div className="mt-10 mb-8 -mx-6 px-6">
+            <h2 className="text-[17px] font-bold text-[#0A2320] mb-5">Reviews ({reviews.length})</h2>
+            <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-4 snap-x">
+              {reviews.slice(0, 5).map((review) => (
+                <div key={review.id} className="bg-[#F8F9FA] p-6 rounded-3xl min-w-[280px] max-w-[320px] shrink-0 snap-start border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-full bg-[#0A2320] text-white flex items-center justify-center font-serif font-bold text-sm shadow-sm">
+                      {(review.author_name || "A")[0]}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-bold text-[14px] text-[#0A2320] truncate">{review.author_name ?? "Anonymous"}</div>
+                      <div className="flex items-center gap-1 mt-0.5">
+                        <Star className="w-3.5 h-3.5 text-[#48CAE4] fill-[#48CAE4]" />
+                        <span className="text-[11px] font-bold text-gray-500">{review.rating}</span>
+                      </div>
+                    </div>
+                  </div>
+                  {review.comment && (
+                    <p className="text-gray-500 text-[13px] leading-[1.7] line-clamp-3">{review.comment}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      <PackageBookingModal
+        itineraryId={itinerary.id}
+        price={itinerary.total_price}
+        currency={itinerary.currency}
+        isLoggedIn={isLoggedIn}
+      />
     </main>
   );
 }

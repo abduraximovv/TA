@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, MapPin, Package, Sparkles, User } from "lucide-react";
@@ -15,58 +15,73 @@ const navItems = [
 
 export function BottomNav() {
   const pathname = usePathname();
+  const [activeIndex, setActiveIndex] = useState(0);
 
-  // Hidden on auth pages (no chrome during sign-in/registration).
+  // Hidden on auth pages
   if (pathname.startsWith("/auth")) {
     return null;
   }
 
+  // Update active index based on route
+  useEffect(() => {
+    const idx = navItems.findIndex((item) => 
+      pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href))
+    );
+    if (idx !== -1) setActiveIndex(idx);
+    else setActiveIndex(0); // fallback
+  }, [pathname]);
+
   return (
-    <nav
-      className="fixed bottom-0 left-0 right-0 z-[100]"
-      style={{
-        background: "rgba(249, 248, 245, 0.96)",
-        backdropFilter: "blur(12px)",
-        borderTop: "1px solid rgba(10,35,32,0.08)",
-        boxShadow: "0 -4px 20px rgba(10,35,32,0.06)",
-        // Real home-indicator clearance on iOS/Android, 0px everywhere else.
-        paddingBottom: "var(--safe-bottom)",
-      }}
-    >
-      <div className="flex items-stretch justify-around max-w-lg mx-auto" style={{ height: "var(--bottom-nav-height)" }}>
-        {navItems.map((item) => {
-          const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
+    <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden pb-safe px-4 mb-4">
+      <div 
+        className="relative bg-[#0A2320] rounded-3xl h-[72px] flex items-center justify-between shadow-2xl"
+        style={{ filter: "drop-shadow(0px 8px 16px rgba(10,35,32,0.2))" }}
+      >
+        
+        {/* The Animated Indicator (Cutout) */}
+        <div 
+          className="absolute top-[-24px] w-[64px] h-[64px] z-10 transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] pointer-events-none"
+          style={{ 
+            left: `calc((100% / 5) * ${activeIndex} + (100% / 10))`,
+            transform: "translateX(-50%)"
+          }}
+        >
+          {/* Main Cutout Circle (White Border + Green Center) */}
+          <div className="absolute inset-0 rounded-full border-[6px] border-[#F8F9FA] bg-[#0A2320]" />
+        </div>
+
+        {/* The Nav Items */}
+        {navItems.map((item, i) => {
+          const isActive = activeIndex === i;
           const Icon = item.icon;
+          
           return (
             <Link
               key={item.label}
               href={item.href}
-              className="tap-target tap-active relative flex flex-col items-center justify-center flex-1 h-full gap-0.5"
-              style={{
-                color: isActive ? "#0A2320" : "rgba(10,35,32,0.45)",
-              }}
+              className="relative z-20 flex-1 flex flex-col items-center justify-center h-full tap-target"
             >
-              <Icon className="w-[22px] h-[22px]" strokeWidth={isActive ? 2.5 : 1.8} />
+              {/* Icon Container */}
+              <div 
+                className={`transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+                  isActive ? '-translate-y-[28px] text-white' : 'translate-y-[0px] text-white/50 hover:text-white/80'
+                }`}
+              >
+                <Icon className={`transition-all duration-500 ${isActive ? 'w-6 h-6' : 'w-6 h-6'}`} />
+              </div>
+              
+              {/* Label */}
               <span
-                style={{
-                  fontFamily: "'Inter', sans-serif",
-                  fontSize: 10,
-                  letterSpacing: "0.02em",
-                  fontWeight: isActive ? 700 : 500,
-                }}
+                className={`absolute text-[10px] font-semibold transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+                  isActive ? "bottom-[12px] opacity-100 text-white" : "bottom-[0px] opacity-0 text-white/50 translate-y-4"
+                }`}
               >
                 {item.label}
               </span>
-              {isActive && (
-                <div
-                  className="absolute -bottom-[2px] w-1.5 h-1.5 rounded-full"
-                  style={{ background: "#C5A880", boxShadow: "0 0 8px rgba(197,168,128,0.8)" }}
-                />
-              )}
             </Link>
           );
         })}
       </div>
-    </nav>
+    </div>
   );
 }
