@@ -140,7 +140,7 @@ export function ThingsToDoSection({ experiences }: Props) {
   }, [experiences, active]);
 
   return (
-    <section style={{ padding: "clamp(56px, 10vw, 88px) 0 clamp(64px, 11vw, 100px)", background: "#FFFFFF" }}>
+    <section style={{ padding: "clamp(40px, 10vw, 88px) 0 clamp(48px, 11vw, 100px)", background: "#FFFFFF" }}>
       <div style={{ marginBottom: 8, paddingLeft: "var(--section-padding-x)", paddingRight: "var(--section-padding-x)" }}>
         <div
           style={{
@@ -160,7 +160,7 @@ export function ThingsToDoSection({ experiences }: Props) {
             fontSize: "var(--text-h2)",
             fontWeight: 600,
             color: "#0A2320",
-            marginBottom: 32,
+            marginBottom: "clamp(18px, 4vw, 32px)",
           }}
         >
           Things To Do
@@ -168,7 +168,10 @@ export function ThingsToDoSection({ experiences }: Props) {
 
         {/* Filter chips -- horizontally scrollable on narrow screens instead of wrapping into an
             awkward multi-row grid with 64px gaps. */}
-        <div className="scrollbar-hide" style={{ display: "flex", gap: "clamp(28px, 5vw, 64px)", overflowX: "auto", paddingBottom: 4 }}>
+        <div
+          className="scrollbar-hide flex flex-nowrap overflow-x-auto md:flex-wrap md:overflow-visible md:justify-between"
+          style={{ gap: "clamp(18px, 5vw, 64px)", paddingBottom: 4 }}
+        >
           {FILTERS.map((f) => {
             const Icon = f.icon;
             const isActive = active === f.key;
@@ -181,7 +184,7 @@ export function ThingsToDoSection({ experiences }: Props) {
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
-                  gap: 12,
+                  gap: "clamp(6px, 1.5vw, 12px)",
                   background: "none",
                   border: "none",
                   padding: 0,
@@ -191,13 +194,20 @@ export function ThingsToDoSection({ experiences }: Props) {
                 }}
               >
                 <Icon
+                  size={28}
+                  className="md:hidden"
+                  strokeWidth={1.15}
+                  color={isActive ? "#006B70" : "rgba(10,35,32,0.55)"}
+                />
+                <Icon
                   size={46}
+                  className="hidden md:block"
                   strokeWidth={1.15}
                   color={isActive ? "#006B70" : "rgba(10,35,32,0.55)"}
                 />
                 <span
                   style={{
-                    fontSize: 16,
+                    fontSize: "clamp(11px, 3vw, 16px)",
                     fontWeight: isActive ? 700 : 500,
                     color: isActive ? "#0A2320" : "rgba(10,35,32,0.65)",
                     whiteSpace: "nowrap",
@@ -212,7 +222,7 @@ export function ThingsToDoSection({ experiences }: Props) {
       </div>
 
       {/* Swiper carousel — circular loop; one long centered slide fills the view, neighbors peek on each side */}
-      <div style={{ position: "relative", marginTop: 36 }} className="things-to-do-swiper">
+      <div style={{ position: "relative", marginTop: "clamp(20px, 4vw, 36px)" }} className="things-to-do-swiper">
         <Swiper
           key={active}
           modules={[Navigation]}
@@ -221,17 +231,17 @@ export function ThingsToDoSection({ experiences }: Props) {
           observer
           observeParents
           centeredSlides
-          spaceBetween={14}
-          slidesPerView={1.15}
+          spaceBetween={12}
+          slidesPerView={1.35}
           breakpoints={{
-            640: { slidesPerView: 1.6, spaceBetween: 16 },
+            640: { slidesPerView: 1.8, spaceBetween: 16 },
             1024: { slidesPerView: 2.1, spaceBetween: 20 },
           }}
         >
           {tiles.map((tile) => (
             <SwiperSlide key={tile.id}>
               <Link href={tile.href} style={{ textDecoration: "none", display: "block" }}>
-                <div style={{ position: "relative", height: "clamp(320px, 62vw, 500px)", borderRadius: 20, overflow: "hidden" }} className="discover-card">
+                <div style={{ position: "relative", height: "clamp(160px, 42vw, 500px)", borderRadius: 20, overflow: "hidden" }} className="discover-card">
                   <Image
                     src={tile.image}
                     alt={tile.title}
@@ -242,25 +252,25 @@ export function ThingsToDoSection({ experiences }: Props) {
                   />
                 </div>
 
-                <div style={{ padding: "22px 4px 4px", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 20 }}>
+                <div style={{ padding: "clamp(12px, 3vw, 22px) 4px 4px", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "clamp(10px, 3vw, 20px)" }}>
                   <div style={{ minWidth: 0 }}>
                     <div
                       style={{
                         display: "flex",
                         alignItems: "center",
                         gap: 6,
-                        fontSize: 13,
+                        fontSize: "clamp(10.5px, 2.6vw, 13px)",
                         letterSpacing: "0.06em",
                         textTransform: "uppercase",
                         color: "rgba(10,35,32,0.5)",
-                        marginBottom: 10,
+                        marginBottom: "clamp(5px, 1.5vw, 10px)",
                         fontFamily: "'Inter', sans-serif",
                         whiteSpace: "nowrap",
                         overflow: "hidden",
                         textOverflow: "ellipsis",
                       }}
                     >
-                      <MapPin size={14} style={{ flexShrink: 0 }} />
+                      <MapPin size={12} style={{ flexShrink: 0 }} />
                       <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         {tile.city} | {FILTERS.find((f) => f.key === tile.category)?.label || "Culture"}
                       </span>
@@ -268,8 +278,8 @@ export function ThingsToDoSection({ experiences }: Props) {
                     <div
                       style={{
                         fontFamily: "'Playfair Display', serif",
-                        fontSize: 24,
-                        lineHeight: 1.3,
+                        fontSize: "clamp(15px, 4.2vw, 24px)",
+                        lineHeight: 1.25,
                         fontWeight: 600,
                         color: "#0A2320",
                         display: "-webkit-box",
@@ -282,9 +292,9 @@ export function ThingsToDoSection({ experiences }: Props) {
                     </div>
                   </div>
 
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 12, flexShrink: 0 }}>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "clamp(7px, 2vw, 12px)", flexShrink: 0 }}>
                     {tile.price > 0 ? (
-                      <span style={{ fontSize: 14, color: "rgba(10,35,32,0.6)", fontFamily: "'Inter', sans-serif", whiteSpace: "nowrap" }}>
+                      <span style={{ fontSize: "clamp(11px, 2.8vw, 14px)", color: "rgba(10,35,32,0.6)", fontFamily: "'Inter', sans-serif", whiteSpace: "nowrap" }}>
                         From{" "}
                         <span style={{ fontWeight: 700, color: "#0A2320" }}>
                           {(Number(tile.price) || 0).toLocaleString("en-US").replace(/,/g, " ")}
@@ -294,7 +304,7 @@ export function ThingsToDoSection({ experiences }: Props) {
                     ) : (
                       <span />
                     )}
-                    <span className="btn-pill-primary" style={{ fontSize: 14, padding: "10px 22px", display: "inline-flex" }}>
+                    <span className="btn-pill-primary" style={{ fontSize: "clamp(11px, 2.8vw, 14px)", padding: "clamp(6px, 1.8vw, 10px) clamp(12px, 3.5vw, 22px)", display: "inline-flex" }}>
                       Book Now
                     </span>
                   </div>

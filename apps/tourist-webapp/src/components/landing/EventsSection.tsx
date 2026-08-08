@@ -147,7 +147,7 @@ export function EventsSection({ events }: Props) {
               transition={{ duration: 0.5, delay: i * 0.08 }}
               style={{ flexShrink: 0 }}
             >
-              <EventCard event={evt} theme="dark" />
+              <EventCard event={evt} theme="dark" width="clamp(200px, 55vw, 340px)" />
             </motion.div>
           ))}
         </div>

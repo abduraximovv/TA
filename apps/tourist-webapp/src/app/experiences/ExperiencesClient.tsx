@@ -6,7 +6,6 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { Search, Check, ChevronDown, SlidersHorizontal } from "lucide-react";
 import type { Service } from "@repo/database";
-import { Footer } from "@/components/landing/Footer";
 
 import { FiltersModal, type AppliedFilters } from "@/components/experiences/FiltersModal";
 import { Breadcrumb } from "@/components/navigation/Breadcrumb";
@@ -338,8 +337,6 @@ export function ExperiencesClient({ experiences }: ExperiencesClientProps) {
           )}
         </div>
       </div>
-
-      <Footer />
 
       <FiltersModal
         isOpen={isModalOpen}

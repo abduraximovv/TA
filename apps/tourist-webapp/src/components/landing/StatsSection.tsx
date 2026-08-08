@@ -12,13 +12,7 @@ const STATS = [
   { id: "s4", value: "1,000+", label: "Verified Local Providers", icon: Users },
 ];
 
-const TOP_STORIES = [
-  "48 Hours in the Nuratau Mountains",
-  "The Master Potters of Rishtan",
-  "How to Eat the Siyob Bazaar",
-  "Sleeping Inside Itchan Kala's Walls",
-  "A First-Timer's Guide to Plov Etiquette",
-];
+
 
 export function StatsSection() {
   return (
@@ -48,7 +42,7 @@ export function StatsSection() {
         </div>
       </div>
 
-      <div className="responsive-grid-5">
+      <div className="stats-grid">
         {STATS.map((stat, i) => {
           const Icon = stat.icon;
           return (
@@ -63,17 +57,17 @@ export function StatsSection() {
                 borderRadius: 14,
                 background: "#FFFFFF",
                 border: "1px solid #EFEDE7",
-                padding: "22px 20px 22px 30px",
+                padding: "16px 14px 16px 18px",
                 display: "flex",
                 flexDirection: "column",
-                gap: 14,
-                minHeight: 168,
+                gap: 8,
+                minHeight: 118,
               }}
             >
               <div
                 style={{
-                  width: 40,
-                  height: 40,
+                  width: 32,
+                  height: 32,
                   borderRadius: "50%",
                   background: "#F9F8F5",
                   display: "flex",
@@ -82,13 +76,13 @@ export function StatsSection() {
                   color: "#006B70",
                 }}
               >
-                <Icon size={18} />
+                <Icon size={15} />
               </div>
               <div>
                 <div
                   style={{
                     fontFamily: "'Playfair Display', serif",
-                    fontSize: 30,
+                    fontSize: "clamp(22px, 5vw, 30px)",
                     fontWeight: 700,
                     color: "#006B70",
                     lineHeight: 1.1,
@@ -115,74 +109,8 @@ export function StatsSection() {
             </motion.div>
           );
         })}
-
-        {/* Larger "most visited stories" card, spanning the remaining column rhythm */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-40px" }}
-          transition={{ duration: 0.5, delay: 0.32 }}
-          className="ribbon-card"
-          style={{
-            // "1 / -1" (always every current track) instead of "span 5" -- auto-fit means the
-            // grid's actual column count varies by width, and "span 5" was forcing 5 tracks to
-            // exist (each >=150px) even on a 338px-wide mobile grid, blowing out the page width.
-            gridColumn: "1 / -1",
-            borderRadius: 14,
-            background: "#FFFFFF",
-            border: "1px solid #EFEDE7",
-            padding: "26px 26px 26px 34px",
-          }}
-        >
-          <div
-            style={{
-              fontFamily: "'Playfair Display', serif",
-              fontSize: 18,
-              fontWeight: 600,
-              color: "#0A2320",
-              marginBottom: 16,
-            }}
-          >
-            204+ Stories to Inspire You
-          </div>
-          <div className="responsive-grid-5" style={{ gap: 16 }}>
-            {TOP_STORIES.map((title, i) => (
-              <Link
-                key={title}
-                href="/discover"
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  textDecoration: "none",
-                }}
-              >
-                <div
-                  style={{
-                    fontFamily: "'JetBrains Mono', monospace",
-                    fontSize: 12,
-                    color: "#C5A880",
-                    flexShrink: 0,
-                  }}
-                >
-                  {String(i + 1).padStart(2, "0")}
-                </div>
-                <div
-                  style={{
-                    fontSize: 12.5,
-                    color: "#0A2320",
-                    lineHeight: 1.4,
-                    fontFamily: "'Inter', sans-serif",
-                  }}
-                >
-                  {title}
-                </div>
-                <ChevronRight size={12} color="rgba(10,35,32,0.4)" style={{ flexShrink: 0, marginLeft: "auto" }} />
-              </Link>
-            ))}
-          </div>
-        </motion.div>
       </div>
+
     </section>
   );
 }

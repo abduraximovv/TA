@@ -2,7 +2,6 @@
 
 import React from "react";
 import { motion, Variants } from "framer-motion";
-import { Footer } from "@/components/landing/Footer";
 import { Globe, Users, ShieldCheck, Map, Compass, Sparkles, Languages, UtensilsCrossed, LifeBuoy, Route, type LucideIcon } from "lucide-react";
 import { Breadcrumb } from "@/components/navigation/Breadcrumb";
 import { PageHero } from "@/components/PageHero";
@@ -348,8 +347,6 @@ export function AboutClient({ stats }: { stats: SiteStats }) {
           </div>
         </motion.div>
       </section>
-
-      <Footer />
     </main>
   );
 }

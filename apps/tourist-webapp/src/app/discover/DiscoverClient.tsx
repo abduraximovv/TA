@@ -19,7 +19,6 @@ import { motion } from "framer-motion";
 import { useSearchParams } from "next/navigation";
 import { Compass, Sun, Search, Check, SlidersHorizontal } from "lucide-react";
 import type { Destination } from "@repo/database";
-import { Footer } from "@/components/landing/Footer";
 import { Breadcrumb } from "@/components/navigation/Breadcrumb";
 import { PageHero } from "@/components/PageHero";
 import { DestinationFiltersModal, type AppliedDestinationFilters } from "@/components/discover/DestinationFiltersModal";
@@ -258,7 +257,6 @@ export function DiscoverClient({ destinations }: DiscoverClientProps) {
           </div>
         )}
       </div>
-      <Footer />
 
       <DestinationFiltersModal
         isOpen={isModalOpen}

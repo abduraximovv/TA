@@ -50,30 +50,32 @@ export function SurveyCTASection() {
             Tell us what worked, what didn&rsquo;t, and what you wish existed — your feedback shapes
             the next version of this platform.
           </p>
-          <Link
-            href="/contact"
-            className="btn-teal"
-            style={{ textDecoration: "none", display: "inline-flex", padding: "13px 26px" }}
-          >
-            Start Survey
-          </Link>
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            <Link
+              href="/contact"
+              className="btn-teal"
+              style={{ textDecoration: "none", display: "inline-flex", padding: "13px 26px" }}
+            >
+              Start Survey
+            </Link>
+            <div
+              className="w-12 h-12 md:w-14 md:h-14"
+              style={{
+                flexShrink: 0,
+                borderRadius: "50%",
+                background: "#EFEDE7",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#006B70",
+              }}
+            >
+              <MessageCircle className="w-5 h-5 md:w-6 md:h-6" strokeWidth={1.4} />
+            </div>
+          </div>
         </div>
 
-        <div
-          style={{
-            flexShrink: 0,
-            width: 96,
-            height: 96,
-            borderRadius: "50%",
-            background: "#EFEDE7",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: "#006B70",
-          }}
-        >
-          <MessageCircle size={38} strokeWidth={1.4} />
-        </div>
+
       </motion.div>
     </section>
   );

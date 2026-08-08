@@ -7,7 +7,6 @@ import type { Event } from "@repo/database";
 import { Breadcrumb } from "@/components/navigation/Breadcrumb";
 import { PageHero } from "@/components/PageHero";
 import { EventCard } from "@/components/events/EventCard";
-import { Footer } from "@/components/landing/Footer";
 
 interface Props {
   events: Event[];
@@ -229,8 +228,6 @@ export function EventsClient({ events }: Props) {
           </div>
         )}
       </div>
-
-      <Footer />
     </main>
   );
 }

@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { LogOut, Home, User as UserIcon, Settings, Shield, Bell, HelpCircle } from "lucide-react";
 import Link from "next/link";
-import { BottomNav } from "../../components/BottomNav";
 import { MyBookingsList } from "@/components/booking/MyBookingsList";
 
 const fadeUp = {
@@ -146,8 +145,6 @@ export default function ProfilePage() {
           </div>
         </div>
       </motion.div>
-
-      <BottomNav />
     </main>
   );
 }

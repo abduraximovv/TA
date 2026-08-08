@@ -1,14 +1,26 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Instagram, Send, Facebook, Phone } from "lucide-react";
+import { Instagram, Send, Facebook, Phone, ChevronDown } from "lucide-react";
 import { subscribeToNewsletter } from "@/app/actions/newsletter";
 
 // The /map page is a full-viewport, edge-to-edge experience -- a footer below it would only be
 // reachable by scrolling past the map itself, which doesn't scroll. Hide it there.
 const HIDE_FOOTER_ON = ["/map"];
+
+/** True once launched from a home-screen icon (installed PWA) rather than a normal browser tab --
+ * a footer (legal links, newsletter, app-download CTA) is a web-page convention that doesn't
+ * belong inside what's now presenting itself as a native app shell. */
+function useIsStandalone() {
+  const [isStandalone, setIsStandalone] = useState(false);
+  useEffect(() => {
+    const isIosStandalone = (window.navigator as Navigator & { standalone?: boolean }).standalone === true;
+    setIsStandalone(window.matchMedia("(display-mode: standalone)").matches || isIosStandalone);
+  }, []);
+  return isStandalone;
+}
 
 const COLUMNS = [
   {
@@ -43,9 +55,13 @@ export function Footer() {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  // Accordion on mobile (see .footer-accordion-content in globals.css for the md: override that
+  // forces it permanently open on desktop, where all 3 columns fit comfortably side by side).
+  const [openColumn, setOpenColumn] = useState<string | null>(null);
   const pathname = usePathname();
+  const isStandalone = useIsStandalone();
 
-  if (HIDE_FOOTER_ON.includes(pathname)) return null;
+  if (HIDE_FOOTER_ON.includes(pathname) || isStandalone) return null;
 
   const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,7 +79,9 @@ export function Footer() {
   };
 
   return (
-    <footer className="bg-emerald-950">
+    // clears-bottom-nav: BottomNav is fixed + md:hidden, and nothing else reserves space for its
+    // height, so without this the last ~64px of the page (this footer's bottom bar) sits under it.
+    <footer className="bg-emerald-950 clears-bottom-nav">
       {/* Geometric pattern divider band */}
       <div className="pattern-band-muted" style={{ height: 18, width: "100%" }} />
 
@@ -72,11 +90,11 @@ export function Footer() {
         style={{
           maxWidth: 1600,
           margin: "0 auto",
-          padding: "clamp(24px, 5vw, 40px) var(--section-padding-x)",
+          padding: "clamp(16px, 4vw, 40px) var(--section-padding-x)",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          gap: 24,
+          gap: 16,
           flexWrap: "wrap",
           borderBottom: "1px solid rgba(255,255,255,0.08)",
         }}
@@ -84,25 +102,25 @@ export function Footer() {
         <div>
           <div
             style={{
-              fontSize: 11,
+              fontSize: "clamp(9.5px, 2vw, 11px)",
               letterSpacing: "0.1em",
               textTransform: "uppercase",
               color: "#C5A880",
-              marginBottom: 10,
+              marginBottom: 8,
               fontFamily: "'Inter', sans-serif",
             }}
           >
-            Download Silk Road Uzbekistan App
+            Download the App
           </div>
-          <div style={{ display: "flex", gap: 10 }}>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             {["Google Play", "App Store", "AppGallery"].map((store) => (
               <div
                 key={store}
                 style={{
-                  padding: "8px 14px",
+                  padding: "6px 11px",
                   borderRadius: 8,
                   border: "1px solid rgba(255,255,255,0.2)",
-                  fontSize: 12,
+                  fontSize: "clamp(10px, 2.2vw, 12px)",
                   color: "#FFFFFF",
                   fontFamily: "'Inter', sans-serif",
                   whiteSpace: "nowrap",
@@ -114,12 +132,12 @@ export function Footer() {
           </div>
         </div>
 
-        <div>
+        <div style={{ minWidth: 0, width: "100%", maxWidth: 320 }} className="sm:w-auto">
           <form onSubmit={handleSubscribe} style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <input
               type="email"
               required
-              placeholder="Your email address"
+              placeholder="Your email"
               value={email}
               onChange={(e) => {
                 setEmail(e.target.value);
@@ -127,7 +145,7 @@ export function Footer() {
               }}
               disabled={status === "submitting"}
               style={{
-                padding: "11px 16px",
+                padding: "9px 14px",
                 borderRadius: 100,
                 border: "1px solid rgba(255,255,255,0.25)",
                 background: "rgba(255,255,255,0.06)",
@@ -135,18 +153,19 @@ export function Footer() {
                 fontSize: 13,
                 fontFamily: "'Inter', sans-serif",
                 outline: "none",
-                width: 220,
+                flex: 1,
+                minWidth: 0,
               }}
             />
-            <button type="submit" className="btn-pill-primary" disabled={status === "submitting"} style={{ opacity: status === "submitting" ? 0.7 : 1 }}>
+            <button type="submit" className="btn-pill-primary" disabled={status === "submitting"} style={{ opacity: status === "submitting" ? 0.7 : 1, flexShrink: 0 }}>
               {status === "submitting" ? "Joining…" : "Join"}
             </button>
           </form>
           {statusMessage && (
             <div
               style={{
-                marginTop: 8,
-                fontSize: 12.5,
+                marginTop: 6,
+                fontSize: 11.5,
                 fontFamily: "'Inter', sans-serif",
                 color: status === "error" ? "#E38B6E" : "#8FD4C8",
               }}
@@ -157,121 +176,157 @@ export function Footer() {
         </div>
       </div>
 
-      {/* Main footer body */}
+      {/* Brand */}
+      <div style={{ maxWidth: 1600, margin: "0 auto", padding: "clamp(20px, 5vw, 32px) var(--section-padding-x) 0" }}>
+        <div
+          style={{
+            fontFamily: "'Playfair Display', serif",
+            fontWeight: 600,
+            fontSize: "clamp(18px, 3.5vw, 23px)",
+            background: "linear-gradient(135deg, #C5A880 0%, #006B70 100%)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            backgroundClip: "text",
+            marginBottom: 8,
+          }}
+        >
+          Silk&nbsp;Road&nbsp;Uzbekistan
+        </div>
+        <p style={{ fontSize: "clamp(12.5px, 2.5vw, 15px)", color: "rgba(249,248,245,0.6)", lineHeight: 1.55, margin: 0, maxWidth: 480 }}>
+          Your independent guide to Uzbekistan's Silk Road — discover real destinations, plan
+          multi-day itineraries, and book directly with verified local guides, artisans, and
+          travel agencies across the country.
+        </p>
+      </div>
+
+      {/* Link columns -- collapsible accordion on mobile, always-open columns from md: up */}
       <div
-        className="footer-columns-grid"
         style={{
           maxWidth: 1600,
           margin: "0 auto",
-          padding: "clamp(40px, 8vw, 56px) var(--section-padding-x)",
+          padding: "clamp(12px, 3vw, 20px) var(--section-padding-x) 0",
+          borderTop: "1px solid rgba(255,255,255,0.08)",
+          marginTop: 20,
         }}
+        className="md:grid md:grid-cols-3 md:gap-8"
       >
-        <div>
-          <div
-            style={{
-              fontFamily: "'Playfair Display', serif",
-              fontWeight: 600,
-              fontSize: 23,
-              background: "linear-gradient(135deg, #C5A880 0%, #006B70 100%)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
-              marginBottom: 12,
-            }}
-          >
-            Silk&nbsp;Road&nbsp;Uzbekistan
-          </div>
-          <p style={{ fontSize: 15, color: "rgba(249,248,245,0.6)", lineHeight: 1.65, marginBottom: 20, maxWidth: 340 }}>
-            Your independent guide to Uzbekistan's Silk Road — discover real destinations, plan
-            multi-day itineraries, and book directly with verified local guides, artisans, and
-            travel agencies across the country.
-          </p>
-          <div style={{ display: "flex", gap: 10 }}>
-            {[Instagram, Send, Facebook].map((Icon, i) => (
-              <div
-                key={i}
+        {COLUMNS.map((col) => {
+          const isOpen = openColumn === col.title;
+          return (
+            <div key={col.title} style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }} className="md:border-none">
+              <button
+                type="button"
+                onClick={() => setOpenColumn(isOpen ? null : col.title)}
+                className="md:pointer-events-none"
                 style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: "50%",
-                  border: "1px solid rgba(255,255,255,0.25)",
+                  width: "100%",
                   display: "flex",
                   alignItems: "center",
-                  justifyContent: "center",
+                  justifyContent: "space-between",
+                  background: "none",
+                  border: "none",
+                  padding: "14px 2px",
+                  cursor: "pointer",
+                  fontSize: "clamp(11px, 2.2vw, 13px)",
+                  fontWeight: 700,
+                  letterSpacing: "0.06em",
+                  textTransform: "uppercase",
                   color: "#FFFFFF",
+                  fontFamily: "'Inter', sans-serif",
                 }}
               >
-                <Icon size={14} />
+                {col.title}
+                <ChevronDown
+                  size={16}
+                  className="md:hidden"
+                  style={{ transition: "transform 0.25s", transform: isOpen ? "rotate(180deg)" : "none", color: "rgba(255,255,255,0.5)" }}
+                />
+              </button>
+              <div className={`footer-accordion-content ${isOpen ? "open" : ""}`}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 9, paddingBottom: 16 }}>
+                  {col.links.map((link) => (
+                    <Link
+                      key={link.label}
+                      href={link.href}
+                      className="footer-link"
+                      style={{
+                        fontSize: "clamp(12.5px, 2.4vw, 14.5px)",
+                        color: "rgba(249,248,245,0.6)",
+                        textDecoration: "none",
+                        transition: "color 0.2s",
+                      }}
+                    >
+                      {link.label}
+                    </Link>
+                  ))}
+                </div>
               </div>
-            ))}
-          </div>
-          <Link
-            href="/contact"
-            className="btn-pill-outline"
-            style={{ marginTop: 18, display: "inline-flex", alignItems: "center", gap: 6, textDecoration: "none" }}
-          >
-            <Phone size={12} /> Contact Us
-          </Link>
-        </div>
+            </div>
+          );
+        })}
+      </div>
 
-        {COLUMNS.map((col) => (
-          <div key={col.title}>
-            <div
-              style={{
-                fontSize: 13,
-                fontWeight: 700,
-                letterSpacing: "0.06em",
-                textTransform: "uppercase",
-                color: "#FFFFFF",
-                marginBottom: 20,
-                fontFamily: "'Inter', sans-serif",
-              }}
-            >
-              {col.title}
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 13 }}>
-              {col.links.map((link) => (
-                <Link
-                  key={link.label}
-                  href={link.href}
-                  className="footer-link"
-                  style={{
-                    fontSize: 14.5,
-                    color: "rgba(249,248,245,0.6)",
-                    textDecoration: "none",
-                    transition: "color 0.2s",
-                  }}
-                >
-                  {link.label}
-                </Link>
-              ))}
-            </div>
+      {/* Social + contact */}
+      <div
+        style={{
+          maxWidth: 1600,
+          margin: "0 auto",
+          padding: "20px var(--section-padding-x) clamp(20px, 5vw, 32px)",
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          flexWrap: "wrap",
+        }}
+      >
+        {[Instagram, Send, Facebook].map((Icon, i) => (
+          <div
+            key={i}
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: "50%",
+              border: "1px solid rgba(255,255,255,0.25)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "#FFFFFF",
+              flexShrink: 0,
+            }}
+          >
+            <Icon size={14} />
           </div>
         ))}
+        <Link
+          href="/contact"
+          className="btn-pill-outline"
+          style={{ display: "inline-flex", alignItems: "center", gap: 6, textDecoration: "none" }}
+        >
+          <Phone size={12} /> Contact Us
+        </Link>
       </div>
 
       {/* Bottom bar */}
       <div
         style={{
           borderTop: "1px solid rgba(255,255,255,0.08)",
-          padding: "20px var(--section-padding-x)",
+          padding: "14px var(--section-padding-x)",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
           flexWrap: "wrap",
-          gap: 12,
+          gap: 10,
         }}
       >
-        <div style={{ fontSize: 11.5, color: "rgba(249,248,245,0.45)", fontFamily: "'JetBrains Mono', monospace" }}>
+        <div style={{ fontSize: "clamp(10px, 2vw, 11.5px)", color: "rgba(249,248,245,0.45)", fontFamily: "'JetBrains Mono', monospace" }}>
           © {new Date().getFullYear()} Silk Road Uzbekistan. All rights reserved.
         </div>
-        <div style={{ display: "flex", gap: 24 }}>
+        <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
           {["Terms", "Privacy", "Freedom of Information", "Sitemap"].map((label) => (
             <Link
               key={label}
               href="/about"
               className="footer-link"
-              style={{ fontSize: 11.5, color: "rgba(249,248,245,0.45)", textDecoration: "none" }}
+              style={{ fontSize: "clamp(10px, 2vw, 11.5px)", color: "rgba(249,248,245,0.45)", textDecoration: "none" }}
             >
               {label}
             </Link>

@@ -176,7 +176,7 @@ export function PackagesSection({ itineraries }: Props) {
             >
               <div
                 style={{
-                  width: 320,
+                  width: "clamp(220px, 66vw, 320px)",
                   borderRadius: 8,
                   overflow: "hidden",
                   border: "1px solid #EFEDE7",
@@ -188,7 +188,7 @@ export function PackagesSection({ itineraries }: Props) {
                 className="pkg-card"
               >
                 {/* Image */}
-                <div style={{ height: 200, position: "relative" }}>
+                <div style={{ height: "clamp(140px, 41vw, 200px)", position: "relative" }}>
                   <Image
                     src={card.image}
                     alt={card.name}

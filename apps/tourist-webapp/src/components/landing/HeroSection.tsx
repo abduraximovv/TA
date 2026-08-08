@@ -174,7 +174,7 @@ export function HeroSection() {
               style={{
                 fontFamily: "var(--font-serif), serif",
                 fontWeight: 600,
-                fontSize: "clamp(28px, 4vw + 16px, 44px)",
+                fontSize: "clamp(26px, 3vw + 14px, 44px)",
                 lineHeight: 1.15,
                 color: "#FFFFFF",
                 margin: "0 0 18px",
@@ -185,7 +185,7 @@ export function HeroSection() {
 
             <p
               style={{
-                fontSize: 16,
+                fontSize: "clamp(14px, 1.5vw + 10px, 16px)",
                 lineHeight: 1.6,
                 color: "rgba(255,255,255,0.85)",
                 margin: "0 0 30px",
@@ -195,17 +195,16 @@ export function HeroSection() {
             </p>
 
             <div
+              className="flex flex-col sm:flex-row sm:items-center"
               style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 14,
+                gap: 12,
                 marginBottom: 34,
               }}
             >
-              <Link href={slide.cta.href} className="btn-primary" style={{ textDecoration: "none", gap: 8 }}>
+              <Link href={slide.cta.href} className="btn-primary" style={{ textDecoration: "none", gap: 8, whiteSpace: "nowrap" }}>
                 {slide.cta.label} <span>→</span>
               </Link>
-              <Link href="/map" className="btn-outline-white" style={{ textDecoration: "none" }}>
+              <Link href="/map" className="btn-outline-white" style={{ textDecoration: "none", whiteSpace: "nowrap" }}>
                 Open Survival Map
               </Link>
             </div>

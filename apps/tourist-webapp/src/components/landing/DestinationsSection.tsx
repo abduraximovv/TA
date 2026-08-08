@@ -132,7 +132,7 @@ export function DestinationsSection({ destinations }: Props) {
               whileInView={{ opacity: 1 }}
               viewport={{ once: true, margin: "-50px" }}
               transition={{ duration: 0.55, delay: i * 0.08 }}
-              style={{ flexShrink: 0, width: 400 }}
+              style={{ flexShrink: 0, width: "clamp(190px, 58vw, 400px)" }}
             >
               <Link href={`/discover/${card.slug}`} style={{ textDecoration: "none", display: "block" }}>
                 <div
@@ -143,7 +143,7 @@ export function DestinationsSection({ destinations }: Props) {
                     background: "#0A2320",
                     boxShadow: "0 24px 48px -20px rgba(10,35,32,0.35)",
                     cursor: "pointer",
-                    height: 520,
+                    height: "clamp(260px, 75vw, 520px)",
                     overflow: "hidden",
                   }}
                 >
@@ -175,17 +175,17 @@ export function DestinationsSection({ destinations }: Props) {
                       left: 0,
                       right: 0,
                       bottom: 0,
-                      padding: "28px 28px 30px",
+                      padding: "clamp(16px, 4vw, 28px) clamp(16px, 4vw, 28px) clamp(18px, 4.5vw, 30px)",
                     }}
                   >
                     <div
                       style={{
                         fontFamily: "'Playfair Display', serif",
-                        fontSize: 28,
+                        fontSize: "clamp(17px, 4.8vw, 28px)",
                         lineHeight: 1.2,
                         fontWeight: 600,
                         color: "#FFFFFF",
-                        marginBottom: 10,
+                        marginBottom: "clamp(4px, 1vw, 10px)",
                         display: "-webkit-box",
                         WebkitLineClamp: 2,
                         WebkitBoxOrient: "vertical",
@@ -196,10 +196,10 @@ export function DestinationsSection({ destinations }: Props) {
                     </div>
                     <div
                       style={{
-                        fontSize: 14,
+                        fontSize: "clamp(11px, 2.8vw, 14px)",
                         color: "rgba(255,255,255,0.78)",
-                        lineHeight: 1.5,
-                        marginBottom: 18,
+                        lineHeight: 1.45,
+                        marginBottom: "clamp(8px, 2vw, 18px)",
                         display: "-webkit-box",
                         WebkitLineClamp: 2,
                         WebkitBoxOrient: "vertical",
@@ -213,7 +213,7 @@ export function DestinationsSection({ destinations }: Props) {
                         display: "inline-flex",
                         alignItems: "center",
                         gap: 6,
-                        fontSize: 13,
+                        fontSize: "clamp(10.5px, 2.6vw, 13px)",
                         fontWeight: 600,
                         color: "#FFFFFF",
                         fontFamily: "'Inter', sans-serif",
@@ -224,7 +224,7 @@ export function DestinationsSection({ destinations }: Props) {
                       }}
                     >
                       Discover More
-                      <ChevronRight size={14} />
+                      <ChevronRight size={12} />
                     </div>
                   </div>
                 </div>

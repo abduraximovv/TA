@@ -54,7 +54,7 @@ export function KnowBeforeYouGoSection() {
         </div>
       </div>
 
-      <div className="responsive-grid-4" style={{ position: "relative" }}>
+      <div className="guides-grid" style={{ position: "relative" }}>
         {GUIDES.map((g, i) => {
           const Icon = g.icon;
           return (
@@ -64,6 +64,7 @@ export function KnowBeforeYouGoSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-40px" }}
               transition={{ duration: 0.45, delay: i * 0.08 }}
+              style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}
             >
               <div
                 style={{

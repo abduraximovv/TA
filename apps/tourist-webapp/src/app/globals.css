@@ -31,7 +31,8 @@
 
     /* Navbar */
     --navbar-height: 0px;
-    --bottom-nav-height: 64px;
+    /* BottomNav's actual fixed-position footprint: 60px bar + its own 16px (mb-4) bottom margin. */
+    --bottom-nav-height: 76px;
 
     /* Fonts */
     --font-serif: 'Playfair Display', serif;
@@ -184,44 +185,114 @@
     .know-destinations-grid {
       grid-template-columns: 1fr;
     }
+    /* Map renders first (order swaps it ahead of the list, which is first in DOM order so
+       desktop's reading order -- list, then map -- stays untouched), then the destination
+       cards float up over its bottom edge as a horizontal-scroll row -- the visitsaudi.com
+       "cards on the map" mobile pattern, instead of a plain list stacked below a plain map. */
+    .know-destinations-map {
+      order: 1;
+    }
     .know-destinations-list {
+      order: 2;
       max-height: none;
       overflow-y: visible;
+      /* !important: overrides the element's own inline display:flex/flexDirection:column --
+         still a flex row, just horizontal instead of vertical, pulled up over the map. */
+      display: flex !important;
+      flex-direction: row !important;
+      overflow-x: auto !important;
+      gap: 14px !important;
+      padding: 0 0 4px !important;
+      margin: -64px 0 0 !important;
+      position: relative;
+      z-index: 5;
+    }
+    .know-destinations-card {
+      width: min(56vw, 220px);
+      /* Fixed instead of content-driven -- title length varies a lot per destination ("Bukhara"
+         vs "Nurata & the Kyzylkum Desert"), and without this each card was only as tall as its
+         own text, so the row read as uneven/jagged instead of a clean aligned strip. */
+      height: clamp(180px, 50vw, 200px);
+      flex-shrink: 0;
     }
   }
 
-  /* Offers / Know Before You Go: fixed 4-column grids -> auto-fit so the browser collapses
-     column count on its own as width shrinks, no breakpoint bookkeeping needed. */
+  /* Offers: fixed 4-column grid -> auto-fit so the browser collapses column count on its own as
+     width shrinks, no breakpoint bookkeeping needed -- except below 480px, where auto-fit's
+     220px floor would still only fit 1 column; force 2 so cards don't stack into one long list. */
   .responsive-grid-4 {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 32px;
   }
+  @media (max-width: 480px) {
+    .responsive-grid-4 {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+    }
+  }
 
-  /* Stats: fixed 5-column grid -> same auto-fit treatment, slightly narrower minimum since
-     each card is content-light (a number + a label). */
+  /* Stories sub-grid inside the stats "204+ Stories" card: item count is genuinely dynamic and
+     has no full-width sibling, so auto-fit's column-collapsing behaves correctly here. */
   .responsive-grid-5 {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     gap: 20px;
   }
 
-  /* Footer link columns: 1.2fr + 3x 1fr -> stacks on mobile instead of squeezing 4 columns
-     into a 375px screen. */
-  .footer-columns-grid {
+  /* Know Before You Go: icon + title + link is much lighter than a full image card, so it can
+     hold 2 columns even on a narrow phone instead of collapsing to 1 tall, sparse column. */
+  .guides-grid {
     display: grid;
-    grid-template-columns: 1.2fr repeat(3, 1fr);
-    gap: 48px;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 20px 24px;
+  }
+
+  /* Stats row: exactly 4 known cards -> explicit column counts instead of auto-fit. (auto-fit
+     sizes its column count from the container width alone, so when this grid also holds a
+     full-width sibling via gridColumn:"1/-1", that spanning card keeps every computed column
+     "occupied" and none collapse -- the 4 real cards then only fill 4 of the many auto-fit
+     tracks and read as undersized, left-clustered, with dead space to the right.) */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
   }
   @media (max-width: 860px) {
-    .footer-columns-grid {
-      grid-template-columns: 1fr 1fr;
-      gap: 32px;
+    .stats-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
     }
   }
-  @media (max-width: 500px) {
-    .footer-columns-grid {
-      grid-template-columns: 1fr;
+
+  /* Reserves space for the fixed mobile BottomNav (md:hidden), which nothing else accounts for --
+     without it, the nav permanently covers the last ~64px of page content below md. */
+  .clears-bottom-nav {
+    padding-bottom: calc(var(--bottom-nav-height) + var(--safe-bottom));
+  }
+  @media (min-width: 768px) {
+    .clears-bottom-nav {
+      padding-bottom: 0;
+    }
+  }
+
+  /* Footer accordion: collapsed (max-height:0) by default so only the tappable header row
+     shows on a phone -- matches the visitsaudi.com-style mobile footer pattern of one link
+     category open at a time instead of every link always expanded. Forced permanently open
+     from md: up (!important, since the JS toggle also drives this via the .open class, which
+     otherwise wins on specificity) -- desktop has the width for 3 always-visible columns. */
+  .footer-accordion-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+  }
+  .footer-accordion-content.open {
+    max-height: 240px;
+  }
+  @media (min-width: 768px) {
+    .footer-accordion-content {
+      max-height: none !important;
+      overflow: visible;
     }
   }
 
@@ -307,8 +378,11 @@
   }
 
   /* Starburst / rosette discount badge — wax-seal look, overlaps card + photo */
+  /* Inner/outer radius ratio ~0.64 (vs. the ~0.37 of a classic pointy 5-point star) -- fat enough
+     that short badge copy ("15% OFF", "KIDS FREE") actually fits in the interior instead of
+     wrapping into the points. Same fix for every viewport -- this was never a mobile-only bug. */
   .starburst-badge {
-    clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+    clip-path: polygon(50% 0%, 69% 24%, 98% 35%, 80% 60%, 79% 90%, 50% 82%, 21% 90%, 20% 60%, 2% 35%, 31% 24%);
     display: flex;
     align-items: center;
     justify-content: center;

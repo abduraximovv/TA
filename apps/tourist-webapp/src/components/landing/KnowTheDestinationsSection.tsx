@@ -119,7 +119,7 @@ export function KnowTheDestinationsSection({ destinations }: Props) {
       </div>
 
       <div className="know-destinations-grid">
-        {/* Left: scrollable destination list with full-size photo cards */}
+        {/* Left on desktop / overlaps the map's bottom edge on mobile: destination cards */}
         <div
           className="scrollbar-hide know-destinations-list"
           style={{
@@ -132,6 +132,7 @@ export function KnowTheDestinationsSection({ destinations }: Props) {
           {list.map((item) => (
             <div
               key={item.name}
+              className="know-destinations-card"
               onMouseEnter={() => setHovered(item.name)}
               onMouseLeave={() => setHovered(null)}
               style={{
@@ -147,13 +148,13 @@ export function KnowTheDestinationsSection({ destinations }: Props) {
                 background: hovered === item.name ? "#F9F8F5" : "#FFFFFF",
                 transition: "all 0.2s ease-in-out",
                 cursor: "pointer",
-                boxShadow: hovered === item.name ? "0 8px 24px rgba(10,35,32,0.08)" : "0 2px 8px rgba(10,35,32,0.03)"
+                boxShadow: hovered === item.name ? "0 8px 24px rgba(10,35,32,0.08)" : "0 8px 24px -8px rgba(10,35,32,0.35)"
               }}
             >
               <div
                 style={{
                   width: "100%",
-                  height: 220,
+                  height: "clamp(88px, 26vw, 220px)",
                   flexShrink: 0,
                   position: "relative",
                   background: "#EFEDE7",
@@ -176,7 +177,7 @@ export function KnowTheDestinationsSection({ destinations }: Props) {
                   </div>
                 )}
               </div>
-              <div style={{ padding: "18px 20px", display: "flex", flexDirection: "column", gap: 10 }}>
+              <div style={{ padding: "clamp(12px, 3vw, 18px) clamp(14px, 3.5vw, 20px)", display: "flex", flexDirection: "column", gap: "clamp(6px, 1.5vw, 10px)" }}>
                 <div
                   style={{
                     display: "flex",
@@ -187,12 +188,16 @@ export function KnowTheDestinationsSection({ destinations }: Props) {
                 >
                   <div
                     style={{
-                      fontSize: 11,
+                      fontSize: "clamp(9.5px, 2.3vw, 11px)",
                       fontWeight: 700,
                       letterSpacing: "0.08em",
                       textTransform: "uppercase",
                       color: "rgba(10,35,32,0.6)",
                       fontFamily: "'Inter', sans-serif",
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      minWidth: 0,
                     }}
                   >
                     {item.tags}
@@ -202,21 +207,26 @@ export function KnowTheDestinationsSection({ destinations }: Props) {
                       display: "flex",
                       alignItems: "center",
                       gap: 4,
-                      fontSize: 13,
+                      fontSize: "clamp(11px, 2.6vw, 13px)",
                       fontWeight: 600,
                       color: "#0A2320",
                       fontFamily: "'Inter', sans-serif",
                     }}
                   >
-                    <Sun size={14} color="#C1592A" /> {item.temp}
+                    <Sun size={13} color="#C1592A" /> {item.temp}
                   </div>
                 </div>
                 <div
                   style={{
                     fontFamily: "'Playfair Display', serif",
-                    fontSize: 22,
+                    fontSize: "clamp(16px, 4.2vw, 22px)",
                     fontWeight: 700,
+                    lineHeight: 1.15,
                     color: "#0A2320",
+                    display: "-webkit-box",
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: "vertical",
+                    overflow: "hidden",
                   }}
                 >
                   {item.name}
@@ -226,8 +236,10 @@ export function KnowTheDestinationsSection({ destinations }: Props) {
           ))}
         </div>
 
-        {/* Right: real map with actual destination coordinates */}
+        {/* Right on desktop / renders above the overlapping cards on mobile: real map with
+            actual destination coordinates */}
         <div
+          className="know-destinations-map"
           style={{
             position: "relative",
             // Establishes a new stacking context so Leaflet's internal z-index (its zoom
