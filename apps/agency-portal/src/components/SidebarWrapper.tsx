@@ -6,9 +6,9 @@ import { Sidebar } from "./Sidebar";
 
 export function SidebarWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isLoginPage = pathname === "/login" || pathname === "/" || pathname.startsWith("/auth/login"); 
+  const isChromeless = pathname === "/" || pathname.startsWith("/auth");
 
-  if (isLoginPage) {
+  if (isChromeless) {
     return <>{children}</>;
   }
 

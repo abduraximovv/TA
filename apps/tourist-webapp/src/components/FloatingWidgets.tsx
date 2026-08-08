@@ -76,7 +76,7 @@ export function FloatingWidgets() {
           }
         }} 
         title="Send Feedback"
-        description="Let us know how we can improve your experience on Silk Road Uzbekistan."
+        description="Let us know how we can improve your experience on Safron."
       >
         {success ? (
           <div className="bg-[#006B70]/10 border border-[#006B70]/20 rounded-xl p-6 text-center my-4">

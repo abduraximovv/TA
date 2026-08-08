@@ -9,9 +9,24 @@ const fontSans = Inter({ subsets: ["latin"], variable: "--font-sans", display: "
 const fontSerif = Playfair_Display({ subsets: ["latin"], variable: "--font-serif", display: "swap" });
 const fontMono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono", display: "swap" });
 
+const SITE_URL = "https://admin.safron.uz";
+
 export const metadata = {
-  title: "admin-portal",
-  description: "Uzbekistan Digital Tourism Ecosystem",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "Safron Admin",
+    template: "%s | Safron Admin",
+  },
+  description: "Internal administration console for the Safron platform.",
+  robots: {
+    index: false,
+    follow: false,
+    nocache: true,
+    googleBot: {
+      index: false,
+      follow: false,
+    },
+  },
 };
 
 export default function RootLayout({

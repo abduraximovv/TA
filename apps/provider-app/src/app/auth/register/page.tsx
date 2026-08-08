@@ -50,7 +50,7 @@ export default function RegisterProviderPage() {
           <div className="text-center mb-8">
             <h1 className="text-2xl font-bold text-gray-900">Provider Application</h1>
             <p className="text-gray-500 mt-2 text-sm">
-              Join the UzTour ecosystem. Provide your business details for verification.
+              Join the Safron ecosystem. Provide your business details for verification.
             </p>
           </div>
 

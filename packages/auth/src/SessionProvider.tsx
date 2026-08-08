@@ -47,14 +47,10 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const supabase = getSupabase();
 
-    supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
-      setSession(initialSession);
-      setUser(initialSession?.user ?? null);
-      setRole(getRoleFromSession(initialSession));
-      setIsVerified(getIsVerifiedFromSession(initialSession));
-      setIsLoading(false);
-    });
-
+    // onAuthStateChange fires an INITIAL_SESSION event immediately on subscribe (supabase-js v2),
+    // carrying the same session an explicit getSession() call would -- calling both raced two
+    // separate state updates for the same session, each with a fresh object reference, which
+    // double-fired every effect keyed on `user` (e.g. MyBookingsList fetching bookings twice).
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, currentSession) => {
       setSession(currentSession);
       setUser(currentSession?.user ?? null);

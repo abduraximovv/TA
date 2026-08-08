@@ -12,7 +12,7 @@ const SLIDE_DURATION = 6500;
 const SLIDES = [
   {
     id: "registan",
-    eyebrow: "Silk Road Uzbekistan · Independent Travel Platform",
+    eyebrow: "Safron · Independent Travel Platform",
     headline: "Four Thousand Years of the Silk Road, One Journey.",
     subtitle:
       "From the turquoise domes of Samarkand to the mountain trails of Chimgan — plan, translate, and book with verified local providers.",

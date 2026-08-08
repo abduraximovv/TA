@@ -9,9 +9,54 @@ const fontSans = Inter({ subsets: ["latin"], variable: "--font-sans", display: "
 const fontSerif = Playfair_Display({ subsets: ["latin"], variable: "--font-serif", display: "swap" });
 const fontMono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono", display: "swap" });
 
+const SITE_URL = "https://agencies.safron.uz";
+const TITLE = "Safron Agency Portal — Manage Packages & Bookings in One Place";
+const DESCRIPTION =
+  "The operating system for Uzbekistan's travel agencies and DMCs. Build multi-day packages, track bookings in real time, and register free on Safron.";
+
 export const metadata = {
-  title: "agency-portal",
-  description: "Uzbekistan Digital Tourism Ecosystem",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: TITLE,
+    template: "%s | Safron Agency Portal",
+  },
+  description: DESCRIPTION,
+  keywords: [
+    "Safron agency portal",
+    "Uzbekistan travel agency software",
+    "DMC booking software Uzbekistan",
+    "travel agency management platform",
+    "Safron for agencies",
+  ],
+  authors: [{ name: "Safron" }],
+  creator: "Safron",
+  publisher: "Safron",
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    title: TITLE,
+    description: DESCRIPTION,
+    url: SITE_URL,
+    siteName: "Safron Agency Portal",
+    type: "website",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: TITLE,
+    description: DESCRIPTION,
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
 };
 
 export default function RootLayout({

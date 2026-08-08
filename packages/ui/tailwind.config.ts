@@ -8,10 +8,19 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Uzbekistan "Silk Road Modern" design system — see docs/UZBEKISTAN_DESIGN_LANGUAGE.md
-        // and docs/UI_UX_GUIDELINES.md. `primary`/`secondary`/`accent` are kept as the semantic
+        // Safron brand design system — see docs/UZBEKISTAN_DESIGN_LANGUAGE.md and
+        // docs/UI_UX_GUIDELINES.md. `primary`/`secondary`/`accent` are kept as the semantic
         // role names (so existing `bg-primary`/`text-primary` call sites repaint automatically)
         // but now point at the real brand tokens instead of the old "Travelora" blue/coral.
+        primary: {
+          DEFAULT: "#0A2320", // Emerald -- matches emerald.950 / --color-primary in packages/ui/src/styles/globals.css
+          light: "#273D3B", // one step up the Emerald->white neutral scale below (gray.800) -- hover state
+        },
+        secondary: {
+          DEFAULT: "#C5A880", // Gold -- matches gold.400 / --color-secondary
+          dark: "#A78F6D", // ~15% darkened Gold -- hover state
+        },
+        accent: "#006B70", // Turquoise -- matches teal.700, Button.tsx's "teal action" variant
         sand: {
           50: "#F9F8F5",
         },

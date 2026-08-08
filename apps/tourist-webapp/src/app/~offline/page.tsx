@@ -19,7 +19,7 @@ export default function OfflinePage() {
             You're Offline
           </h1>
           <p className="text-lg text-gray-500 font-sans leading-relaxed">
-            The Silk Road is vast, and you seem to have lost your connection. Check your network to continue exploring UzTour.
+            The Silk Road is vast, and you seem to have lost your connection. Check your network to continue exploring Safron.
           </p>
         </div>
         

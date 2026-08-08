@@ -3,7 +3,7 @@ import { AboutClient } from "./AboutClient";
 import { getSiteStats } from "@repo/database";
 
 export const metadata = {
-  title: "About Us | Silk Road Uzbekistan",
+  title: "About Us | Safron",
   description: "Learn about our mission to bridge the digital divide for rural artisans and local guides in Uzbekistan.",
 };
 

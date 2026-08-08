@@ -43,7 +43,7 @@ export function InstallPrompt() {
   if (!isReadyForInstall) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 p-4 z-50 animate-in slide-in-from-bottom-full duration-300">
+    <div className="md:hidden fixed bottom-0 left-0 right-0 p-4 z-50 animate-in slide-in-from-bottom-full duration-300">
       <div className="max-w-md mx-auto bg-white rounded-t-xl sm:rounded-xl shadow-2xl border border-gray-100 p-4 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">

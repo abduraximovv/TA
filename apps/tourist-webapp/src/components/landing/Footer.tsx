@@ -181,16 +181,17 @@ export function Footer() {
         <div
           style={{
             fontFamily: "'Playfair Display', serif",
-            fontWeight: 600,
+            fontWeight: 700,
             fontSize: "clamp(18px, 3.5vw, 23px)",
-            background: "linear-gradient(135deg, #C5A880 0%, #006B70 100%)",
+            background: "linear-gradient(135deg, #C5A880 0%, #E0935C 55%, #C1592A 100%)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
             backgroundClip: "text",
             marginBottom: 8,
+            letterSpacing: "0.01em",
           }}
         >
-          Silk&nbsp;Road&nbsp;Uzbekistan
+          Safron
         </div>
         <p style={{ fontSize: "clamp(12.5px, 2.5vw, 15px)", color: "rgba(249,248,245,0.6)", lineHeight: 1.55, margin: 0, maxWidth: 480 }}>
           Your independent guide to Uzbekistan's Silk Road — discover real destinations, plan
@@ -318,7 +319,7 @@ export function Footer() {
         }}
       >
         <div style={{ fontSize: "clamp(10px, 2vw, 11.5px)", color: "rgba(249,248,245,0.45)", fontFamily: "'JetBrains Mono', monospace" }}>
-          © {new Date().getFullYear()} Silk Road Uzbekistan. All rights reserved.
+          © {new Date().getFullYear()} Safron. All rights reserved.
         </div>
         <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
           {["Terms", "Privacy", "Freedom of Information", "Sitemap"].map((label) => (

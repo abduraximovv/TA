@@ -168,13 +168,7 @@ export function EventsClient({ events }: Props) {
             <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 28, fontWeight: 600, color: "#0A2320", marginBottom: 24 }}>
               Happening Soon
             </h2>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
-                gap: "16px",
-              }}
-            >
+            <div className="events-grid">
               {upcoming.slice(0, 3).map((e) => (
                 <EventCard key={e.id} event={e} width="100%" />
               ))}
@@ -188,13 +182,7 @@ export function EventsClient({ events }: Props) {
             <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 28, fontWeight: 600, color: "#0A2320", marginBottom: 24 }}>
               All Upcoming Events
             </h2>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
-                gap: "16px",
-              }}
-            >
+            <div className="events-grid">
               {upcoming.slice(3).map((e) => (
                 <EventCard key={e.id} event={e} width="100%" />
               ))}
@@ -214,13 +202,7 @@ export function EventsClient({ events }: Props) {
             <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 600, color: "rgba(10,35,32,0.5)", marginBottom: 24 }}>
               Past Events
             </h2>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
-                gap: "16px",
-              }}
-            >
+            <div className="events-grid">
               {past.map((e) => (
                 <EventCard key={e.id} event={e} width="100%" />
               ))}
@@ -228,6 +210,20 @@ export function EventsClient({ events }: Props) {
           </div>
         )}
       </div>
+
+      <style>{`
+        .events-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+          gap: 16px;
+        }
+        @media (min-width: 1024px) {
+          .events-grid {
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 40px 24px;
+          }
+        }
+      `}</style>
     </main>
   );
 }

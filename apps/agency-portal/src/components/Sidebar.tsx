@@ -41,8 +41,19 @@ export function Sidebar() {
       }}
     >
       <div style={{ padding: "0 24px 28px", marginBottom: 12, borderBottom: "1px solid rgba(249,248,245,0.1)" }}>
-        <div style={{ fontFamily: "'Playfair Display', serif", fontWeight: 600, fontSize: 19, color: "#F9F8F5" }}>
-          Silk&nbsp;Road
+        <div
+          style={{
+            fontFamily: "'Playfair Display', serif",
+            fontWeight: 700,
+            fontSize: 20,
+            letterSpacing: "0.01em",
+            background: "linear-gradient(135deg, #C5A880 0%, #E0935C 55%, #C1592A 100%)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            backgroundClip: "text",
+          }}
+        >
+          Safron
         </div>
         <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10.5, letterSpacing: "0.1em", textTransform: "uppercase", color: "#C5A880", marginTop: 4 }}>
           Agency Portal

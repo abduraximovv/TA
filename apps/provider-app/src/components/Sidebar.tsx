@@ -55,7 +55,7 @@ export function Sidebar() {
         <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center">
           <Compass className="w-5 h-5 text-primary" />
         </div>
-        <span className="text-xl font-bold tracking-tight text-white">UzTour Provider</span>
+        <span className="text-xl font-bold tracking-tight text-white">Safron Provider</span>
       </div>
 
       <nav className="flex-1 px-4 mt-6 space-y-1">

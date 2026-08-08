@@ -9,9 +9,54 @@ const fontSans = Inter({ subsets: ["latin"], variable: "--font-sans", display: "
 const fontSerif = Playfair_Display({ subsets: ["latin"], variable: "--font-serif", display: "swap" });
 const fontMono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono", display: "swap" });
 
+const SITE_URL = "https://providers.safron.uz";
+const TITLE = "Safron Provider Portal — List Your Services & Manage Bookings";
+const DESCRIPTION =
+  "Become a verified Safron provider. List your tours, stays, and experiences, manage bookings in real time, and get discovered by travelers exploring Uzbekistan.";
+
 export const metadata = {
-  title: "provider-app",
-  description: "Uzbekistan Digital Tourism Ecosystem",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: TITLE,
+    template: "%s | Safron Provider Portal",
+  },
+  description: DESCRIPTION,
+  keywords: [
+    "Safron provider",
+    "become a tour guide Uzbekistan",
+    "list tours Uzbekistan",
+    "Uzbekistan local guide platform",
+    "Safron for providers",
+  ],
+  authors: [{ name: "Safron" }],
+  creator: "Safron",
+  publisher: "Safron",
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    title: TITLE,
+    description: DESCRIPTION,
+    url: SITE_URL,
+    siteName: "Safron Provider Portal",
+    type: "website",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: TITLE,
+    description: DESCRIPTION,
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
 };
 
 export const viewport = {

@@ -188,13 +188,7 @@ export function DiscoverClient({ destinations }: DiscoverClientProps) {
             </span>
           </div>
         ) : (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
-              gap: "16px",
-            }}
-          >
+          <div className="discover-grid">
             {filteredDestinations.map((d, i) => (
               <motion.div
                 key={d.id}
@@ -264,6 +258,20 @@ export function DiscoverClient({ destinations }: DiscoverClientProps) {
         onApply={(filters) => setAdvancedFilters(filters)}
         destinations={destinations}
       />
+
+      <style>{`
+        .discover-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+          gap: 16px;
+        }
+        @media (min-width: 1024px) {
+          .discover-grid {
+            grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+            gap: 48px 32px;
+          }
+        }
+      `}</style>
     </main>
   );
 }

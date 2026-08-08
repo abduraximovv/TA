@@ -2,9 +2,9 @@ import { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "UzTour Ecosystem",
-    short_name: "UzTour",
-    description: "Uzbekistan Digital Tourism Ecosystem",
+    name: "Safron — Uzbekistan Travel",
+    short_name: "Safron",
+    description: "Discover Uzbekistan, book verified local guides and experiences, and plan your trip with Safron.",
     start_url: "/",
     display: "standalone",
     background_color: "#F9F8F5",
@@ -12,16 +12,10 @@ export default function manifest(): MetadataRoute.Manifest {
     orientation: "portrait-primary",
     icons: [
       {
-        src: "/icons/icon-192x192.png",
-        sizes: "192x192",
-        type: "image/png",
+        src: "/icon.svg",
+        sizes: "any",
+        type: "image/svg+xml",
         purpose: "any",
-      },
-      {
-        src: "/icons/icon-512x512.png",
-        sizes: "512x512",
-        type: "image/png",
-        purpose: "maskable",
       },
     ],
   };

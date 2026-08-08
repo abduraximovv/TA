@@ -271,14 +271,9 @@ export function ExperiencesClient({ experiences }: ExperiencesClientProps) {
           </div>
         </div>
 
-        {/* Experiences Grid */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
-            gap: "16px",
-          }}
-        >
+        {/* Experiences Grid -- compact minmax(160px) on mobile (unchanged), original spacious
+            minmax(280px) restored from >=1024px so laptop/desktop isn't stuck with phone-sized cards. */}
+        <div className="experiences-grid">
           {filteredExperiences.length > 0 ? (
             filteredExperiences.map((exp, i) => (
               <motion.div
@@ -344,6 +339,20 @@ export function ExperiencesClient({ experiences }: ExperiencesClientProps) {
         onApply={(filters) => setAdvancedFilters(filters)}
         experiences={experiences}
       />
+
+      <style>{`
+        .experiences-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+          gap: 16px;
+        }
+        @media (min-width: 1024px) {
+          .experiences-grid {
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 40px 24px;
+          }
+        }
+      `}</style>
     </main>
   );
 }

@@ -49,7 +49,7 @@ export default function RegisterAgencyPage() {
         <Card className="p-8 border-none shadow-[0_8px_30px_rgb(0,0,0,0.08)] rounded-lg bg-white w-full">
           <div className="text-center mb-8">
             <h1 className="text-2xl font-bold text-gray-900">Agency Application</h1>
-            <p className="text-gray-500 mt-2 text-sm">Join the UzTour ecosystem. Please provide your business details for verification.</p>
+            <p className="text-gray-500 mt-2 text-sm">Join the Safron ecosystem. Please provide your business details for verification.</p>
           </div>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-5">

@@ -13,7 +13,7 @@ export default function OfflinePage() {
         <div className="space-y-2">
           <h1 className="text-2xl font-bold text-gray-900">You're Offline</h1>
           <p className="text-gray-500">
-            Please check your internet connection to manage your services on UzTour Provider.
+            Please check your internet connection to manage your services on Safron Provider.
           </p>
         </div>
         

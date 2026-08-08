@@ -165,11 +165,7 @@ export function PackagesClient({ itineraries }: { itineraries: ItineraryWithMeta
             initial="hidden"
             animate="visible"
             variants={staggerContainer}
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
-              gap: "16px",
-            }}
+            className="packages-grid"
           >
             {filteredItineraries.map((itin, i) => (
               <PackageCard key={itin.id} itinerary={itin} fallback={FALLBACK_IMAGES[i % FALLBACK_IMAGES.length]} />
@@ -231,6 +227,20 @@ export function PackagesClient({ itineraries }: { itineraries: ItineraryWithMeta
         onApply={(filters) => setAdvancedFilters(filters)}
         itineraries={itineraries}
       />
+
+      <style>{`
+        .packages-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+          gap: 16px;
+        }
+        @media (min-width: 1024px) {
+          .packages-grid {
+            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+            gap: 28px;
+          }
+        }
+      `}</style>
     </main>
   );
 }

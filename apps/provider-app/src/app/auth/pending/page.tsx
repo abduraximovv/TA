@@ -73,7 +73,7 @@ export default function PendingPage() {
         <h1 className="text-3xl font-bold text-white mb-3 tracking-tight">You're almost there</h1>
 
         <p className="text-white/80 text-base mb-8 leading-relaxed">
-          Thanks for applying to join the UzTour ecosystem{user?.email ? ` as ${user.email}` : ""}.
+          Thanks for applying to join the Safron ecosystem{user?.email ? ` as ${user.email}` : ""}.
           Our team typically reviews new providers within 24 hours — this page will jump straight
           to your dashboard the moment you're approved, no need to refresh.
         </p>

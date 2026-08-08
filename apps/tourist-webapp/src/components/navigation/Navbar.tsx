@@ -102,16 +102,8 @@ export function Navbar() {
           ) : (
             <>
               <Link href="/" style={{ textDecoration: "none" }}>
-                <div
-                  style={{
-                    fontFamily: "var(--font-serif), serif",
-                    fontWeight: 700,
-                    fontSize: 21,
-                    color: "#FFFFFF",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  Silk&nbsp;Road
+                <div className="safron-wordmark" style={{ fontSize: 22 }}>
+                  Safron
                 </div>
               </Link>
               <div className="flex items-center gap-1">
@@ -154,17 +146,8 @@ export function Navbar() {
         >
           {/* Logo */}
           <Link href="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 14 }}>
-            <div
-              style={{
-                fontFamily: "var(--font-serif), serif",
-                fontWeight: 700,
-                fontSize: 26,
-                color: "#FFFFFF",
-                whiteSpace: "nowrap",
-                letterSpacing: "0.02em",
-              }}
-            >
-              Silk&nbsp;Road
+            <div className="safron-wordmark" style={{ fontSize: 28 }}>
+              Safron
             </div>
           </Link>
 
@@ -341,6 +324,16 @@ export function Navbar() {
       <AuthModal isOpen={isAuthOpen} onOpenChange={setIsAuthOpen} />
 
       <style>{`
+        .safron-wordmark {
+          font-family: var(--font-serif), serif;
+          font-weight: 700;
+          white-space: nowrap;
+          letter-spacing: 0.01em;
+          background: linear-gradient(135deg, #C5A880 0%, #E0935C 55%, #C1592A 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
         .nav-link-hover:hover { color: #FFFFFF !important; }
         .btn-pill-outline {
           padding: 8px 16px;

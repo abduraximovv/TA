@@ -2,9 +2,9 @@ import { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "UzTour Provider",
-    short_name: "UzTour Pro",
-    description: "Provider Portal for Uzbekistan Digital Tourism",
+    name: "Safron Provider Portal",
+    short_name: "Safron Pro",
+    description: "Manage your listings, bookings, and reviews as a verified Safron provider.",
     start_url: "/",
     display: "standalone",
     background_color: "#0A2320",
@@ -12,16 +12,10 @@ export default function manifest(): MetadataRoute.Manifest {
     orientation: "portrait-primary",
     icons: [
       {
-        src: "/icons/icon-192x192.png",
-        sizes: "192x192",
-        type: "image/png",
+        src: "/icon.svg",
+        sizes: "any",
+        type: "image/svg+xml",
         purpose: "any",
-      },
-      {
-        src: "/icons/icon-512x512.png",
-        sizes: "512x512",
-        type: "image/png",
-        purpose: "maskable",
       },
     ],
   };

@@ -14,17 +14,57 @@ const fontSans = Inter({ subsets: ["latin"], variable: "--font-sans", display: "
 const fontSerif = Playfair_Display({ subsets: ["latin"], variable: "--font-serif", display: "swap" });
 const fontMono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono", display: "swap" });
 
+const SITE_URL = "https://safron.uz";
+const TITLE = "Safron — Uzbekistan Travel Platform | Book Tours, Guides & Stays";
+const DESCRIPTION =
+  "Plan your Uzbekistan trip with Safron. Discover Samarkand, Bukhara, and Khiva, book verified local guides and experiences, and build multi-day itineraries — all in one place.";
+
 export const metadata = {
-  title: "Silk Road Uzbekistan — Official Tourism Platform",
-  description:
-    "Four thousand years of the Silk Road, one journey. Explore Uzbekistan's ancient cities, hidden gems, and authentic local experiences. Plan with verified local providers.",
-  keywords:
-    "uzbekistan tourism, visit uzbekistan, silk road, samarkand, bukhara, khiva, travel, official",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: TITLE,
+    template: "%s | Safron",
+  },
+  description: DESCRIPTION,
+  keywords: [
+    "Safron",
+    "Uzbekistan tourism",
+    "visit Uzbekistan",
+    "Silk Road travel",
+    "Samarkand tours",
+    "Bukhara travel guide",
+    "Khiva tourism",
+    "Uzbekistan travel agency",
+    "book local guide Uzbekistan",
+  ],
+  authors: [{ name: "Safron" }],
+  creator: "Safron",
+  publisher: "Safron",
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
-    title: "Silk Road Uzbekistan — Official Tourism Platform",
-    description:
-      "From the turquoise domes of Samarkand to the mountain trails of Chimgan — plan, translate, and book with verified local providers.",
+    title: TITLE,
+    description: DESCRIPTION,
+    url: SITE_URL,
+    siteName: "Safron",
     type: "website",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: TITLE,
+    description: DESCRIPTION,
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
   },
 };
 

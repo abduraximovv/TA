@@ -34,3 +34,51 @@
     background-color: #F9F8F5;
   }
 }
+
+@layer components {
+  .glass-panel-agency {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+  }
+
+  .btn-hero-gold-a {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-sans), sans-serif;
+    font-weight: 700;
+    font-size: 15.5px;
+    background: #c5a880;
+    color: #0a2320;
+    border: none;
+    border-radius: 999px;
+    padding: 16px 28px;
+    cursor: pointer;
+    transition: transform 0.2s, background 0.2s;
+  }
+  .btn-hero-gold-a:hover {
+    background: #d6bc95;
+    transform: translateY(-2px);
+  }
+
+  .btn-hero-outline-a {
+    display: inline-flex;
+    align-items: center;
+    font-family: var(--font-sans), sans-serif;
+    font-weight: 600;
+    font-size: 15.5px;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(10px);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 999px;
+    padding: 15px 28px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .btn-hero-outline-a:hover {
+    background: rgba(255, 255, 255, 0.18);
+  }
+}
