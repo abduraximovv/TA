@@ -17,19 +17,21 @@ export function BottomNav() {
   const pathname = usePathname();
   const [activeIndex, setActiveIndex] = useState(0);
 
-  // Hidden on auth pages
-  if (pathname.startsWith("/auth")) {
-    return null;
-  }
-
   // Update active index based on route
   useEffect(() => {
-    const idx = navItems.findIndex((item) => 
+    const idx = navItems.findIndex((item) =>
       pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href))
     );
     if (idx !== -1) setActiveIndex(idx);
     else setActiveIndex(0); // fallback
   }, [pathname]);
+
+  // Hidden on auth pages -- checked after every hook has run, so the hook count never changes
+  // between renders (BottomNav stays mounted across client-side route changes; conditionally
+  // skipping useEffect above based on pathname violates the Rules of Hooks and crashes the app).
+  if (pathname.startsWith("/auth")) {
+    return null;
+  }
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden pb-safe px-4 mb-4">
