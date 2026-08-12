@@ -58,6 +58,12 @@ export function Navbar() {
     setMobileQuery("");
   };
 
+  // /ai-chat renders its own full-screen header (back button, Kimi status, brand mark) --
+  // checked after every hook above has run, so the hook count stays constant across renders.
+  if (pathname === "/ai-chat") {
+    return null;
+  }
+
   return (
     <>
       <header

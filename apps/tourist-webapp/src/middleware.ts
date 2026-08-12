@@ -2,28 +2,13 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { updateSession } from "@/utils/supabase/middleware";
 
-function parseJwt(token: string) {
-  try {
-    const base64Url = token.split(".")[1];
-    if (!base64Url) return null;
-    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-    const jsonPayload = decodeURIComponent(
-      atob(base64)
-        .split("")
-        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-        .join("")
-    );
-    return JSON.parse(jsonPayload);
-  } catch (e) {
-    return null;
-  }
-}
-
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  
-  // Keep the Supabase session active
-  let response = await updateSession(request);
+
+  // Keep the Supabase session active -- also hands back the authenticated user (already
+  // verified via supabase.auth.getUser() against the auth server, not just decoded off a
+  // cookie), so role-based routing below doesn't need its own separate/hand-rolled JWT parsing.
+  const { response, user } = await updateSession(request);
 
   // 1. Define Route Scopes
   const isPublicAsset = 
@@ -48,19 +33,13 @@ export async function middleware(request: NextRequest) {
     (p) => pathname === p || pathname.startsWith(`${p}/`)
   );
 
-  // 2. Extract Token and Role
-  const accessToken = request.cookies.get("sb-access-token")?.value;
-  let userRole: string | null = null;
-
-  if (accessToken) {
-    const payload = parseJwt(accessToken);
-    if (payload) {
-      userRole = payload.app_metadata?.role || payload.user_metadata?.role || "tourist"; // fallback to tourist if logged in but role undefined
-    }
-  }
+  // 2. Extract Role
+  const userRole: string | null = user
+    ? user.app_metadata?.role || user.user_metadata?.role || "tourist" // fallback to tourist if logged in but role undefined
+    : null;
 
   // 3. Unauthenticated User attempting to access an account-specific page -> Redirect to Login
-  if (isProtectedRoute && !accessToken) {
+  if (isProtectedRoute && !user) {
     const url = request.nextUrl.clone();
     url.pathname = "/auth/login";
     url.searchParams.set("next", pathname);
@@ -68,7 +47,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // 4. Role-Based Redirection Matrix (Cross-Domain for other roles)
-  if (accessToken && userRole) {
+  if (user && userRole) {
     // Landing/browsing pages stay viewable by anyone regardless of role or login state --
     // only /auth/* (login/register) redirects an already-logged-in tourist away, since landing
     // there while signed in doesn't make sense.

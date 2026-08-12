@@ -26,10 +26,11 @@ export function BottomNav() {
     else setActiveIndex(0); // fallback
   }, [pathname]);
 
-  // Hidden on auth pages -- checked after every hook has run, so the hook count never changes
-  // between renders (BottomNav stays mounted across client-side route changes; conditionally
-  // skipping useEffect above based on pathname violates the Rules of Hooks and crashes the app).
-  if (pathname.startsWith("/auth")) {
+  // Hidden on auth pages and the full-screen AI chat -- checked after every hook has run, so the
+  // hook count never changes between renders (BottomNav stays mounted across client-side route
+  // changes; conditionally skipping useEffect above based on pathname violates the Rules of
+  // Hooks and crashes the app).
+  if (pathname.startsWith("/auth") || pathname === "/ai-chat") {
     return null;
   }
 

@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { openai } from "@ai-sdk/openai";
-import { streamText } from "ai";
+import { createOpenAI } from "@ai-sdk/openai";
+import { generateText } from "ai";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
-import { createClient } from "@supabase/supabase-js";
+import { cookies } from "next/headers";
+import { createClient } from "@/utils/supabase/server";
+
+// Initialize OpenAI client for Moonshot
+const moonshot = createOpenAI({
+  baseURL: "https://api.moonshot.ai/v1",
+  apiKey: process.env.MOONSHOT_API_KEY,
+});
 
 // Optional: Upstash Redis Rate Limiting
 const redis =
@@ -34,107 +41,90 @@ const dailyRateLimit = redis
     })
   : null;
 
+// Simple In-Memory Rate Limiter Fallback
+type RateLimitInfo = { hourlyCount: number; dailyCount: number; hourlyReset: number; dailyReset: number; };
+const rateLimitMap = new Map<string, RateLimitInfo>();
+const HOURLY_LIMIT = 60;
+const DAILY_LIMIT = 500;
+const HOUR_MS = 60 * 60 * 1000;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+function checkInMemoryRateLimit(userId: string) {
+  const now = Date.now();
+  let info = rateLimitMap.get(userId);
+  if (!info) {
+    info = { hourlyCount: 0, dailyCount: 0, hourlyReset: now + HOUR_MS, dailyReset: now + DAY_MS };
+  }
+  if (now > info.hourlyReset) { info.hourlyCount = 0; info.hourlyReset = now + HOUR_MS; }
+  if (now > info.dailyReset) { info.dailyCount = 0; info.dailyReset = now + DAY_MS; }
+
+  if (info.hourlyCount >= HOURLY_LIMIT) return { success: false, error: "Hourly rate limit exceeded", limit: HOURLY_LIMIT, reset: info.hourlyReset };
+  if (info.dailyCount >= DAILY_LIMIT) return { success: false, error: "Daily rate limit exceeded", limit: DAILY_LIMIT, reset: info.dailyReset };
+
+  info.hourlyCount++;
+  info.dailyCount++;
+  rateLimitMap.set(userId, info);
+  return { success: true };
+}
+
 export async function POST(req: NextRequest) {
   try {
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 401 }
-      );
-    }
+    const cookieStore = cookies();
+    const supabase = createClient(cookieStore);
+    const { data: { user } } = await supabase.auth.getUser();
 
-    const token = authHeader.replace("Bearer ", "");
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-    
-    // Using standard supabase-js client to verify the JWT
-    const supabase = createClient(supabaseUrl, supabaseAnonKey);
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    // Use user ID if logged in, otherwise fallback to IP address for rate limiting
+    const userId = user?.id || req.headers.get("x-forwarded-for") || "anonymous_user";
 
-    if (authError || !user) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 401 }
-      );
-    }
-
-    const userId = user.id;
-
+    // Strict Rate Limiting Enforcement
     if (redis) {
       // Enforce daily limit first
       const { success: dailySuccess, reset: dailyReset } = await dailyRateLimit!.limit(userId);
       if (!dailySuccess) {
-        return NextResponse.json(
-          { success: false, error: "Daily rate limit exceeded" },
-          {
-            status: 429,
-            headers: {
-              "X-RateLimit-Limit": "500",
-              "X-RateLimit-Reset": dailyReset.toString(),
-            },
-          }
-        );
+        return NextResponse.json({ success: false, error: "Daily rate limit exceeded" }, { status: 429, headers: { "X-RateLimit-Limit": "500", "X-RateLimit-Reset": dailyReset.toString() } });
       }
 
       // Enforce hourly limit
       const { success: hourlySuccess, reset: hourlyReset } = await hourlyRateLimit!.limit(userId);
       if (!hourlySuccess) {
-        return NextResponse.json(
-          { success: false, error: "Hourly rate limit exceeded" },
-          {
-            status: 429,
-            headers: {
-              "X-RateLimit-Limit": "60",
-              "X-RateLimit-Reset": hourlyReset.toString(),
-            },
-          }
-        );
+        return NextResponse.json({ success: false, error: "Hourly rate limit exceeded" }, { status: 429, headers: { "X-RateLimit-Limit": "60", "X-RateLimit-Reset": hourlyReset.toString() } });
+      }
+    } else {
+      const rlCheck = checkInMemoryRateLimit(userId);
+      if (!rlCheck.success) {
+        return NextResponse.json({ success: false, error: rlCheck.error }, { status: 429, headers: { "X-RateLimit-Limit": rlCheck.limit!.toString(), "X-RateLimit-Reset": rlCheck.reset!.toString() } });
       }
     }
 
-    const { prompt } = await req.json();
+    const body = await req.json();
+    const { text, context_situation, target_language } = body;
 
-    if (!prompt) {
-      return NextResponse.json(
-        { success: false, error: "Prompt is required" },
-        { status: 400 }
-      );
+    if (!text || !context_situation || !target_language) {
+      return NextResponse.json({ success: false, error: "Missing required fields: text, context_situation, target_language" }, { status: 400 });
     }
 
-    if (!process.env.OPENAI_API_KEY) {
-       console.error("OPENAI_API_KEY is missing");
-       return NextResponse.json(
-         { success: false, error: "Translation service unavailable" },
-         { status: 503 }
-       );
+    if (!process.env.MOONSHOT_API_KEY) {
+       console.error("MOONSHOT_API_KEY is missing");
+       return NextResponse.json({ success: false, error: "Translation service unavailable" }, { status: 503 });
     }
 
-    const systemPrompt = `You are an expert Contextual Translator optimized for travel in Uzbekistan.
-Your goal is to translate text or voice inputs between English and Uzbek/Russian.
-When a user provides an input:
-1. Translate it accurately. If it is in English, translate to Uzbek (and Russian if appropriate, or whichever fits the context). If it is in Uzbek/Russian, translate to English.
-2. Provide "cultural context notes" when applicable. For example, if it's about bargaining, explain polite bargaining etiquette in Uzbekistan. If it mentions specific local ingredients (e.g., in a dietary restriction context), explain what they usually are.
-3. Keep the output highly readable. Use this exact structure in plain text (since we are streaming):
+    const systemPrompt = `You are a culturally aware digital translator in Uzbekistan. Translate the input text to the target language based on the provided travel context. Do not translate literally; instead, provide a culturally polite, natural translation. Add a short, friendly 'Culture Tip' (maximum 1 sentence) explaining any local etiquette related to this situation.`;
+    const userPrompt = `Context: ${context_situation}\nTarget Language: ${target_language}\n\nText to translate:\n"${text}"`;
 
-TRANSLATION:
-<the translated text>
+    try {
+      const result = await generateText({
+        model: moonshot.chat("kimi-k3"),
+        system: systemPrompt,
+        prompt: userPrompt,
+      });
 
-CULTURAL NOTES:
-<cultural notes or tips, if any. Otherwise say "None">`;
-
-    const result = await streamText({
-      model: openai("gpt-4-turbo"),
-      system: systemPrompt,
-      prompt: prompt,
-    });
-
-    return result.toTextStreamResponse();
+      return NextResponse.json({ success: true, translation: result.text });
+    } catch (apiError: any) {
+      console.error("Moonshot API Error:", apiError);
+      return NextResponse.json({ success: false, error: "Translation service unavailable" }, { status: 503 });
+    }
   } catch (error: any) {
     console.error("Translation API Error:", error);
-    return NextResponse.json(
-      { success: false, error: "Internal Server Error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: "Internal Server Error" }, { status: 500 });
   }
 }

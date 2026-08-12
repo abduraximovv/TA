@@ -1,8 +1,8 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { getSupabase } from "@repo/database";
-import type { Session, User } from "@supabase/supabase-js";
+import { getSupabaseBrowserClient } from "@repo/database";
+import type { AuthChangeEvent, Session, User } from "@supabase/supabase-js";
 
 export type UserRole = "tourist" | "provider" | "agency" | "admin";
 
@@ -45,27 +45,34 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    const supabase = getSupabase();
+    const supabase = getSupabaseBrowserClient();
 
     // onAuthStateChange fires an INITIAL_SESSION event immediately on subscribe (supabase-js v2),
     // carrying the same session an explicit getSession() call would -- calling both raced two
     // separate state updates for the same session, each with a fresh object reference, which
     // double-fired every effect keyed on `user` (e.g. MyBookingsList fetching bookings twice).
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, currentSession) => {
+    // createBrowserClient (unlike the old plain supabase-js client this used to call) persists
+    // the session into cookies itself, in the exact format @supabase/ssr's server-side client
+    // expects -- tourist-webapp's own API routes/middleware now read that directly and no
+    // longer need anything mirrored by hand.
+    //
+    // provider-app/agency-portal/admin-portal's Edge middleware are a different consumer,
+    // though: they intentionally avoid @supabase/ssr's cookie format and a per-request
+    // getUser() network call (see packages/auth/src/verificationGuard.ts's comment), decoding
+    // a plain JWT out of a plain `sb-access-token` cookie instead. That cookie has no other
+    // purpose now -- keep writing *only* it (not sb-refresh-token, which nothing ever read).
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: AuthChangeEvent, currentSession: Session | null) => {
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
       setRole(getRoleFromSession(currentSession));
       setIsVerified(getIsVerifiedFromSession(currentSession));
       setIsLoading(false);
 
+      const secureFlag = window.location.protocol === "https:" ? "; Secure" : "";
       if (currentSession) {
-        const secureFlag = window.location.protocol === 'https:' ? '; Secure' : '';
         document.cookie = `sb-access-token=${currentSession.access_token}; path=/; max-age=${currentSession.expires_in}; SameSite=Lax${secureFlag}`;
-        document.cookie = `sb-refresh-token=${currentSession.refresh_token}; path=/; max-age=604800; SameSite=Lax${secureFlag}`;
       } else {
-        const secureFlag = window.location.protocol === 'https:' ? '; Secure' : '';
         document.cookie = `sb-access-token=; path=/; max-age=0; SameSite=Lax${secureFlag}`;
-        document.cookie = `sb-refresh-token=; path=/; max-age=0; SameSite=Lax${secureFlag}`;
       }
     });
 
@@ -75,19 +82,14 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signInWithEmail = async (email: string, password: string) => {
-    const supabase = getSupabase();
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    const supabase = getSupabaseBrowserClient();
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
-    if (data.session) {
-      const secureFlag = window.location.protocol === 'https:' ? '; Secure' : '';
-      document.cookie = `sb-access-token=${data.session.access_token}; path=/; max-age=${data.session.expires_in}; SameSite=Lax${secureFlag}`;
-      document.cookie = `sb-refresh-token=${data.session.refresh_token}; path=/; max-age=604800; SameSite=Lax${secureFlag}`;
-    }
   };
 
   const signUpWithEmail = async (email: string, password: string, assignedRole: UserRole = "tourist") => {
-    const supabase = getSupabase();
-    const { data, error } = await supabase.auth.signUp({
+    const supabase = getSupabaseBrowserClient();
+    const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -95,21 +97,16 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       },
     });
     if (error) throw error;
-    if (data.session) {
-      const secureFlag = window.location.protocol === 'https:' ? '; Secure' : '';
-      document.cookie = `sb-access-token=${data.session.access_token}; path=/; max-age=${data.session.expires_in}; SameSite=Lax${secureFlag}`;
-      document.cookie = `sb-refresh-token=${data.session.refresh_token}; path=/; max-age=604800; SameSite=Lax${secureFlag}`;
-    }
   };
 
   const signInWithOtp = async (phone: string) => {
-    const supabase = getSupabase();
+    const supabase = getSupabaseBrowserClient();
     const { error } = await supabase.auth.signInWithOtp({ phone });
     if (error) throw error;
   };
 
   const signInWithGoogle = async () => {
-    const supabase = getSupabase();
+    const supabase = getSupabaseBrowserClient();
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
@@ -120,7 +117,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
-    const supabase = getSupabase();
+    const supabase = getSupabaseBrowserClient();
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
   };

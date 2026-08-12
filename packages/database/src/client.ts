@@ -1,8 +1,13 @@
 import { createClient } from "@supabase/supabase-js";
+import { createBrowserClient } from "@supabase/ssr";
 import type { Database, LocationCategory, Location } from "./types";
 
 let supabaseInstance: ReturnType<typeof createClient<Database>> | null = null;
 
+// Plain supabase-js client -- session lives in localStorage, not cookies. Fine (and cheaper)
+// for the public/anonymous reads in this file (destinations, services, events, etc.), which
+// never need the server to see who's signed in. Do NOT use this for anything a server-side
+// route needs to authenticate -- see getSupabaseBrowserClient below for that.
 export const getSupabase = () => {
   if (!supabaseInstance) {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -16,6 +21,28 @@ export const getSupabase = () => {
     supabaseInstance = createClient<Database>(supabaseUrl, supabaseAnonKey);
   }
   return supabaseInstance!;
+};
+
+let supabaseBrowserInstance: ReturnType<typeof createBrowserClient<Database>> | null = null;
+
+// Session-aware browser client for sign-in/sign-up/sign-out (see packages/auth's
+// SessionProvider). Unlike getSupabase() above, this writes the session into cookies in the
+// exact format @supabase/ssr's server-side createServerClient expects -- required for any
+// Next.js API route or Server Component to recognize a signed-in tourist via
+// supabase.auth.getUser(). Browser-only: relies on `document`, never call this during SSR.
+export const getSupabaseBrowserClient = () => {
+  if (!supabaseBrowserInstance) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      throw new Error(
+        "Supabase credentials missing. Ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set."
+      );
+    }
+    supabaseBrowserInstance = createBrowserClient<Database>(supabaseUrl, supabaseAnonKey);
+  }
+  return supabaseBrowserInstance!;
 };
 
 export const fetchLocationsInRadius = async (
@@ -109,6 +136,7 @@ export const getApprovedItineraries = async (): Promise<ItineraryWithMeta[]> => 
   return rows.map(r => ({
     id: r.id,
     agency_id: r.agency_id,
+    tourist_id: r.tourist_id,
     title: r.title,
     description: r.description,
     start_date: r.start_date,
@@ -162,6 +190,7 @@ export const getItineraryById = async (id: string): Promise<ItineraryDetail | nu
   const result: ItineraryDetail = {
     id: row.id,
     agency_id: row.agency_id,
+    tourist_id: row.tourist_id,
     title: row.title,
     description: row.description,
     start_date: row.start_date,
@@ -179,6 +208,10 @@ export const getItineraryById = async (id: string): Promise<ItineraryDetail | nu
         itinerary_id: item.itinerary_id,
         service_id: item.service_id,
         title: item.title,
+        description: item.description,
+        location_name: item.location_name,
+        scheduled_time: item.scheduled_time,
+        day_number: item.day_number,
         price: item.price,
         sort_order: item.sort_order,
         created_at: item.created_at,

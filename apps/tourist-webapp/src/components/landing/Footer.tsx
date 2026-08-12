@@ -6,9 +6,9 @@ import { usePathname } from "next/navigation";
 import { Instagram, Send, Facebook, Phone, ChevronDown } from "lucide-react";
 import { subscribeToNewsletter } from "@/app/actions/newsletter";
 
-// The /map page is a full-viewport, edge-to-edge experience -- a footer below it would only be
-// reachable by scrolling past the map itself, which doesn't scroll. Hide it there.
-const HIDE_FOOTER_ON = ["/map"];
+// /map and /ai-chat are full-viewport, edge-to-edge experiences -- a footer below either would
+// only be reachable by scrolling past content that doesn't scroll. Hide it there.
+const HIDE_FOOTER_ON = ["/map", "/ai-chat"];
 
 /** True once launched from a home-screen icon (installed PWA) rather than a normal browser tab --
  * a footer (legal links, newsletter, app-download CTA) is a web-page convention that doesn't

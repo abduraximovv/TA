@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { getSupabase } from "@repo/database";
+import { cookies } from "next/headers";
+import { createClient } from "@/utils/supabase/server";
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
@@ -7,25 +8,15 @@ export async function GET(request: Request) {
   const next = searchParams.get("next") ?? "/";
 
   if (code) {
-    const supabase = getSupabase();
-    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-    if (!error && data.session) {
-      const response = NextResponse.redirect(`${origin}${next}`);
-      
-      response.cookies.set("sb-access-token", data.session.access_token, {
-        path: "/",
-        maxAge: data.session.expires_in,
-        sameSite: "lax",
-        secure: true,
-      });
-      response.cookies.set("sb-refresh-token", data.session.refresh_token, {
-        path: "/",
-        maxAge: 604800,
-        sameSite: "lax",
-        secure: true,
-      });
-      
-      return response;
+    // @supabase/ssr's server client persists the exchanged session into cookies itself (via its
+    // setAll callback, wired in utils/supabase/server.ts) in the format middleware/API routes
+    // expect -- manually setting raw sb-access-token/sb-refresh-token cookies here (as before)
+    // used a format the rest of the app's server-side code doesn't recognize.
+    const cookieStore = cookies();
+    const supabase = createClient(cookieStore);
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    if (!error) {
+      return NextResponse.redirect(`${origin}${next}`);
     }
   }
 

@@ -336,6 +336,7 @@ export interface Database {
         Insert: {
           id?: string;
           agency_id?: string | null;
+          tourist_id?: string | null;
           title: string;
           description?: string | null;
           start_date?: string | null;
@@ -349,6 +350,7 @@ export interface Database {
         Update: {
           id?: string;
           agency_id?: string | null;
+          tourist_id?: string | null;
           title?: string;
           description?: string | null;
           start_date?: string | null;
@@ -367,6 +369,10 @@ export interface Database {
           itinerary_id?: string | null;
           service_id?: string | null;
           title?: string | null;
+          description?: string | null;
+          location_name?: string | null;
+          scheduled_time?: string | null;
+          day_number?: number | null;
           price?: number | null;
           sort_order?: number;
           created_at?: string;
@@ -376,6 +382,10 @@ export interface Database {
           itinerary_id?: string | null;
           service_id?: string | null;
           title?: string | null;
+          description?: string | null;
+          location_name?: string | null;
+          scheduled_time?: string | null;
+          day_number?: number | null;
           price?: number | null;
           sort_order?: number;
           created_at?: string;

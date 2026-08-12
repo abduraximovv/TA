@@ -6,6 +6,7 @@
   "dependencies": {
     "@repo/types": "workspace:*",
     "@supabase/supabase-js": "^2.110.7",
+    "@supabase/ssr": "^0.12.3",
     "pg": "^8.22.0"
   },
   "devDependencies": {
