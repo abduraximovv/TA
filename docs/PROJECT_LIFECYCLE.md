@@ -1,7 +1,7 @@
-# Project Development Lifecycle — Uzbekistan Digital Tourism Ecosystem
+# Project Development Lifecycle — Safron (formerly "Uzbekistan Digital Tourism Ecosystem" / "UzTour")
 
-**Version:** 2.0 (UI-First Strategy)
-**Date:** 2026-07-19
+**Version:** 2.1 (Brand, SEO & Launch Prep)
+**Date:** 2026-08-09
 **Status:** Active
 **Purpose:** Track staged project development from inception to full production launch, prioritizing a premium UI and foundational backend architecture.
 
@@ -129,6 +129,38 @@ We will build the portals in the following order to ensure a logical flow of UI 
 ### 3.7 Core Authentication & Approvals
 - [x] **Authentication Flow:** Connected Supabase Auth, enforced JWT routing protection and role-based redirects.
 - [x] **Approval Workflows:** Connected the Admin Portal's Approve/Reject buttons to update user roles/statuses in the database, triggering access for Agencies/Suppliers.
+- [x] **Email confirmation disabled** for new tourist registrations (temporary, by explicit request — users can create an account without verifying email).
+
+### 3.8 [NEW] Tourist WebApp — Mobile/Desktop Responsive Audit (2026-08-08 follow-up)
+A teammate's mobile-responsiveness pass left several already-"complete" Stage 1 pages with real regressions —
+mobile looked right, desktop/laptop was broken. Found and fixed via direct reproduction (Playwright, not
+guesswork) rather than closed as assumed-fine:
+- [x] **Destinations, Packages, Experiences, Events pages:** a single mobile-sized `minmax(160px)` grid had no
+  desktop breakpoint, so laptop/desktop users saw 6–8 phone-sized columns. Restored each page's original desktop
+  card size behind a `min-width: 1024px` media query; mobile layout left untouched and verified unchanged.
+- [x] **Offers section** converted to a real Swiper carousel (was previously a static, non-sliding grid).
+- [x] **Destination cards:** fixed inconsistent card heights (`clamp()` height + 2-line title clamp).
+- [x] **Footer** redesigned as an accordion (visitsaudi.com reference); **BottomNav** active-tab indicator resized
+  (was "popping out" over adjacent tabs).
+- [x] **Duplicate Footer/BottomNav instances** found and removed across multiple pages.
+- [x] **Fixed a hard app-wide crash:** `BottomNav.tsx` violated React's Rules of Hooks (conditionally skipped
+  `useEffect` on `/auth/*` routes). Since the component stays mounted across client-side navigation and the app
+  has no `error.tsx` boundary anywhere, any nav away from an auth page — e.g. tapping "Back to Home" during
+  signup — crashed the *entire* app to a blank "Application error" screen. Reproduced end-to-end with a real
+  signup flow before and after the fix; confirmed resolved.
+- [x] **`InstallPrompt`** was showing on desktop/laptop (`beforeinstallprompt` fires there too); now `md:hidden`,
+  mobile-only as intended.
+- [x] **PWA standalone/installed mode** (iOS home-screen, Android PWA) now hides the marketing footer
+  automatically, matching native-app expectations.
+
+### 3.9 [NEW] Public Marketing Landing Pages — Provider App & Agency Portal
+Not in the original Stage 1 scope — both apps' public `/` route was still the bare scaffold placeholder.
+- [x] Built full conversion-focused landing pages for both: Hero, Problem, Features (grounded in real shipped
+  functionality, not aspirational copy), How It Works, Roadmap ("what's next," clearly labeled unbuilt), Vision/
+  live stats, Final CTA, Footer.
+- [x] Rebuilt tourist-webapp's `/about` page — replaced generic B2B/investor-deck content (a "4 internal
+  portals" grid that had no business being shown to a traveler) with a traveler-facing story and a "What We
+  Stand For" section grounded in real product behavior (verification, direct booking, no middlemen).
 
 ---
 
@@ -199,6 +231,32 @@ that were never wired to real queries. All fixed as part of Stage 2 close-out:
   - Cloudflare WAF and SSL configuration.
   - Final Marketing deployment.
 
+### 6.1 [NEW] Brand, SEO & Production Deployment (started 2026-08-08)
+Not part of the original Stage 4 scope (which is about deep business/compliance features), but this is the
+actual launch-track work underway right now, tracked separately so it isn't confused with E-Mehmon/Payments below.
+- [x] **Rebrand:** entire product renamed from "UzTour" / "Silk Road Uzbekistan" to **Safron** across all 4 apps —
+  navbars, dashboard sidebars, footers, PWA manifests, page metadata. Historical "Silk Road" content deliberately
+  *kept* where it's thematic marketing copy (e.g. hero lines, package names) rather than brand identity.
+- [x] **SEO:** full metadata (title templates, Open Graph, Twitter cards, robots, canonical URLs) added to all 4
+  apps; admin-portal explicitly set `noindex` as an internal-only tool.
+- [x] **Favicons:** rebuilt as static SVGs after discovering `next/og`'s dynamic image generation is broken in
+  this dev environment (a Windows path-with-space bug inside `@vercel/og`, confirmed via failed local builds).
+- [ ] **Social preview (OG) image** — blocked by the same environment bug; needs to be designed externally as a
+  static asset and wired into `openGraph.images`.
+- [x] **Vercel deployment (in progress):** all 4 apps set up as separate Vercel Projects from one repo. Fixed 3
+  real deploy-blocking bugs found via actual failed build logs, not hypothetical review:
+  1. Missing Supabase env vars in Vercel project settings (tourist-webapp).
+  2. Turborepo's `strict` env mode silently stripping `SUPABASE_SERVICE_ROLE_KEY` before it reached `next build`
+     even though it *was* set correctly in Vercel — fixed via a `globalEnv` declaration in the root `turbo.json`.
+  3. A phantom `framer-motion` dependency in provider-app and agency-portal (used throughout the new landing
+     pages but never added to either `package.json`) — worked locally via pnpm hoisting, failed on Vercel's
+     isolated install. Fixed in both `package.json` files plus `pnpm-lock.yaml`.
+- [ ] **Domain & DNS:** `safron.uz` + subdomain scheme (`admin.` / `agencies.` / `providers.`) — guide written,
+  not yet executed against the real registrar.
+- [ ] **Supabase redirect-URL allowlist** update for the production domains — documented as required (auth
+  breaks in prod otherwise), not yet confirmed applied.
+- [ ] **Final smoke test** across all 4 live production domains once fully deployed.
+
 ---
 
 ## 7. Progress Tracking Dashboard
@@ -206,10 +264,16 @@ that were never wired to real queries. All fixed as part of Stage 2 close-out:
 | Stage | Status | Progress | Focus |
 |---|---|---|---|
 | Stage 0: Setup | 🟢 Complete | 100% | Infrastructure |
-| Stage 1: Premium UI & Core DB | 🟡 In Progress | 85% | UI, DB, Authentication, Approvals completed |
+| Stage 1: Premium UI & Core DB | 🟡 In Progress | 85% | Core UI/DB/Auth complete; 2026-08-08 follow-up fixed a real app-crashing bug + several desktop regressions on already-"complete" pages, and added the provider/agency marketing landing pages + a rebuilt About page (not in original scope). Admin caching and Agency/Provider "Real Data Integration" checkboxes still unverified this session — not re-audited. |
 | Stage 2: Business Workflows | 🟢 Complete | 100% | Offerings, real-time bookings, and reviews verified end-to-end 2026-08-01; Kanban/Itinerary Canvas formally descoped in favor of the simpler CRUD UI already shipped |
-| Stage 3: Advanced Features | ⬜ Not Started | 0% | AI Scanners, Itineraries |
-| Stage 4: Compliance & Launch | ⬜ Not Started | 0% | E-Mehmon, Payments, Scale |
+| Stage 3: Advanced Features | ⬜ Not Started | 0% | AI Scanners, Itineraries — untouched this session |
+| Stage 4: Compliance & Launch | 🟡 In Progress | ~15% | Original scope (E-Mehmon, Payments, Dynamic Pricing) still 0%. Separately: rebrand to Safron, full SEO, and Vercel deployment are actively underway (§6.1) — 3 real deploy-blocking bugs found and fixed via actual failed builds; domain/DNS and Supabase redirect config still pending. |
 
 ### How to Update
 Update this document at the end of each sprint. Mark completed items with `[x]` and adjust the progress percentages in the table.
+
+**Note on scope (2026-08-09):** items marked `[NEW]` throughout this document were not part of the original
+plan — they're real work completed that didn't have a home in the existing structure. This lifecycle doc tracks
+*implementation* (features, bug fixes, infra); external communication artifacts produced alongside this work
+(a trilingual project-overview one-pager, a pitch-deck PDF) are intentionally not listed here since they aren't
+implementation deliverables.
