@@ -162,6 +162,24 @@ Not in the original Stage 1 scope — both apps' public `/` route was still the 
   portals" grid that had no business being shown to a traveler) with a traveler-facing story and a "What We
   Stand For" section grounded in real product behavior (verification, direct booking, no middlemen).
 
+### 3.10 [NEW] Authentication Architecture Rework
+Not part of the original Stage 1 checklist, but a substantial change to the auth foundation built there.
+- [x] **Tourist WebApp migrated to `@supabase/ssr`:** session cookies are now written and read in
+  `@supabase/ssr`'s format, with `supabase.auth.getUser()` doing a server-verified check on each request
+  instead of a client-side JWT decode. `packages/database/src/client.ts` now exposes both the original
+  `getSupabase()` (kept for anonymous/public reads) and a new `getSupabaseBrowserClient()` for this flow.
+- [x] **Provider App, Agency Portal, and Admin Portal are unchanged:** their Edge middleware still decodes a
+  hand-set `sb-access-token` cookie directly — the same pattern Tourist WebApp used before this rework.
+- [x] **A bridging layer keeps both working:** `packages/auth/src/SessionProvider.tsx` now writes both cookie
+  formats on every auth-state change — the `@supabase/ssr` format for Tourist WebApp, and a manually-set
+  `sb-access-token` cookie purely so the other three apps' existing middleware keeps working unchanged.
+- [x] **Bearer-token auth added to three Tourist WebApp API routes** (`/api/v1/bookings`, `/api/v1/reviews`,
+  `/api/v1/destination-reviews`): each now validates an explicit `Authorization: Bearer` header on a
+  request-scoped Supabase client, because neither cookie format alone was reliably propagating the caller's
+  identity into RLS-gated inserts on those routes.
+- [ ] **Not yet resolved:** the platform now runs two different auth-cookie architectures across the four apps.
+  This split isn't captured in an ADR or in the security documentation yet.
+
 ---
 
 ## 4. Stage 2 — Core Business Workflows & Transactions
@@ -208,12 +226,43 @@ that were never wired to real queries. All fixed as part of Stage 2 close-out:
 
 > **Duration:** 4 weeks  
 > **Goal:** Integrate the "Wow Factor" features and AI capabilities.
+> **Verified:** 2026-08-13, cross-checked against shipped code and the AI-focused commit that landed 2026-08-12.
 
 ### Deliverables Checklist
-- [ ] **Taste & Trust Scanner:** Connect the camera UI to OpenAI Vision API for real-time menu translation and allergen detection.
-- [ ] **Contextual Translator:** Connect the chat UI to LLM endpoints for cultural translations.
-- [ ] **Itinerary Builder:** Implement the complex auto-pricing and scheduling logic for the Agency drag-and-drop calendar.
-- [ ] **Survival Map:** Connect Mapbox GL to PostGIS geospatial queries for live SOS/Cultural pins.
+- [x] **Taste & Trust Scanner:** Camera UI connected to a real vision-capable LLM (`POST /api/v1/ai/scan-menu`)
+  for menu translation, ingredient/allergen detection, and dietary-flag tagging. Requires sign-in; scanned
+  photos persist to a private `menu-scans` Storage bucket on a best-effort basis. Ships on **Moonshot's
+  `kimi-k3` model**, called through an OpenAI-compatible client — not OpenAI Vision as originally specified
+  (see AI Provider Note below).
+- [x] ~~**Contextual Translator:** Connect the chat UI to LLM endpoints for cultural translations.~~ —
+  **Backend rebuilt, frontend not reconnected.** `POST /api/v1/ai/translate` now runs on a new request/response
+  contract, but the `/translator` page's component was not updated to match it and is no longer linked from any
+  navigation (Navbar, BottomNav, FloatingWidgets) — submissions from that page currently fail against the new
+  contract. The intended replacement is the unified AI Chat assistant below, reached through a single FAB.
+  Whether `/translator` is formally retired or reconnected to the new contract is an open product decision.
+- [x] **Itinerary Builder:** Shipped, but as a different feature than this item originally described. The AI
+  itinerary endpoint (`POST /api/v1/ai/itinerary-suggest`) is a **tourist-facing, self-planned** trip generator —
+  days/budget/interests in, a day-by-day AI-generated plan out, savable to "My Trips" — not the Agency
+  drag-and-drop calendar with auto-pricing this item originally scoped. The Agency-side Itinerary Canvas remains
+  unbuilt (see Stage 2, formally descoped in favor of the CRUD Packages page). The generator also applies a
+  deliberate "decentralization" rule, steering suggestions toward secondary regions (Nurata, Gijduvan, Zaamin,
+  Sentob, Yangiabad) rather than Tashkent/Samarkand, grounded in real listings from the `services` table where
+  available.
+- [ ] **Survival Map:** Not implemented. The `/map` page runs on Leaflet with CartoDB tiles (not Mapbox as
+  planned) and only plots destinations, experiences, and events — there is no SOS, toilet, pharmacy, ATM, or
+  WiFi category layer, and no PostGIS radius query wired into the UI. A "Live Activity" density overlay
+  (time-of-day- and rating-weighted, explicitly not GPS-based) ships on the same page as a stand-in for a
+  separate, later-priority heatmap concept, but it is not the survival-pin feature described here.
+- [x] **[NEW] AI Chat Assistant:** Not part of the original Stage 3 scope. A persistent chat assistant
+  (`/ai-chat`, backed by `GET/POST /api/v1/ai/chat` and a new `ai_chat_messages` table, RLS-scoped per user)
+  shipped alongside the three items above and became the single entry point — via one FAB — that previously
+  would have routed to separate AI Assistant / Translator affordances.
+
+### AI Provider Note
+All four AI features (menu scanner, translator, itinerary planner, chat assistant) run on **Moonshot's
+`kimi-k3` model**, called through an OpenAI-compatible client, rather than OpenAI as specified in earlier
+planning docs. Hourly rate limiting is implemented on all four endpoints; a daily cap on top of that is only
+enforced on the translator today.
 
 ---
 
@@ -264,9 +313,9 @@ actual launch-track work underway right now, tracked separately so it isn't conf
 | Stage | Status | Progress | Focus |
 |---|---|---|---|
 | Stage 0: Setup | 🟢 Complete | 100% | Infrastructure |
-| Stage 1: Premium UI & Core DB | 🟡 In Progress | 85% | Core UI/DB/Auth complete; 2026-08-08 follow-up fixed a real app-crashing bug + several desktop regressions on already-"complete" pages, and added the provider/agency marketing landing pages + a rebuilt About page (not in original scope). Admin caching and Agency/Provider "Real Data Integration" checkboxes still unverified this session — not re-audited. |
+| Stage 1: Premium UI & Core DB | 🟡 In Progress | 85% | Core UI/DB/Auth complete; 2026-08-08 follow-up fixed a real app-crashing bug + several desktop regressions on already-"complete" pages, and added the provider/agency marketing landing pages + a rebuilt About page (not in original scope). Auth was later substantially reworked (§3.10) — Tourist WebApp now runs on `@supabase/ssr` while the other three apps keep the original JWT-decode approach. Admin caching and Agency/Provider "Real Data Integration" checkboxes still unverified this session — not re-audited. |
 | Stage 2: Business Workflows | 🟢 Complete | 100% | Offerings, real-time bookings, and reviews verified end-to-end 2026-08-01; Kanban/Itinerary Canvas formally descoped in favor of the simpler CRUD UI already shipped |
-| Stage 3: Advanced Features | ⬜ Not Started | 0% | AI Scanners, Itineraries — untouched this session |
+| Stage 3: Advanced Features | 🟡 In Progress | ~65% | Menu Scanner, Chat Assistant, and an AI Itinerary planner shipped 2026-08-12, all on Moonshot's `kimi-k3` model rather than OpenAI as originally planned; the Itinerary planner shipped as a tourist self-service feature, diverging from this stage's original Agency-canvas scope. Contextual Translator's backend was rebuilt but its frontend was not reconnected and is now orphaned from navigation. Survival Map (Mapbox/PostGIS SOS pins) not started. |
 | Stage 4: Compliance & Launch | 🟡 In Progress | ~15% | Original scope (E-Mehmon, Payments, Dynamic Pricing) still 0%. Separately: rebrand to Safron, full SEO, and Vercel deployment are actively underway (§6.1) — 3 real deploy-blocking bugs found and fixed via actual failed builds; domain/DNS and Supabase redirect config still pending. |
 
 ### How to Update

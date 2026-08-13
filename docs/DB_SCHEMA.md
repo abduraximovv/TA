@@ -1,9 +1,11 @@
 # Database Schema — Uzbekistan Digital Tourism Ecosystem
 
-**Version:** 1.0  
-**Date:** 2026-07-16  
+**Version:** 1.1  
+**Date:** 2026-08-13  
 **Database:** PostgreSQL 15 (via Supabase)  
-**Extensions:** PostGIS, pg_cron, pgcrypto
+**Extensions:** pgcrypto (confirmed — backs `gen_random_uuid()` defaults across nearly every table); PostGIS (only exercised if the `locations` table described in §3.3 actually exists in the live project — its existence has not been confirmed independently of application code)
+
+> **Note on scope:** this document reflects the schema produced by the migrations under `supabase/migrations/` that were actually applied, not `supabase/migrations/20240101000000_init.sql`'s original table/enum definitions, which were never applied to the live project (only `agency_requests` and `services` pre-existed it). Where a table's live existence could not be independently confirmed from the migration history alone, that is called out explicitly in its section rather than asserted.
 
 ---
 
@@ -23,86 +25,108 @@
 
 ## 1. Schema Overview
 
-The database is designed around a **central booking transaction model** that connects four user types (Tourist, Provider, Agency, Admin) through a unified relational structure.
+The database is designed around a **central booking transaction model** that connects three user-facing roles (Tourist, Provider, Agency) plus Admin through a unified relational structure. There is no application-level `users` table — Supabase Auth's built-in `auth.users` is the identity table, and `public.user_profiles` extends it 1:1 (its primary key **is** the Supabase Auth user ID, not a separate generated ID with a foreign key back to it).
 
 ### Core Principle
 
-> The `bookings` table is the **heart of the system** — it is the bridge where the shadow economy (`services`) meets formal demand (`users` as Tourists and Agencies).
+> The `bookings` table is the **heart of the system** — it is the bridge where the shadow economy (`services`) meets formal demand (tourists and agencies, both represented as roles on `user_profiles`/`auth.users`).
 
 ### Table Summary
 
 | Table | Purpose | Primary Relations |
 |---|---|---|
-| `users` | All 4 user types, distinguished by role | Central identity table |
-| `user_profiles` | Extended profile data per user type | → `users` |
-| `services` | Offerings created by Local Providers | → `users` (provider) |
-| `service_media` | Photos/videos for services | → `services` |
-| `bookings` | Central transaction table | → `users` (tourist), `services`, `users` (agency) |
+| `user_profiles` | Role + profile data, one row per Supabase Auth user (`id` is both PK and FK) | → `auth.users` |
+| `provider_verifications` | Admin verification workflow for providers/agencies | → `auth.users` |
+| `locations` | Spatial data for Survival Maps — **live existence unconfirmed**, see §3.3 | Independent geospatial data |
+| `services` | Offerings created by Local Providers | → `auth.users` (provider, **no FK constraint**) |
+| `destinations` | Landing-page destination/region content | Independent |
+| `destination_reviews` | Tourist reviews left directly on a destination | → `destinations`, `auth.users` |
+| `events` | Festival/event listings shown on the landing page and map | → `destinations` |
+| `bookings` | Central transaction table | → `auth.users` (tourist, provider), `services`, `itineraries` |
 | `booking_status_history` | Audit trail for booking state changes | → `bookings` |
-| `locations` | Spatial data for maps | Independent geospatial data |
-| `reviews` | Tourist reviews of services | → `users`, `services`, `bookings` |
-| `itineraries` | Agency-created trip plans | → `users` (agency), `users` (tourist) |
-| `itinerary_items` | Individual items within an itinerary | → `itineraries`, `services` |
-| `notifications` | Push notification records | → `users` |
-| `provider_verifications` | Admin verification workflow | → `users` (provider), `users` (admin) |
-| `impact_stamps` | Digital stamps for Impact Passport | → `users` (tourist), `locations` |
-| `analytics_events` | Platform analytics event log | → `users` |
+| `reviews` | Tourist reviews of services/itineraries, tied to a completed booking | → `auth.users`, `services`, `itineraries`, `bookings` |
+| `itineraries` | Trip plans — agency-created **or** tourist self-planned | → `auth.users` (`agency_id` or `tourist_id`, both nullable) |
+| `itinerary_items` | Individual items scheduled within an itinerary | → `itineraries`, `services` |
+| `notifications` | In-app notification records | → `auth.users` |
+| `contact_messages` | Public contact/feedback form submissions (write-only from the client) | → `auth.users` (optional) |
+| `newsletter_subscribers` | Public newsletter signups | Independent |
+| `ai_chat_messages` | Persistent history for the Kimi AI chat assistant | → `auth.users` |
+| `agency_requests` | Legacy — superseded by `provider_verifications`, no longer written to | Independent |
+
+Two Supabase Storage buckets exist alongside these tables — `service-photos` (public) and `menu-scans` (private) — documented in §3.18–3.19.
 
 ---
 
 ## 2. Entity-Relationship Diagram
 
+`auth.users` (Supabase-managed, not shown as its own box below since the app never defines it) is the root identity table. `user_profiles.id` **is** `auth.users.id` — a 1:1 extension keyed on the same UUID, not a separately-generated profile ID with a foreign key back to it.
+
 ```mermaid
 erDiagram
-    USERS {
+    USER_PROFILES {
         uuid id PK
-        text email
         user_role role
-        boolean is_active
+        text full_name
+        text phone
+        boolean is_verified
         timestamptz created_at
     }
 
-    USER_PROFILES {
+    PROVIDER_VERIFICATIONS {
         uuid id PK
         uuid user_id FK
-        text full_name
-        text phone
-        text avatar_url
-        text bio
-        jsonb metadata
+        user_role role
+        text business_name
+        verification_status status
     }
 
     SERVICES {
         uuid id PK
-        uuid provider_id FK
+        uuid provider_id "no FK constraint"
         text title
-        text description
-        decimal price
+        text category
+        numeric price
         text currency
-        service_category category
         boolean is_available
-        geography location
+        boolean is_featured
+        numeric latitude
+        numeric longitude
         timestamptz created_at
     }
 
-    SERVICE_MEDIA {
+    DESTINATIONS {
         uuid id PK
-        uuid service_id FK
-        text url
-        media_type type
-        int sort_order
+        text name
+        text slug
+        text region
+        boolean is_featured
+    }
+
+    DESTINATION_REVIEWS {
+        uuid id PK
+        uuid destination_id FK
+        uuid tourist_id FK
+        int rating
+        text comment
+    }
+
+    EVENTS {
+        uuid id PK
+        text title
+        uuid destination_id FK
+        date start_date
+        date end_date
     }
 
     BOOKINGS {
         uuid id PK
         uuid tourist_id FK
         uuid service_id FK
-        uuid agency_id FK
+        uuid itinerary_id FK
+        uuid provider_id FK
         booking_status status
         date booking_date
-        int guest_count
-        decimal total_price
-        text notes
+        numeric total_price
         timestamptz created_at
     }
 
@@ -115,20 +139,11 @@ erDiagram
         timestamptz changed_at
     }
 
-    LOCATIONS {
-        uuid id PK
-        text name
-        text description
-        location_type type
-        geography coordinates
-        jsonb metadata
-        boolean is_active
-    }
-
     REVIEWS {
         uuid id PK
         uuid tourist_id FK
         uuid service_id FK
+        uuid itinerary_id FK
         uuid booking_id FK
         int rating
         text comment
@@ -137,22 +152,21 @@ erDiagram
 
     ITINERARIES {
         uuid id PK
-        uuid agency_id FK
-        uuid tourist_id FK
+        uuid agency_id FK "nullable"
+        uuid tourist_id FK "nullable, added 2026-08-12"
         text title
-        date start_date
-        date end_date
         itinerary_status status
-        timestamptz created_at
+        numeric total_price
     }
 
     ITINERARY_ITEMS {
         uuid id PK
         uuid itinerary_id FK
         uuid service_id FK
-        date scheduled_date
-        text notes
-        int sort_order
+        text title
+        text scheduled_time "text, e.g. 09:00"
+        int day_number
+        numeric price
     }
 
     NOTIFICATIONS {
@@ -165,309 +179,402 @@ erDiagram
         timestamptz created_at
     }
 
-    PROVIDER_VERIFICATIONS {
+    CONTACT_MESSAGES {
         uuid id PK
-        uuid provider_id FK
-        uuid admin_id FK
-        verification_status status
-        text rejection_reason
-        timestamptz reviewed_at
+        text type
+        text email
+        text status
+    }
+
+    NEWSLETTER_SUBSCRIBERS {
+        uuid id PK
+        text email
+        boolean is_active
+    }
+
+    AI_CHAT_MESSAGES {
+        uuid id PK
+        uuid user_id FK
+        chat_message_role role
+        text content
         timestamptz created_at
     }
 
-    IMPACT_STAMPS {
-        uuid id PK
-        uuid tourist_id FK
-        uuid location_id FK
-        stamp_type type
-        timestamptz earned_at
-    }
-
-    USERS ||--|| USER_PROFILES : "has"
-    USERS ||--o{ SERVICES : "provides"
-    USERS ||--o{ BOOKINGS : "books as tourist"
-    USERS ||--o{ BOOKINGS : "facilitates as agency"
-    SERVICES ||--o{ SERVICE_MEDIA : "has"
+    USER_PROFILES ||--o{ SERVICES : "provides (unenforced)"
+    USER_PROFILES ||--o{ BOOKINGS : "books as tourist"
+    USER_PROFILES ||--o{ BOOKINGS : "fulfills as provider"
+    USER_PROFILES ||--o{ PROVIDER_VERIFICATIONS : "applies as"
     SERVICES ||--o{ BOOKINGS : "is booked"
     SERVICES ||--o{ REVIEWS : "receives"
+    SERVICES ||--o{ ITINERARY_ITEMS : "scheduled in"
     BOOKINGS ||--o{ BOOKING_STATUS_HISTORY : "tracks"
     BOOKINGS ||--o| REVIEWS : "generates"
-    USERS ||--o{ ITINERARIES : "creates as agency"
-    USERS ||--o{ ITINERARIES : "receives as tourist"
+    USER_PROFILES ||--o{ ITINERARIES : "creates as agency (nullable)"
+    USER_PROFILES ||--o{ ITINERARIES : "self-plans as tourist (nullable)"
     ITINERARIES ||--o{ ITINERARY_ITEMS : "contains"
-    SERVICES ||--o{ ITINERARY_ITEMS : "scheduled in"
-    USERS ||--o{ NOTIFICATIONS : "receives"
-    USERS ||--o{ PROVIDER_VERIFICATIONS : "verified"
-    USERS ||--o{ IMPACT_STAMPS : "earns"
-    LOCATIONS ||--o{ IMPACT_STAMPS : "at"
+    ITINERARIES ||--o{ BOOKINGS : "booked as a package"
+    DESTINATIONS ||--o{ DESTINATION_REVIEWS : "receives"
+    DESTINATIONS ||--o{ EVENTS : "hosts"
+    USER_PROFILES ||--o{ NOTIFICATIONS : "receives"
+    USER_PROFILES ||--o{ AI_CHAT_MESSAGES : "sends/receives"
 ```
+
+`locations` is omitted from the diagram above because its live existence is unconfirmed (see §3.3); `agency_requests` is omitted because it is a dead/orphaned table nothing in current app code writes to (see §3.17).
 
 ---
 
 ## 3. Table Definitions
 
-### 3.1 `users`
+### 3.1 `user_profiles`
 
-The central identity table for all four user types. Linked to Supabase Auth via `id`.
-
-| Column | Type | Constraints | Description |
-|---|---|---|---|
-| `id` | `uuid` | PK, default `auth.uid()` | Matches Supabase Auth user ID |
-| `email` | `text` | UNIQUE, NOT NULL | User's email address |
-| `role` | `user_role` | NOT NULL | Enum: `tourist`, `provider`, `agency`, `admin` |
-| `is_active` | `boolean` | DEFAULT `true` | Soft-delete flag |
-| `is_verified` | `boolean` | DEFAULT `false` | Admin verification status (for providers) |
-| `created_at` | `timestamptz` | DEFAULT `now()` | Account creation timestamp |
-| `updated_at` | `timestamptz` | DEFAULT `now()` | Last update timestamp |
-
-### 3.2 `user_profiles`
-
-Extended profile data. Schema varies by `role` via the `metadata` JSONB field.
+Extended profile and role data for every Supabase Auth user — one row per user, keyed directly to `auth.users` (`id` is both the primary key and the foreign key; there is no separate `users` table in the application schema).
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | `uuid` | PK, default `gen_random_uuid()` | Profile ID |
-| `user_id` | `uuid` | FK → `users.id`, UNIQUE | One profile per user |
-| `full_name` | `text` | NOT NULL | Display name |
+| `id` | `uuid` | PK, FK → `auth.users(id)` ON DELETE CASCADE | Matches the Supabase Auth user ID |
+| `role` | `user_role` | NOT NULL, DEFAULT `'tourist'` | Enum: `tourist`, `provider`, `agency`, `admin` |
+| `full_name` | `text` | | Display name |
 | `phone` | `text` | | Phone number |
-| `avatar_url` | `text` | | Profile photo URL |
-| `bio` | `text` | | Short biography |
-| `language` | `text` | DEFAULT `'en'` | Preferred language code |
-| `country` | `text` | | Country of origin (tourists) |
-| `metadata` | `jsonb` | DEFAULT `'{}'` | Role-specific data (see below) |
+| `avatar_url` | `text` | | Profile photo URL — no upload UI exists yet in the tourist app; this is a static placeholder in practice |
+| `is_verified` | `boolean` | NOT NULL, DEFAULT `false` | Admin verification status (providers/agencies); back-filled `true` for pre-existing `tourist`/`admin` rows when this column was introduced |
+| `created_at` | `timestamptz` | NOT NULL, DEFAULT `NOW()` | |
+| `updated_at` | `timestamptz` | NOT NULL, DEFAULT `NOW()` | No trigger bumps this on UPDATE — application code must set it manually |
+
+There is no `metadata` JSONB column and no `bio`/`language`/`country` columns. Role-specific data (business name, license number, etc.) lives on `provider_verifications` instead, not on `user_profiles`.
+
+A trigger, `on_auth_user_created` (`AFTER INSERT ON auth.users` → `public.handle_new_user()`, `SECURITY DEFINER`), auto-inserts a `user_profiles` row from `raw_user_meta_data->>'full_name'`/`raw_user_meta_data->>'role'` (defaulting to `'tourist'`) on signup, `ON CONFLICT (id) DO NOTHING`.
+
+### 3.2 `provider_verifications`
+
+Admin workflow for verifying new providers and agencies before they can list on the platform.
+
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| `id` | `uuid` | PK, DEFAULT `gen_random_uuid()` | Verification request ID |
+| `user_id` | `uuid` | FK → `auth.users(id)` ON DELETE CASCADE, UNIQUE | Applicant |
+| `role` | `user_role` | NOT NULL, CHECK `role IN ('provider','agency')` | Role being requested |
+| `business_name` | `text` | NOT NULL | |
+| `email` | `text` | NOT NULL | |
+| `phone` | `text` | | |
+| `status` | `verification_status` | NOT NULL, DEFAULT `'pending'` | Enum: `pending`, `approved`, `rejected` |
+| `documents_url` | `text` | | Uploaded verification documents |
+| `metadata` | `jsonb` | NOT NULL, DEFAULT `'{}'` | Also carries the rejection reason (as a key inside this JSON) when `status = 'rejected'` — there is no separate `rejection_reason` column |
+| `created_at` | `timestamptz` | NOT NULL, DEFAULT `NOW()` | |
+| `updated_at` | `timestamptz` | NOT NULL, DEFAULT `NOW()` | |
+
+There is no `admin_id` or `reviewed_at` column. This table is added to the `supabase_realtime` publication so `/auth/pending` can unblock a waiting user instantly on approval.
+
+### 3.3 `locations`
+
+Spatial data intended for the Survival Map (SOS hubs, toilets, pharmacies, etc.).
+
+> **Live existence unconfirmed.** No file under `supabase/migrations/` that actually ran creates `public.locations`, the `location_category` enum, or the `get_locations_in_radius()` RPC — yet application code (`packages/database/src/types.ts`'s `Location`/`LocationCategory`, `packages/database/src/client.ts`'s `fetchLocationsInRadius`) references all three as if they exist. The table's baseline `service-photos`/`agency_requests` era predates the applied-migrations trail, so this may have been created directly against the live project outside `supabase/migrations/`, or it may not exist at all. The shape below is what the application code assumes, sourced from `packages/database/schema/02_locations.sql`; treat it as **unverified against the live database** until confirmed directly.
+
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| `id` | `uuid` | PK | Location ID |
+| `name` | `text` | NOT NULL | Location name |
+| `description` | `text` | | |
+| `category` | `location_category` | NOT NULL | Enum — see §4; exact live value set is also unconfirmed |
+| `coordinates` | `geography(Point, 4326)` | NOT NULL | PostGIS point |
+| `created_at` | `timestamptz` | | |
+| `updated_at` | `timestamptz` | | |
+
+There are no `name_uz`/`name_ru`/`address`/`city`/`region`/`phone`/`operating_hours`/`metadata`/`is_active`/`verified_by` columns in the source this was derived from — those were part of an earlier, unapplied design and should not be assumed present.
+
+### 3.4 `services`
+
+Offerings created by Local Providers (yurt stays, masterclasses, camel rides, etc.) — the shadow-economy inventory the platform surfaces to tourists. Built additively across five migrations on top of the original `packages/database/schema/03_services.sql`.
+
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| `id` | `uuid` | PK, DEFAULT `gen_random_uuid()` | |
+| `provider_id` | `uuid` | NULLABLE, **no FK constraint** | Provider who created this service — plain `uuid`, not `REFERENCES user_profiles`/`auth.users` |
+| `title` | `text` | NOT NULL | |
+| `description` | `text` | | |
+| `category` | `text` | NOT NULL | Free-text category, not an enum |
+| `price` | `numeric` | NOT NULL, DEFAULT `0` | |
+| `currency` | `text` | NOT NULL, DEFAULT `'UZS'` | |
+| `image_url` | `text` | | |
+| `avg_rating` | `numeric(3,2)` | DEFAULT `0.0` | Legacy rating column — still the one indexed, and still what provider-app/agency-portal read |
+| `reviews_count` | `integer` | DEFAULT `0` | Legacy — paired with `avg_rating` |
+| `created_at` | `timestamptz` | NOT NULL, DEFAULT `timezone('utc', now())` | |
+| `updated_at` | `timestamptz` | NOT NULL, DEFAULT `timezone('utc', now())` | |
+| `location` | `text` | | Free-text location label — **not** a PostGIS column |
+| `is_rural_provider` | `boolean` | DEFAULT `false` | |
+| `provider_name` | `text` | | |
+| `duration_display` | `text` | | |
+| `is_featured` | `boolean` | DEFAULT `false` | |
+| `is_available` | `boolean` | NOT NULL, DEFAULT `true` | Provider's online/offline toggle — column exists but no UI in `provider-app` currently reads or writes it (F-P01 not yet built) |
+| `rating_avg` | `numeric(2,1)` | NOT NULL, DEFAULT `0.0` | Newer rating column, backfilled once from `avg_rating` at migration time; **not kept in sync going forward** — the two rating pairs can now diverge |
+| `rating_count` | `integer` | NOT NULL, DEFAULT `0` | Newer — paired with `rating_avg`, same one-time-backfill caveat |
+| `duration_minutes` | `integer` | | |
+| `max_guests` | `integer` | | |
+| `city` | `text` | | |
+| `region` | `text` | | |
+| `latitude` | `numeric` | | Plain numeric column, not PostGIS |
+| `longitude` | `numeric` | | Plain numeric column, not PostGIS |
+
+There is no `geography(Point, 4326)` column on this table (see §6), no `title_uz`/`title_ru`/`description_uz`/`description_ru`, and no `address` column.
+
+### 3.5 `destinations`
+
+Landing-page destination/region content (hero cards shown on the marketing site and map).
+
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| `id` | `uuid` | PK, DEFAULT `gen_random_uuid()` | |
+| `name` | `text` | NOT NULL | |
+| `slug` | `text` | NOT NULL, UNIQUE | |
+| `description` | `text` | | |
+| `region` | `text` | | |
+| `image_url` | `text` | | |
+| `hero_image_url` | `text` | | |
+| `latitude` | `double precision` | | |
+| `longitude` | `double precision` | | |
+| `service_count` | `integer` | DEFAULT `0` | |
+| `is_featured` | `boolean` | DEFAULT `false` | |
+| `display_order` | `integer` | DEFAULT `0` | |
+| `created_at` | `timestamptz` | NOT NULL, DEFAULT `NOW()` | |
+| `updated_at` | `timestamptz` | NOT NULL, DEFAULT `NOW()` | |
+| `body` | `text` | | Long-form destination copy |
+| `gallery_images` | `text[]` | NOT NULL, DEFAULT `'{}'` | |
+
+### 3.6 `destination_reviews`
+
+Tourist reviews left directly on a destination (distinct from `reviews`, which is scoped to a service/itinerary and requires a completed booking).
+
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| `id` | `uuid` | PK, DEFAULT `gen_random_uuid()` | |
+| `destination_id` | `uuid` | NOT NULL, FK → `destinations(id)` ON DELETE CASCADE | |
+| `tourist_id` | `uuid` | NOT NULL, FK → `auth.users(id)` | |
+| `rating` | `int` | NULLABLE, CHECK `rating BETWEEN 1 AND 5` | Nullable, unlike `reviews.rating` |
+| `comment` | `text` | NOT NULL | |
+| `created_at` | `timestamptz` | DEFAULT `now()` | |
+
+### 3.7 `events`
+
+Festival/event listings shown on the landing page and map.
+
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| `id` | `uuid` | PK, DEFAULT `gen_random_uuid()` | |
+| `title` | `text` | NOT NULL | |
+| `description` | `text` | | |
+| `location` | `text` | | Free-text label |
+| `destination_id` | `uuid` | NULLABLE, FK → `destinations(id)` | |
+| `image_url` | `text` | | |
+| `start_date` | `date` | NOT NULL | |
+| `end_date` | `date` | | |
+| `event_type` | `text` | DEFAULT `'festival'` | |
+| `is_featured` | `boolean` | DEFAULT `false` | |
+| `ticket_url` | `text` | | |
+| `latitude` | `numeric` | | |
+| `longitude` | `numeric` | | |
+| `slug` | `text` | UNIQUE, NULLABLE | Nullable by design — not yet backfilled or tightened to NOT NULL |
+
+### 3.8 `itineraries`
+
+Trip plans — **either** agency-created **or** tourist self-planned. Originally agency-only; tourist self-planning was added on 2026-08-12 for the AI itinerary generator.
+
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| `id` | `uuid` | PK, DEFAULT `gen_random_uuid()` | Itinerary ID |
+| `agency_id` | `uuid` | NULLABLE, FK → `auth.users(id)` | Creating agency — **always nullable**, never `NOT NULL` |
+| `tourist_id` | `uuid` | NULLABLE, FK → `auth.users(id)` ON DELETE CASCADE | **Added 2026-08-12.** The self-planning tourist owner. Mutually exclusive with `agency_id` by convention only — there is no DB-level `CHECK` constraint enforcing that exactly one of the two is set |
+| `title` | `text` | NOT NULL | Trip name |
+| `description` | `text` | | Trip overview |
+| `start_date` | `date` | | |
+| `end_date` | `date` | | |
+| `status` | `itinerary_status` | DEFAULT `'draft'` | Enum: `draft`, `active`, `completed` |
+| `total_price` | `numeric(12,2)` | DEFAULT `0` | |
+| `currency` | `text` | DEFAULT `'UZS'` | AI-generated self-planned itineraries are saved with `currency: 'USD'` by the `saveGeneratedItinerary` server action, hardcoded, regardless of this column's default — a data-consistency point worth watching |
 | `created_at` | `timestamptz` | DEFAULT `now()` | |
 | `updated_at` | `timestamptz` | DEFAULT `now()` | |
 
-**Metadata by role:**
+`tourist_id` on this table does **not** mean "agency-assigned client" — it means the tourist is the itinerary's own author/owner, planning solo (typically via the AI itinerary generator).
 
-```jsonc
-// Tourist
-{ "passport_country": "US", "dietary_restrictions": ["halal", "nut-allergy"], "travel_dates": { "arrival": "2026-08-01", "departure": "2026-08-14" } }
+### 3.9 `itinerary_items`
 
-// Provider
-{ "business_name": "Rustam's Yurt Camp", "address": "Nurata District", "bank_details": { "card_number": "8600****1234" } }
-
-// Agency
-{ "company_name": "Silk Road Adventures", "license_number": "DMC-2024-0042", "team_size": 5 }
-
-// Admin
-{ "department": "Tourism Quality Assurance", "access_level": "super_admin" }
-```
-
-### 3.3 `services`
-
-Offerings created by Local Providers (yurt stays, masterclasses, camel rides, etc.).
+Individual items scheduled within an itinerary. Originally just linked services with a price/sort order; gained four nullable columns on 2026-08-12 to support AI-generated, non-catalog activities.
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | `uuid` | PK, default `gen_random_uuid()` | Service ID |
-| `provider_id` | `uuid` | NULLABLE | Provider who created this service (No FK in production) |
-| `title` | `text` | NOT NULL | Service name (AI-translated) |
-| `title_uz` | `text` | | Original Uzbek title |
-| `title_ru` | `text` | | Russian title |
-| `description` | `text` | NOT NULL | Service description |
-| `description_uz` | `text` | | Original Uzbek description |
-| `description_ru` | `text` | | Russian description |
-| `category` | `text` | NOT NULL | Free text category |
-| `price` | `decimal(10,2)` | NOT NULL | Price per person |
-| `currency` | `text` | DEFAULT `'UZS'` | Currency code |
-| `duration_minutes` | `integer` | | Duration of the experience |
-| `max_guests` | `integer` | DEFAULT `10` | Maximum group size |
-| `is_available` | `boolean` | DEFAULT `false` | Provider's online/offline toggle |
-| `location` | `geography(Point, 4326)` | | PostGIS point for geospatial queries |
-| `address` | `text` | | Human-readable address |
-| `city` | `text` | | City/district name |
-| `region` | `text` | | Region/province |
-| `rating_avg` | `decimal(2,1)` | DEFAULT `0.0` | Cached average rating |
-| `rating_count` | `integer` | DEFAULT `0` | Cached review count |
+| `id` | `uuid` | PK, DEFAULT `gen_random_uuid()` | |
+| `itinerary_id` | `uuid` | NULLABLE, FK → `itineraries(id)` ON DELETE CASCADE | |
+| `service_id` | `uuid` | NULLABLE, FK → `services(id)` | Linked catalog service (nullable for AI-generated/custom items) |
+| `title` | `text` | | Item label |
+| `price` | `numeric(12,2)` | | Item cost |
+| `sort_order` | `int` | DEFAULT `0` | |
 | `created_at` | `timestamptz` | DEFAULT `now()` | |
-| `updated_at` | `timestamptz` | DEFAULT `now()` | |
+| `description` | `text` | **Added 2026-08-12** | Populated for AI-generated activities |
+| `location_name` | `text` | **Added 2026-08-12** | |
+| `scheduled_time` | `text` | **Added 2026-08-12** | Plain text (e.g. `"09:00"`) — **not** a `time`/`timestamptz` column |
+| `day_number` | `int` | **Added 2026-08-12** | |
 
-### 3.4 `service_media`
+There is no `scheduled_date`, `start_time` (as a `time` column), `duration_minutes`, or `notes` column on this table.
 
-Photos and videos associated with services.
+### 3.10 `bookings`
 
-| Column | Type | Constraints | Description |
-|---|---|---|---|
-| `id` | `uuid` | PK, default `gen_random_uuid()` | Media ID |
-| `service_id` | `uuid` | FK → `services.id`, ON DELETE CASCADE | Parent service |
-| `url` | `text` | NOT NULL | Supabase Storage URL |
-| `type` | `media_type` | NOT NULL | Enum: `photo`, `video` |
-| `alt_text` | `text` | | Accessibility description |
-| `sort_order` | `integer` | DEFAULT `0` | Display order |
-| `created_at` | `timestamptz` | DEFAULT `now()` | |
-
-### 3.5 `bookings`
-
-The central transaction table connecting tourists, services, and agencies.
+The central transaction table connecting tourists, services/itineraries, and providers.
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | `uuid` | PK, default `gen_random_uuid()` | Booking ID |
-| `tourist_id` | `uuid` | FK → `users.id`, NOT NULL | The tourist making the booking |
-| `service_id` | `uuid` | FK → `services.id`, NULLABLE | The booked service |
-| `itinerary_id` | `uuid` | FK → `itineraries.id`, NULLABLE | The booked itinerary (package) |
-| `provider_id` | `uuid` | FK → `users.id`, NULLABLE | The user (provider/agency) owning this booking |
+| `id` | `uuid` | PK, DEFAULT `gen_random_uuid()` | Booking ID |
+| `tourist_id` | `uuid` | NOT NULL, FK → `auth.users(id)` | The tourist making the booking |
+| `service_id` | `uuid` | NULLABLE, FK → `services(id)` | The booked service |
+| `itinerary_id` | `uuid` | NULLABLE, FK → `itineraries(id)` | The booked itinerary (package) |
+| `provider_id` | `uuid` | NULLABLE, FK → `auth.users(id)` | The provider/agency owning this booking |
 | `status` | `booking_status` | DEFAULT `'pending'` | Current booking state |
 | `booking_date` | `date` | NOT NULL | Date of the experience |
-| `guest_count` | `integer` | DEFAULT `1` | Number of guests |
-| `special_requests` | `text` | | Tourist's special requests |
-| `passenger_manifest` | `jsonb` | | JSON containing passenger details |
-| `dietary_preferences` | `text` | | Dietary restrictions |
-| `pickup_location` | `text` | | Where to pick up |
-| `total_price` | `numeric(12,2)` | | Total calculated price |
-| `currency` | `text` | DEFAULT `'UZS'` | Currency code |
+| `guest_count` | `int` | DEFAULT `1` | Number of guests |
+| `special_requests` | `text` | | |
+| `passenger_manifest` | `jsonb` | | |
+| `dietary_preferences` | `text` | | |
+| `pickup_location` | `text` | | |
+| `total_price` | `numeric(12,2)` | | |
+| `currency` | `text` | DEFAULT `'UZS'` | |
 | `created_at` | `timestamptz` | DEFAULT `now()` | |
 | `updated_at` | `timestamptz` | DEFAULT `now()` | |
 
-### 3.6 `booking_status_history`
+**Constraint:** `CHECK (num_nonnulls(service_id, itinerary_id) = 1)` — exactly one of `service_id`/`itinerary_id` must be set. There is no `agency_id` column on this table — the agency's relationship to a booking runs through `itinerary_id → itineraries.agency_id`, and `provider_id` (not `agency_id`) is what a provider/agency row actually filters on.
+
+### 3.11 `booking_status_history`
 
 Audit trail for all booking state transitions.
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | `uuid` | PK, default `gen_random_uuid()` | History entry ID |
-| `booking_id` | `uuid` | FK → `bookings.id`, ON DELETE CASCADE | Parent booking |
-| `old_status` | `booking_status` | | Previous status |
-| `new_status` | `booking_status` | NOT NULL | New status |
-| `changed_by` | `uuid` | FK → `users.id` | User who triggered the change |
-| `notes` | `text` | | Additional context |
+| `id` | `uuid` | PK, DEFAULT `gen_random_uuid()` | |
+| `booking_id` | `uuid` | NULLABLE, FK → `bookings(id)` ON DELETE CASCADE | |
+| `old_status` | `booking_status` | | |
+| `new_status` | `booking_status` | NOT NULL | |
+| `changed_by` | `uuid` | NULLABLE, FK → `auth.users(id)` | |
+| `notes` | `text` | | |
 | `changed_at` | `timestamptz` | DEFAULT `now()` | |
 
-### 3.7 `locations`
+### 3.12 `reviews`
 
-Spatial data for Survival Maps (SOS hubs, toilets) and Heatmap tracking.
-
-| Column | Type | Constraints | Description |
-|---|---|---|---|
-| `id` | `uuid` | PK, default `gen_random_uuid()` | Location ID |
-| `name` | `text` | NOT NULL | Location name |
-| `name_uz` | `text` | | Uzbek name |
-| `name_ru` | `text` | | Russian name |
-| `description` | `text` | | Description of the location |
-| `type` | `location_type` | NOT NULL | Enum: see custom types |
-| `coordinates` | `geography(Point, 4326)` | NOT NULL | PostGIS point |
-| `address` | `text` | | Street address |
-| `city` | `text` | | City |
-| `region` | `text` | | Region |
-| `phone` | `text` | | Contact phone (for SOS) |
-| `operating_hours` | `jsonb` | | Opening/closing times |
-| `metadata` | `jsonb` | DEFAULT `'{}'` | Type-specific data |
-| `is_active` | `boolean` | DEFAULT `true` | Active/inactive flag |
-| `verified_by` | `uuid` | FK → `users.id` | Admin who verified |
-| `created_at` | `timestamptz` | DEFAULT `now()` | |
-| `updated_at` | `timestamptz` | DEFAULT `now()` | |
-
-### 3.8 `reviews`
-
-Tourist reviews of completed services.
+Tourist reviews of services/itineraries, tied to a completed booking.
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | `uuid` | PK, default `gen_random_uuid()` | Review ID |
-| `tourist_id` | `uuid` | FK → `users.id`, NOT NULL | Reviewing tourist |
-| `service_id` | `uuid` | FK → `services.id`, NULLABLE | Reviewed service |
-| `itinerary_id` | `uuid` | FK → `itineraries.id`, NULLABLE | Reviewed itinerary (package) |
-| `booking_id` | `uuid` | FK → `bookings.id`, UNIQUE, NOT NULL | One review per booking |
-| `rating` | `integer` | NOT NULL, CHECK `1-5` | Star rating |
-| `comment` | `text` | | Review text |
+| `id` | `uuid` | PK, DEFAULT `gen_random_uuid()` | |
+| `tourist_id` | `uuid` | NOT NULL, FK → `auth.users(id)` | Reviewing tourist |
+| `service_id` | `uuid` | NULLABLE, FK → `services(id)` | |
+| `itinerary_id` | `uuid` | NULLABLE, FK → `itineraries(id)` | |
+| `booking_id` | `uuid` | NOT NULL, FK → `bookings(id)`, UNIQUE | One review per booking |
+| `rating` | `int` | NOT NULL, CHECK `rating BETWEEN 1 AND 5` | |
+| `comment` | `text` | | |
 | `response` | `text` | | Business reply |
-| `response_at` | `timestamptz` | | When the business replied |
+| `response_at` | `timestamptz` | | |
 | `created_at` | `timestamptz` | DEFAULT `now()` | |
 
-### 3.9 `itineraries`
+### 3.13 `notifications`
 
-Trip plans created by agencies for tourists.
+In-app notification records for all user types.
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | `uuid` | PK, default `gen_random_uuid()` | Itinerary ID |
-| `agency_id` | `uuid` | FK → `users.id`, NOT NULL | Creating agency |
-| `tourist_id` | `uuid` | FK → `users.id` | Assigned tourist (nullable during draft) |
-| `title` | `text` | NOT NULL | Trip name |
-| `description` | `text` | | Trip overview |
-| `start_date` | `date` | | Trip start |
-| `end_date` | `date` | | Trip end |
-| `status` | `itinerary_status` | DEFAULT `'draft'` | Enum: `draft`, `active`, `completed` |
-| `total_price` | `numeric(12,2)` | DEFAULT `0` | Sum of all itinerary items |
-| `currency` | `text` | DEFAULT `'UZS'` | Currency code |
+| `id` | `uuid` | PK, DEFAULT `gen_random_uuid()` | |
+| `user_id` | `uuid` | NOT NULL, FK → `auth.users(id)` | Recipient |
+| `title` | `text` | NOT NULL | |
+| `body` | `text` | NOT NULL | |
+| `type` | `notification_type` | NOT NULL | Enum: see §4 |
+| `action_url` | `text` | | |
+| `is_read` | `bool` | DEFAULT `false` | |
+| `created_at` | `timestamptz` | DEFAULT `now()` | |
+
+These are in-app records, not push notifications — no `PushManager`/web-push integration exists anywhere in the codebase.
+
+### 3.14 `contact_messages`
+
+Public contact/feedback form submissions. Write-only from the public API — there is no public SELECT policy; only the admin-portal (via the service-role key) can read these.
+
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| `id` | `uuid` | PK, DEFAULT `gen_random_uuid()` | |
+| `type` | `text` | NOT NULL, DEFAULT `'contact'`, CHECK `type IN ('contact','feedback')` | |
+| `name` | `text` | NOT NULL | |
+| `email` | `text` | NOT NULL | |
+| `subject` | `text` | | |
+| `message` | `text` | NOT NULL | |
+| `rating` | `int` | CHECK `rating BETWEEN 1 AND 5` | |
+| `page_source` | `text` | | |
+| `user_id` | `uuid` | NULLABLE, FK → `auth.users(id)` | |
+| `status` | `text` | NOT NULL, DEFAULT `'new'`, CHECK `status IN ('new','read','resolved')` | |
+| `created_at` | `timestamptz` | DEFAULT `now()` | |
+
+### 3.15 `newsletter_subscribers`
+
+Public newsletter signups from the site footer. Same write-only-via-public-API model as `contact_messages`.
+
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| `id` | `uuid` | PK, DEFAULT `gen_random_uuid()` | |
+| `email` | `text` | NOT NULL, UNIQUE | |
+| `is_active` | `boolean` | NOT NULL, DEFAULT `true` | |
+| `source` | `text` | | e.g. `"footer"` |
 | `created_at` | `timestamptz` | DEFAULT `now()` | |
 | `updated_at` | `timestamptz` | DEFAULT `now()` | |
 
-### 3.10 `itinerary_items`
+There is no UPDATE policy — the admin-portal's pause/resume toggle on a subscriber goes through the service-role key, not RLS.
 
-Individual services scheduled within an itinerary.
+### 3.16 `ai_chat_messages`
 
-| Column | Type | Constraints | Description |
-|---|---|---|---|
-| `id` | `uuid` | PK, default `gen_random_uuid()` | Item ID |
-| `itinerary_id` | `uuid` | FK → `itineraries.id`, ON DELETE CASCADE | Parent itinerary |
-| `service_id` | `uuid` | FK → `services.id` | Linked service (nullable for custom items) |
-| `title` | `text` | NOT NULL | Item label |
-| `scheduled_date` | `date` | NOT NULL | Day of the experience |
-| `start_time` | `time` | | Scheduled time |
-| `duration_minutes` | `integer` | | Expected duration |
-| `price` | `decimal(10,2)` | | Item cost |
-| `notes` | `text` | | Special instructions |
-| `sort_order` | `integer` | DEFAULT `0` | Order within the day |
-| `created_at` | `timestamptz` | DEFAULT `now()` | |
-
-### 3.11 `notifications`
-
-Push notification records for all user types.
+Persistent per-user history for the Kimi-powered AI chat assistant reachable from the global Sparkles FAB (`/ai-chat`), which replaced the earlier separate AI-assistant and translator circles.
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | `uuid` | PK, default `gen_random_uuid()` | Notification ID |
-| `user_id` | `uuid` | FK → `users.id`, NOT NULL | Recipient |
-| `title` | `text` | NOT NULL | Notification title |
-| `body` | `text` | NOT NULL | Notification body |
-| `type` | `notification_type` | NOT NULL | Enum: see custom types |
-| `action_url` | `text` | | Deep link URL |
-| `is_read` | `boolean` | DEFAULT `false` | Read status |
-| `created_at` | `timestamptz` | DEFAULT `now()` | |
+| `id` | `uuid` | PK, DEFAULT `gen_random_uuid()` | |
+| `user_id` | `uuid` | NOT NULL, FK → `auth.users(id)` ON DELETE CASCADE | |
+| `role` | `chat_message_role` | NOT NULL | Enum: `'user'` \| `'assistant'` |
+| `content` | `text` | NOT NULL | |
+| `created_at` | `timestamptz` | NOT NULL, DEFAULT `now()` | |
 
-### 3.12 `provider_verifications`
+Anonymous users can chat too, but only signed-in users get messages persisted here — anonymous conversation context is carried client-side (`history` in the request body, capped to the last 20 turns) and never written to this table.
 
-Admin workflow for verifying new local providers.
+### 3.17 `agency_requests` (legacy, orphaned)
 
-| Column | Type | Constraints | Description |
-|---|---|---|---|
-| `id` | `uuid` | PK, default `gen_random_uuid()` | Verification ID |
-| `provider_id` | `uuid` | FK → `users.id`, NOT NULL | Provider under review |
-| `admin_id` | `uuid` | FK → `users.id` | Reviewing admin |
-| `status` | `verification_status` | DEFAULT `'pending'` | Enum: `pending`, `approved`, `rejected` |
-| `documents_url` | `text` | | Uploaded verification documents |
-| `rejection_reason` | `text` | | Reason if rejected |
-| `reviewed_at` | `timestamptz` | | When admin reviewed |
-| `created_at` | `timestamptz` | DEFAULT `now()` | |
-
-### 3.13 `impact_stamps`
-
-Digital stamps earned by tourists for visiting rural areas or eco-friendly actions.
+The original agency sign-up table, superseded by `provider_verifications`. Left in place (not dropped) but nothing in current app code writes to it going forward.
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | `uuid` | PK, default `gen_random_uuid()` | Stamp ID |
-| `tourist_id` | `uuid` | FK → `users.id`, NOT NULL | Earning tourist |
-| `location_id` | `uuid` | FK → `locations.id` | Location where earned |
-| `type` | `stamp_type` | NOT NULL | Enum: see custom types |
-| `earned_at` | `timestamptz` | DEFAULT `now()` | |
+| `id` | `uuid` | PK | |
+| `company_name` | `text` | NOT NULL | |
+| `email` | `text` | NOT NULL, UNIQUE | |
+| `phone` | `text` | | |
+| `status` | `varchar(50)` | NOT NULL, DEFAULT `'pending'` | |
+| `metadata` | `jsonb` | DEFAULT `'{}'` | |
+| `created_at` | `timestamptz` | | |
+| `updated_at` | `timestamptz` | | |
 
-### 3.14 `analytics_events`
+### 3.18 Storage bucket: `service-photos`
 
-Platform event log for admin analytics dashboard.
+Public bucket for provider service photos, uploaded from the provider-app/agency-portal listing forms.
 
-| Column | Type | Constraints | Description |
-|---|---|---|---|
-| `id` | `uuid` | PK, default `gen_random_uuid()` | Event ID |
-| `user_id` | `uuid` | FK → `users.id` | Acting user (nullable for anonymous) |
-| `event_name` | `text` | NOT NULL | e.g., `page_view`, `booking_created`, `search_performed` |
-| `properties` | `jsonb` | DEFAULT `'{}'` | Event-specific data |
-| `session_id` | `text` | | Browser session identifier |
-| `user_agent` | `text` | | Browser/device info |
-| `ip_address` | `inet` | | Anonymized IP |
-| `created_at` | `timestamptz` | DEFAULT `now()` | |
+| Setting | Value |
+|---|---|
+| `public` | `true` |
+| `file_size_limit` | none set |
+| `allowed_mime_types` | none set (any type accepted) |
+
+RLS (on `storage.objects`): owners can INSERT/UPDATE/DELETE objects whose path's first folder segment matches `auth.uid()::text` (`(storage.foldername(name))[1] = auth.uid()::text`); anyone can SELECT (`bucket_id = 'service-photos'`).
+
+### 3.19 Storage bucket: `menu-scans`
+
+Private bucket storing photos submitted to the Taste & Trust menu scanner (`POST /api/v1/ai/scan-menu`), scoped per user.
+
+| Setting | Value |
+|---|---|
+| `public` | `false` |
+| `file_size_limit` | `10485760` (10 MB) |
+| `allowed_mime_types` | `['image/jpeg', 'image/png']` |
+
+Upload path convention: `<user_id>/<uuid>.<ext>` where `ext` is `png` or `jpg`. The upload is **best-effort and non-blocking** — if it fails, the scan request still succeeds and the failure is only logged.
+
+RLS (on `storage.objects`, all policies scoped `TO authenticated`): INSERT, SELECT, and DELETE are each allowed only where `bucket_id = 'menu-scans' AND (storage.foldername(name))[1] = auth.uid()::text`. There is no UPDATE policy.
 
 ---
 
@@ -476,6 +583,9 @@ Platform event log for admin analytics dashboard.
 ```sql
 -- User roles
 CREATE TYPE user_role AS ENUM ('tourist', 'provider', 'agency', 'admin');
+
+-- Verification status (provider_verifications.status)
+CREATE TYPE verification_status AS ENUM ('pending', 'approved', 'rejected');
 
 -- Booking status workflow
 CREATE TYPE booking_status AS ENUM (
@@ -486,22 +596,12 @@ CREATE TYPE booking_status AS ENUM (
   'cancelled'         -- Cancelled by tourist or agency
 );
 
--- Payment status removed (No payments in Stage 2 scope)
-
--- Location types for Survival Map
-CREATE TYPE location_type AS ENUM (
-  'sos_hub',          -- Emergency contact / tourist police
-  'clean_toilet',     -- Verified clean public toilet
-  'cultural_site',    -- Monument, mosque, historical site
-  'festival',         -- Active local festival
-  'pharmacy',         -- Pharmacy / medical
-  'atm',              -- ATM / currency exchange
-  'wifi_hotspot',     -- Free WiFi locations
-  'water_station'     -- Clean drinking water
+-- Itinerary status
+CREATE TYPE itinerary_status AS ENUM (
+  'draft',       -- Being built (agency-created or tourist self-planned)
+  'active',      -- Trip is in progress
+  'completed'    -- Trip finished
 );
-
--- Media types
-CREATE TYPE media_type AS ENUM ('photo', 'video');
 
 -- Notification types
 CREATE TYPE notification_type AS ENUM (
@@ -512,137 +612,238 @@ CREATE TYPE notification_type AS ENUM (
   'system'                 -- System announcements
 );
 
--- Itinerary status
-CREATE TYPE itinerary_status AS ENUM (
-  'draft',       -- Agency is building it
-  'active',      -- Trip is in progress
-  'completed'    -- Trip finished
-);
+-- AI chat message role — new, backs ai_chat_messages.role
+CREATE TYPE chat_message_role AS ENUM ('user', 'assistant');
 
--- Verification status
-CREATE TYPE verification_status AS ENUM ('pending', 'approved', 'rejected');
-
--- Impact stamp types
-CREATE TYPE stamp_type AS ENUM (
-  'rural_visit',        -- Visited a rural area
-  'eco_transport',      -- Used eco-friendly transport
-  'cultural_activity',  -- Participated in cultural experience
-  'local_cuisine',      -- Tried local food experience
-  'hidden_gem'          -- Visited an off-the-beaten-path location
+-- Location category for the Survival Map — existence of this type in the live
+-- database is unconfirmed (see §3.3). Two conflicting value sets exist across
+-- unapplied source files: one with 'food'/'stay' included, one without.
+CREATE TYPE location_category AS ENUM (
+  'sos', 'toilet', 'cultural', 'festival', 'pharmacy', 'atm', 'wifi', 'water'
+  -- possibly also 'food', 'stay' — unconfirmed which set (if either) is live
 );
 ```
+
+Payment status was scoped out (no payments in Stage 2). There is no `location_type`, `media_type`, `stamp_type`, or `service_category` enum in the live schema — `services.category` is plain `TEXT`, and the `service_media`/`impact_stamps` tables these other enums would have backed do not exist as deployed tables (see §3 for what does exist).
+
+`packages/database/src/types.ts`'s generated `Database.public.Enums` map only lists `location_category`, `user_role`, and `verification_status` — `booking_status`, `itinerary_status`, `notification_type`, and `chat_message_role` are absent from that map (they're typed via `@repo/types` string unions instead), which is a type-generation gap worth knowing about but not itself a runtime bug.
 
 ---
 
 ## 5. Row-Level Security (RLS) Policies
 
-All tables have RLS **enabled**. Below are the key policies.
+All tables below have RLS **enabled**. There is no `EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'admin')`-style admin bypass policy on any table — the admin-portal instead uses the Supabase **service-role key** in its Server Actions, which bypasses RLS entirely rather than being granted through a policy. Several policies below are also `TO authenticated`-scoped explicitly, unlike most of the schema's policies, which are role-unrestricted (implicitly `TO public`).
 
-### 5.1 `users` Policies
+### 5.1 `user_profiles` Policies
 
 ```sql
--- Users can read their own profile
 CREATE POLICY "Users can view own profile"
-  ON users FOR SELECT
+  ON user_profiles FOR SELECT
   USING (auth.uid() = id);
 
--- Admins can view all users
-CREATE POLICY "Admins can view all users"
-  ON users FOR SELECT
+CREATE POLICY "Users can update own profile"
+  ON user_profiles FOR UPDATE
+  USING (auth.uid() = id);
+
+-- Fully public read — overlaps/widens the policy above; permissive
+-- policies are OR'd together, so this alone makes every profile world-readable
+CREATE POLICY "Profiles are readable by everyone"
+  ON user_profiles FOR SELECT
+  USING (true);
+```
+
+### 5.2 `provider_verifications` Policies
+
+```sql
+CREATE POLICY "Users can view their own verification request"
+  ON provider_verifications FOR SELECT
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert their own verification request"
+  ON provider_verifications FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Admins can select all verification requests"
+  ON provider_verifications FOR SELECT
   USING (
-    EXISTS (
-      SELECT 1 FROM users WHERE id = auth.uid() AND role = 'admin'
-    )
+    COALESCE(auth.jwt()->'app_metadata'->>'role', auth.jwt()->'user_metadata'->>'role') = 'admin'
   );
 
--- Agencies can view providers (for inventory)
-CREATE POLICY "Agencies can view providers"
-  ON users FOR SELECT
+CREATE POLICY "Admins can update all verification requests"
+  ON provider_verifications FOR UPDATE
   USING (
-    role = 'provider'
-    AND EXISTS (
-      SELECT 1 FROM users WHERE id = auth.uid() AND role = 'agency'
-    )
+    COALESCE(auth.jwt()->'app_metadata'->>'role', auth.jwt()->'user_metadata'->>'role') = 'admin'
   );
 ```
 
-### 5.2 `services` Policies
+### 5.3 `services` Policies
 
 ```sql
--- Anyone authenticated can view available services
-CREATE POLICY "Authenticated users can view available services"
+-- Every service row is publicly readable — no is_available filter
+CREATE POLICY "Services are publicly readable"
   ON services FOR SELECT
-  USING (is_available = true OR provider_id = auth.uid());
+  USING (true);
 
--- Providers can only manage their own services
-CREATE POLICY "Providers manage own services"
-  ON services FOR ALL
-  USING (provider_id = auth.uid());
+CREATE POLICY "Owners can insert their own services"
+  ON services FOR INSERT
+  WITH CHECK (auth.uid() = provider_id);
 
--- Admins can view all services
-CREATE POLICY "Admins can view all services"
-  ON services FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM users WHERE id = auth.uid() AND role = 'admin'
-    )
-  );
+CREATE POLICY "Owners can update their own services"
+  ON services FOR UPDATE
+  USING (auth.uid() = provider_id);
+
+CREATE POLICY "Owners can delete their own services"
+  ON services FOR DELETE
+  USING (auth.uid() = provider_id);
 ```
 
-### 5.3 `bookings` Policies
+### 5.4 `destinations`, `destination_reviews`, `events` Policies
 
 ```sql
--- Tourists can view their own bookings
-CREATE POLICY "Tourists view own bookings"
-  ON bookings FOR SELECT
-  USING (tourist_id = auth.uid());
+-- destinations: public read only — no INSERT/UPDATE/DELETE policy exists,
+-- writes go through the admin-portal's service-role client
+CREATE POLICY "Destinations are publicly readable"
+  ON destinations FOR SELECT
+  USING (true);
 
--- Providers can view bookings for their services
-CREATE POLICY "Providers view bookings for their services"
-  ON bookings FOR SELECT
-  USING (
-    service_id IN (
-      SELECT id FROM services WHERE provider_id = auth.uid()
-    )
-  );
+-- destination_reviews
+CREATE POLICY "Destination reviews are publicly readable"
+  ON destination_reviews FOR SELECT
+  USING (true);
 
--- Agencies can view bookings they facilitated
-CREATE POLICY "Agencies view facilitated bookings"
-  ON bookings FOR SELECT
+CREATE POLICY "Tourists can write their own destination reviews"
+  ON destination_reviews FOR INSERT
+  WITH CHECK (tourist_id = auth.uid());
+-- no UPDATE/DELETE policy
+
+-- events: public read only, same as destinations — no write policy for
+-- anyone but the service-role client
+CREATE POLICY "Events are publicly readable"
+  ON events FOR SELECT
+  USING (true);
+```
+
+### 5.5 `itineraries` and `itinerary_items` Policies
+
+```sql
+-- itineraries
+CREATE POLICY "Owners can read/write their own itineraries"
+  ON itineraries FOR ALL
   USING (agency_id = auth.uid());
 
--- Tourists can create bookings
-CREATE POLICY "Tourists can create bookings"
-  ON bookings FOR INSERT
-  WITH CHECK (tourist_id = auth.uid());
+CREATE POLICY "Tourists can read/write their own self-planned itineraries"
+  ON itineraries FOR ALL
+  USING (tourist_id = auth.uid());
 
--- Providers can update booking status (accept/decline)
-CREATE POLICY "Providers can update booking status"
-  ON bookings FOR UPDATE
-  USING (
-    service_id IN (
-      SELECT id FROM services WHERE provider_id = auth.uid()
-    )
-  );
+-- itinerary_items
+CREATE POLICY "Owners can read/write their own itinerary items"
+  ON itinerary_items FOR ALL
+  USING (itinerary_id IN (SELECT id FROM itineraries WHERE agency_id = auth.uid()));
+
+CREATE POLICY "Tourists can read/write items on their own self-planned itineraries"
+  ON itinerary_items FOR ALL
+  USING (itinerary_id IN (SELECT id FROM itineraries WHERE tourist_id = auth.uid()));
 ```
 
-### 5.4 `locations` Policies
+Both `FOR ALL` policies above omit an explicit `WITH CHECK` clause — Postgres reuses the `USING` expression for `WITH CHECK` in that case, so this is not a gap, just worth knowing when reading the migration directly.
+
+### 5.6 `bookings` and `booking_status_history` Policies
 
 ```sql
--- All authenticated users can view active locations
-CREATE POLICY "View active locations"
-  ON locations FOR SELECT
-  USING (is_active = true);
+-- bookings
+CREATE POLICY "Tourists can read/write their own bookings"
+  ON bookings FOR ALL
+  USING (tourist_id = auth.uid());
 
--- Only admins can manage locations
-CREATE POLICY "Admins manage locations"
-  ON locations FOR ALL
-  USING (
-    EXISTS (
-      SELECT 1 FROM users WHERE id = auth.uid() AND role = 'admin'
-    )
-  );
+CREATE POLICY "Providers/Agencies can read/write their own bookings"
+  ON bookings FOR ALL
+  USING (provider_id = auth.uid());
+
+-- booking_status_history
+CREATE POLICY "Tourists can read/write their own booking history"
+  ON booking_status_history FOR ALL
+  USING (booking_id IN (SELECT id FROM bookings WHERE tourist_id = auth.uid()));
+
+CREATE POLICY "Providers/Agencies can read/write their own booking history"
+  ON booking_status_history FOR ALL
+  USING (booking_id IN (SELECT id FROM bookings WHERE provider_id = auth.uid()));
 ```
+
+There is no `agency_id`-scoped policy on `bookings` — the column doesn't exist on this table (see §3.10). `bookings` and `notifications` are also added to the `supabase_realtime` publication so provider-app/agency-portal can subscribe to live updates.
+
+### 5.7 `reviews` Policies
+
+```sql
+CREATE POLICY "Tourists can read/write their own reviews"
+  ON reviews FOR ALL
+  USING (tourist_id = auth.uid());
+
+CREATE POLICY "Providers/Agencies can read/write reviews for their bookings"
+  ON reviews FOR ALL
+  USING (booking_id IN (SELECT id FROM bookings WHERE provider_id = auth.uid()));
+
+-- Added later to fix SSR pages showing empty review lists
+CREATE POLICY "Reviews are publicly readable"
+  ON reviews FOR SELECT
+  USING (true);
+```
+
+### 5.8 `notifications` Policies
+
+```sql
+CREATE POLICY "Users can read/write their own notifications"
+  ON notifications FOR ALL
+  USING (user_id = auth.uid());
+
+-- Opens INSERT cross-user so e.g. a provider can notify a tourist on
+-- booking accept/decline. SELECT/UPDATE/DELETE remain self-scoped.
+CREATE POLICY "Authenticated users can create notifications for others"
+  ON notifications FOR INSERT
+  WITH CHECK (auth.role() = 'authenticated');
+```
+
+### 5.9 `contact_messages` and `newsletter_subscribers` Policies
+
+```sql
+-- contact_messages: insert-only, no SELECT policy at all — readable only
+-- via the admin-portal's service-role client
+CREATE POLICY "Anyone can submit a contact or feedback message"
+  ON contact_messages FOR INSERT
+  WITH CHECK (true);
+
+-- newsletter_subscribers: same insert-only pattern, no UPDATE policy
+CREATE POLICY "Anyone can subscribe to the newsletter"
+  ON newsletter_subscribers FOR INSERT
+  WITH CHECK (true);
+```
+
+### 5.10 `ai_chat_messages` Policies
+
+```sql
+CREATE POLICY "Users can view their own chat history"
+  ON ai_chat_messages FOR SELECT
+  TO authenticated
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert their own chat messages"
+  ON ai_chat_messages FOR INSERT
+  TO authenticated
+  WITH CHECK (auth.uid() = user_id);
+```
+
+No UPDATE/DELETE policy exists — chat messages are immutable and undeletable via the public API once written.
+
+### 5.11 `locations` Policies
+
+> Same live-existence caveat as §3.3 applies here.
+
+```sql
+CREATE POLICY "Public can read locations"
+  ON locations FOR SELECT
+  USING (true);
+```
+
+No admin-only management policy or `is_active` column is confirmed to exist for this table in the sources it was derived from.
 
 ---
 

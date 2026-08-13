@@ -94,11 +94,14 @@ Layer 1: Network (Cloudflare WAF, DDoS protection, TLS 1.3)
 
 ### 2.4 Token Storage
 
+The four portals do not share a single cookie implementation. Tourist Webapp and the other three portals (Provider App, Agency Portal, Admin Portal) use two different, incompatible session-cookie architectures:
+
 | Platform | Storage Method | Security |
 |---|---|---|
-| **PWA (Tourist/Provider)** | `httpOnly` cookies set by Next.js middleware | Not accessible via JavaScript; CSRF-protected |
-| **Agency Portal** | `httpOnly` cookies | Same as above |
-| **Admin Portal** | `httpOnly` cookies + session validation | Additional session fingerprinting |
+| **Tourist Webapp** | `@supabase/ssr` cookies (`httpOnly`, chunked), read/written by Next.js middleware and server components via `createServerClient` / `createBrowserClient` | Not accessible via JavaScript; session is verified server-side on every request via `supabase.auth.getUser()` (a real network round-trip to Supabase Auth, not a local decode) |
+| **Provider App / Agency Portal / Admin Portal** | Single `sb-access-token` cookie holding the raw access-token JWT, written client-side (`document.cookie`) on every auth-state change by the shared `SessionProvider` (`packages/auth`) | **Not** `httpOnly` — it is set by client-side JavaScript. Each app's Edge middleware decodes the JWT payload locally to read role/verification claims for route gating; the signature is not verified and there is no network call to Supabase for this check |
+
+This split is intentional, not accidental: the three portal apps' Edge middleware avoids `@supabase/ssr`'s cookie format and the per-request `getUser()` network round-trip for latency reasons, decoding the JWT locally instead. Because that local decode is used only for UI-level route gating (e.g. redirecting unverified providers away from the dashboard), every actual data read or write is still subject to full RLS enforcement using the caller's real, network-verified Supabase session — an unverified or tampered `sb-access-token` cookie can change which pages a request is routed to, but cannot by itself grant access to another user's data.
 
 ---
 
@@ -122,11 +125,12 @@ Admin (full platform access)
 | `services` | Read available | CRUD own | Read available | Read all |
 | `bookings` | Read/Create own | Read/Update own service bookings | Read/Create facilitated | Read all |
 | `locations` | Read active | Read active | Read active | CRUD all |
-| `itineraries` | Read assigned | — | CRUD own | Read all |
+| `itineraries` | CRUD own (self-planned trips) | — | CRUD own (client itineraries) | Read all |
 | `reviews` | Create/Read own | Read own service reviews | — | Read all |
 | `notifications` | Read own | Read own | Read own | Read/Create all |
 | `provider_verifications` | — | Read own | — | CRUD all |
 | `analytics_events` | — | — | — | Read all |
+| `ai_chat_messages` | Create/Read own (immutable — no update/delete) | — | — | — |
 
 ### 3.3 API-Level Guards (Defense in Depth)
 
@@ -149,6 +153,12 @@ export async function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 ```
+
+### 3.4 Data Isolation for AI Features
+
+**`ai_chat_messages`** — backs the persistent AI chat assistant (`/ai-chat`). RLS restricts both `SELECT` and `INSERT` to `auth.uid() = user_id`, and both policies are scoped `TO authenticated` — anonymous chat sessions never touch this table; their history exists only in the client for the duration of the conversation. There is no `UPDATE` or `DELETE` policy, so messages are append-only/immutable once written via the public API, and there is no admin-bypass policy on this table — the only way to read another user's chat history is with the service-role key, which none of the AI routes use for this table.
+
+**`menu-scans` storage bucket** — backs the Taste & Trust Dietary Scanner. The bucket is private (`public = false`), capped at 10 MB per file, and restricted to `image/jpeg`/`image/png`. Isolation is enforced by a folder-prefix convention: every object is written to `<user_id>/<uuid>.<ext>`, and all three `storage.objects` policies (`INSERT`, `SELECT`, `DELETE`, all `TO authenticated`) require `(storage.foldername(name))[1] = auth.uid()::text`. There is no `UPDATE` policy. Upload is best-effort — a failed upload only logs an error and does not block the scan response — but a failed upload also means the image was never persisted, so it never becomes readable by anyone. This is the same owner-scoped folder pattern already used by the `service-photos` bucket, except `service-photos` is public-read (anyone can view a listing's photos) while `menu-scans` has no public-read policy at all — only the uploading user can ever read their own scans back.
 
 ---
 
@@ -231,7 +241,7 @@ SET metadata = jsonb_set(
 
 | Third Party | Data Shared | Purpose | Legal Basis |
 |---|---|---|---|
-| **OpenAI** | Menu images, translation text | AI processing | Consent + contract |
+| **Moonshot AI (Kimi)** | Menu images, translation text, chat messages, itinerary-planning inputs | AI processing (menu scanning, translation, chat assistant, itinerary suggestions) | Consent + contract |
 | **Mapbox** | Anonymized location coordinates | Map rendering | Legitimate interest |
 | **Stripe/Payme** | Payment details | Transaction processing | Contract |
 | **PostHog** | Anonymized usage events | Analytics | Consent |
@@ -258,7 +268,7 @@ E-Mehmon is Uzbekistan's mandatory guest registration system. All accommodations
 
 During MVP, E-Mehmon compliance is handled **manually** by agencies. The platform provides:
 
-1. **Passport OCR scanning** (via OpenAI Vision) to auto-populate tourist information.
+1. **Passport OCR scanning** (via Moonshot Vision) to auto-populate tourist information.
 2. **Data export** in E-Mehmon compatible format (CSV/Excel).
 3. **Compliance checklist** reminding agencies of registration deadlines.
 
@@ -306,7 +316,7 @@ Content-Security-Policy:
   script-src 'self' 'unsafe-eval' https://api.mapbox.com;
   style-src 'self' 'unsafe-inline' https://api.mapbox.com;
   img-src 'self' data: blob: https://*.supabase.co https://api.mapbox.com;
-  connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.mapbox.com https://api.openai.com;
+  connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.mapbox.com https://api.moonshot.ai;
   font-src 'self' https://fonts.gstatic.com;
   frame-src 'none';
   object-src 'none';
@@ -348,7 +358,8 @@ Permissions-Policy: camera=(self), geolocation=(self), microphone=(self)
 | Secret | Storage | Access |
 |---|---|---|
 | `SUPABASE_SERVICE_ROLE_KEY` | Vercel encrypted env | Server-side only (Edge Functions) |
-| `OPENAI_API_KEY` | Vercel encrypted env | Server-side only (API routes) |
+| `MOONSHOT_API_KEY` | Vercel encrypted env | Server-side only (AI API routes) |
+| `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` | Vercel encrypted env | Server-side only (AI route rate limiting; each AI route falls back to a non-distributed in-memory limiter if unset) |
 | `MAPBOX_SECRET_TOKEN` | Vercel encrypted env | Server-side only |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Vercel env (public) | Client-side (safe — RLS protects data) |
 | `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN` | Vercel env (public) | Client-side (scoped to map renders) |
@@ -378,7 +389,7 @@ Permissions-Policy: camera=(self), geolocation=(self), microphone=(self)
 | **API key exposure** | Low | Critical | Server-side only keys, env encryption | Very Low |
 | **Malicious file upload** | Medium | Medium | File type validation, size limits, scanning | Low |
 | **Insider threat** | Low | High | Least privilege, audit logs, MFA | Low |
-| **OpenAI data leakage** | Low | Medium | No PII sent to AI, anonymization | Low |
+| **Moonshot AI data leakage** | Low | Medium | No PII sent to AI, anonymization | Low |
 | **Tourist location tracking** | Medium | High | Anonymized geo data, no real-time individual tracking | Low |
 
 ### 9.2 Attack Surface
@@ -395,7 +406,7 @@ External Attackers
   └── Third-Party Services
       ├── Supabase → SOC 2 Type II certified
       ├── Vercel → SOC 2 Type II certified
-      └── OpenAI → Data processing agreement
+      └── Moonshot AI → Data processing agreement
 
 Internal Threats
   ├── Engineers → MFA, code review, least privilege

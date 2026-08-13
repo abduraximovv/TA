@@ -68,7 +68,7 @@ uzbekistan-tourism/
 │   ├── auth/                    # Shared authentication logic
 │   ├── config/                  # Shared ESLint, TypeScript, Tailwind configs
 │   ├── map-utils/               # Mapbox GL JS shared utilities
-│   ├── ai/                      # OpenAI API shared wrappers
+│   ├── ai/                      # Moonshot (Kimi) API shared wrappers
 │   └── types/                   # Shared TypeScript type definitions
 ├── supabase/
 │   ├── migrations/              # PostgreSQL migration files
@@ -143,10 +143,10 @@ uzbekistan-tourism/
 | Service | Technology | Use Case |
 |---|---|---|
 | **Mapping** | Mapbox GL JS | Survival Maps, Heatmap, geolocation |
-| **AI/NLP** | OpenAI API (GPT-4) | Contextual Translator, Taste & Trust, Itinerary AI |
+| **AI/NLP** | Moonshot API (Kimi, `kimi-k3`) via OpenAI-compatible SDK client | AI Chat Assistant, Contextual Translator, Taste & Trust, Itinerary AI |
 | **Payments** | Stripe / Payme (local) | Tourist payments + provider payouts |
 | **Push Notifications** | Web Push API | Contextual notifications for tourists |
-| **OCR** | Tesseract.js / OpenAI Vision | Passport scanning, menu scanning |
+| **OCR** | Moonshot API (Kimi vision, `kimi-k3`) | Passport scanning, menu scanning |
 | **Analytics** | PostHog (self-hosted) | Privacy-first platform analytics |
 
 ### 3.4 Mobile Strategy: Progressive Web App (PWA)
@@ -169,7 +169,7 @@ uzbekistan-tourism/
 | Feature | Description | Tech Dependencies |
 |---|---|---|
 | **Survival Map** | Interactive map with pins for SOS hubs, clean toilets, cultural sites, local festivals | Mapbox GL JS, PostGIS, Supabase |
-| **Taste & Trust Scanner** | Upload menu photo → AI translates, explains dishes, warns of allergens | OpenAI Vision API, Supabase Storage |
+| **Taste & Trust Scanner** | Upload menu photo → AI translates, explains dishes, warns of allergens | Moonshot API (Kimi vision, `kimi-k3`), Supabase Storage |
 | **Direct Discovery** | Browse and book "Hidden Uzbekistan" masterclasses from local providers | Supabase queries, booking flow |
 | **User Auth** | Registration/login with email or Google OAuth | Supabase Auth |
 | **PWA Shell** | Installable, offline-capable progressive web app | Next.js PWA config, Workbox |
@@ -297,7 +297,7 @@ Turborepo's remote caching (via Vercel) ensures that unchanged packages are not 
 | Risk | Severity | Likelihood | Mitigation |
 |---|---|---|---|
 | **PWA limitations on iOS** | Medium | High | Test extensively on Safari; use fallback UI for unsupported features |
-| **OpenAI API cost overrun** | High | Medium | Implement rate limiting, caching, and token budget per user |
+| **Moonshot API cost overrun** | High | Medium | Implement rate limiting, caching, and token budget per user |
 | **Supabase vendor lock-in** | Medium | Low | Use standard PostgreSQL; Supabase is open-source and self-hostable |
 | **Mapbox pricing at scale** | Medium | Medium | Monitor tile requests; consider MapLibre as open-source fallback |
 | **Poor rural connectivity** | High | High | Aggressive offline caching; minimal payload for Provider PWA |
@@ -351,8 +351,13 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 # Mapbox
 NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN=your-mapbox-token
 
-# OpenAI
-OPENAI_API_KEY=your-openai-key
+# Moonshot (Kimi) — used by all AI/NLP and OCR endpoints via an OpenAI-compatible SDK client
+MOONSHOT_API_KEY=your-moonshot-key
+
+# Upstash Redis — backs distributed rate limiting on the AI endpoints; each endpoint
+# falls back to an in-memory (per-instance, non-distributed) limiter if these are unset
+UPSTASH_REDIS_REST_URL=your-upstash-redis-rest-url
+UPSTASH_REDIS_REST_TOKEN=your-upstash-redis-rest-token
 
 # App URLs
 NEXT_PUBLIC_TOURIST_APP_URL=http://localhost:3000
@@ -372,8 +377,8 @@ NEXT_PUBLIC_ADMIN_APP_URL=http://localhost:3003
 | **Supabase Auth** | All | MVP | Low |
 | **Supabase Realtime** | Provider, Agency | MVP | Medium |
 | **Mapbox GL JS** | Tourist, Admin | MVP | Medium |
-| **OpenAI GPT-4** | Tourist, Agency | MVP | Medium |
-| **OpenAI Vision** | Tourist | MVP | Medium |
+| **Moonshot API (Kimi chat)** | Tourist | MVP | Medium |
+| **Moonshot API (Kimi vision)** | Tourist | MVP | Medium |
 | **Web Push API** | Tourist, Provider | MVP | Low |
 | **Stripe** | Tourist, Agency | Post-MVP | High |
 | **Payme (Uzbek)** | Provider | Post-MVP | High |
@@ -386,7 +391,7 @@ NEXT_PUBLIC_ADMIN_APP_URL=http://localhost:3003
 |---|---|---|---|
 | **Supabase** | 500 MB DB, 50K auth users | Well within limits | None |
 | **Mapbox** | 50K map loads/month | ~5K during MVP | None |
-| **OpenAI** | Pay-per-token | ~$50–200/month at MVP | Set budget alerts |
+| **Moonshot (Kimi)** | Pay-per-token | Pricing TBD | Set budget alerts |
 | **Vercel** | 100 GB bandwidth | Well within limits | None |
 | **PostHog** | 1M events/month | Well within limits | None |
 

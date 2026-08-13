@@ -65,10 +65,11 @@
 | **Edge Functions** | Supabase | Serverless compute | Included |
 | **Realtime** | Supabase Realtime | WebSocket subscriptions | Included |
 | **CDN/WAF** | Cloudflare | DDoS protection, SSL | Free/Pro |
-| **AI** | OpenAI | GPT-4, Vision | Pay-as-you-go |
+| **AI** | Moonshot AI | `kimi-k3` (chat + vision), accessed via an OpenAI-compatible client pointed at `api.moonshot.ai` | Pay-as-you-go |
+| **Rate Limiting** | Upstash Redis (optional) | Distributed sliding-window rate limits for the AI endpoints | Pay-as-you-go / Free tier |
 | **Maps** | Mapbox | Map tiles, geocoding | Pay-as-you-go |
 | **Analytics** | PostHog | Event tracking | Free tier |
-| **CI/CD** | GitHub Actions | Build, test, deploy | Free tier |
+| **CI/CD** | GitHub Actions | Build, test, deploy (planned — not yet implemented, see §7) | Free tier |
 
 ---
 
@@ -105,7 +106,8 @@ Production Release → Production Deploy
 | **Vercel** | Team account (Pro) | Link to GitHub repo |
 | **Supabase** | Organization account | Create project |
 | **Cloudflare** | Account | Add domain |
-| **OpenAI** | API account | Generate API key |
+| **Moonshot AI** | API account | Generate API key at `platform.moonshot.ai`, set as `MOONSHOT_API_KEY` |
+| **Upstash** (optional) | Redis database | Create a Redis database, set `UPSTASH_REDIS_REST_URL`/`UPSTASH_REDIS_REST_TOKEN` for distributed AI rate limiting (falls back to per-instance in-memory limiting if omitted) |
 | **Mapbox** | Account | Generate access token |
 
 ### 3.2 Local Tools
@@ -208,12 +210,16 @@ Enable the following extensions in the Supabase dashboard:
 
 ### 5.4 Edge Functions
 
-| Function | Purpose | Trigger |
+The AI-powered endpoints (`translate`, `scan-menu`, `itinerary-suggest`, `chat`) are **not deployed as Supabase Edge Functions** — they run as Next.js Route Handlers inside `apps/tourist-webapp` (`src/app/api/v1/ai/*/route.ts`), calling Moonshot AI's `kimi-k3` model directly from the server. No `pnpm supabase functions deploy` step is required for them; they ship and scale with the Vercel deployment of `tourist-webapp` (§6).
+
+| Route | Purpose | AI vendor |
 |---|---|---|
-| `translate` | OpenAI translation wrapper | HTTP (API route proxy) |
-| `scan-menu` | OpenAI Vision menu analysis | HTTP (API route proxy) |
-| `send-notification` | Web Push notification dispatch | Database webhook |
-| `calculate-heatmap` | Aggregate tourist density data | `pg_cron` (every 5 min) |
+| `POST /api/v1/ai/translate` | Contextual phrase translation | Moonshot AI (`kimi-k3`) |
+| `POST /api/v1/ai/scan-menu` | Menu photo analysis (dietary flags, allergens) | Moonshot AI (`kimi-k3` vision) |
+| `POST /api/v1/ai/itinerary-suggest` | Tourist self-service trip planner | Moonshot AI (`kimi-k3`) |
+| `GET/POST /api/v1/ai/chat` | Persistent AI chat assistant | Moonshot AI (`kimi-k3`) |
+
+`send-notification` (Web Push dispatch) and `calculate-heatmap` (tourist density aggregation via `pg_cron`) are not present in the codebase as of this writing — no Web Push (VAPID) code or heatmap-aggregation job exists yet. Treat both as planned/roadmap items, not deployed functions.
 
 ---
 
@@ -263,6 +269,8 @@ Every PR automatically creates preview deployments for all four apps:
 ---
 
 ## 7. CI/CD Pipeline
+
+**Current status:** no `.github/workflows` directory exists in the repository yet — the workflow below is the target pipeline design, not a description of what runs today. At present, each Vercel project (§6.1) builds and deploys directly off its own Git integration with no gating CI job in front of it. `turbo.json` currently only defines `build`, `lint`, and `dev` tasks; the `type-check`, `test:unit`, `test:integration`, and `test:e2e` tasks referenced in the workflow below are not yet wired into Turborepo. The root `package.json`'s `test` script is a stub (`exit 1`) even though Vitest, Playwright, and Testing Library are installed as dependencies and test files exist under `tests/e2e` and alongside components (e.g. `*.test.tsx`). Implementing this section requires both adding the workflow file and adding the missing Turborepo tasks it depends on.
 
 ### 7.1 GitHub Actions Workflow
 
@@ -390,18 +398,22 @@ Before production deployment:
 | `NEXT_PUBLIC_SUPABASE_URL` | Client | All | Public |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Client | All | Public (safe with RLS) |
 | `SUPABASE_SERVICE_ROLE_KEY` | Server | All | 🔴 Critical |
+| `MOONSHOT_API_KEY` | Server | All | 🔴 Critical — required by all four `/api/v1/ai/*` routes in `tourist-webapp` (chat, translate, scan-menu, itinerary-suggest); each route returns `503` if unset |
+| `UPSTASH_REDIS_REST_URL` | Server | All | 🟡 Sensitive — optional. Enables distributed, cross-instance rate limiting on the AI routes; if unset, each route falls back to an in-process `Map`-based limiter that is per-instance only and resets on cold start, which is not a meaningful limit in a multi-instance/serverless deployment |
+| `UPSTASH_REDIS_REST_TOKEN` | Server | All | 🔴 Critical if `UPSTASH_REDIS_REST_URL` is set (paired credential); otherwise unused |
 | `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN` | Client | All | Public (scoped) |
-| `OPENAI_API_KEY` | Server | All | 🔴 Critical |
 | `NEXT_PUBLIC_APP_URL` | Client | Per env | Public |
 | `VAPID_PUBLIC_KEY` | Client | All | Public |
 | `VAPID_PRIVATE_KEY` | Server | All | 🔴 Critical |
 | `POSTHOG_API_KEY` | Server | Prod/Staging | 🟡 Sensitive |
 
+`NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN`, `NEXT_PUBLIC_APP_URL`, `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, and `POSTHOG_API_KEY` are not currently read anywhere in application code (no Web Push, PostHog, or Mapbox-token integration is wired up yet) — they are listed here as the intended configuration for those not-yet-connected integrations, not as vars a current deployment must set. The root `.env.example` accordingly only documents `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` — it should be extended with `MOONSHOT_API_KEY` and, if distributed rate limiting is desired, the two `UPSTASH_REDIS_REST_*` vars.
+
 ### 9.2 Setting Variables in Vercel
 
 ```bash
 # Set a variable for all environments
-vercel env add OPENAI_API_KEY
+vercel env add MOONSHOT_API_KEY
 
 # Set a variable for specific environment
 vercel env add SUPABASE_SERVICE_ROLE_KEY --environment production
@@ -413,12 +425,18 @@ vercel env add SUPABASE_SERVICE_ROLE_KEY --environment production
 # Copy the template
 cp .env.example .env.local
 
-# The template contains:
+# The template currently contains only the three Supabase vars:
 # NEXT_PUBLIC_SUPABASE_URL=http://localhost:54321
 # NEXT_PUBLIC_SUPABASE_ANON_KEY=<from supabase start output>
 # SUPABASE_SERVICE_ROLE_KEY=<from supabase start output>
+#
+# Add these manually to run the AI features locally (not yet in .env.example):
+# MOONSHOT_API_KEY=<your-moonshot-key>
+# UPSTASH_REDIS_REST_URL=<your-upstash-redis-url>       # optional — omit to use the in-memory rate-limit fallback
+# UPSTASH_REDIS_REST_TOKEN=<your-upstash-redis-token>   # optional — pairs with the URL above
+#
+# Not yet consumed by any app code, but reserved for planned integrations:
 # NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN=<your-dev-token>
-# OPENAI_API_KEY=<your-dev-key>
 ```
 
 ---
@@ -435,7 +453,7 @@ cp .env.example .env.local
 | **Logs** | Vercel Logs + Supabase Logs | Request logs, Edge Function logs |
 | **Analytics** | PostHog | User events, funnels, retention |
 | **Database** | Supabase Dashboard | Query performance, connections, storage |
-| **AI Costs** | OpenAI Dashboard | Token usage, spend tracking |
+| **AI Costs** | Moonshot AI platform console | Token usage, spend tracking |
 
 ### 10.2 Alerts
 
@@ -445,7 +463,7 @@ cp .env.example .env.local
 | **Error Spike** | > 50 errors in 5 minutes | Telegram | P1 |
 | **Slow API** | p95 latency > 1 second | Email | P2 |
 | **DB Connections** | > 80% pool capacity | Email | P1 |
-| **OpenAI Budget** | > $100/day spend | Email | P1 |
+| **Moonshot AI Budget** | > $100/day spend | Email | P1 |
 | **Storage** | > 80% capacity | Email | P2 |
 
 ### 10.3 Health Check Endpoints
@@ -453,7 +471,7 @@ cp .env.example .env.local
 ```
 GET /api/health → { "status": "ok", "version": "1.0.0", "timestamp": "..." }
 GET /api/health/db → { "status": "ok", "latency_ms": 12 }
-GET /api/health/services → { "supabase": "ok", "openai": "ok", "mapbox": "ok" }
+GET /api/health/services → { "supabase": "ok", "moonshot": "ok", "mapbox": "ok" }
 ```
 
 ---
@@ -602,8 +620,8 @@ pnpm supabase db push --linked --target production
 ```bash
 # 1. Generate new key in provider dashboard
 # 2. Update in Vercel
-vercel env rm OPENAI_API_KEY
-vercel env add OPENAI_API_KEY
+vercel env rm MOONSHOT_API_KEY
+vercel env add MOONSHOT_API_KEY
 
 # 3. Trigger redeployment
 vercel redeploy --prod

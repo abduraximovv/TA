@@ -33,8 +33,6 @@ uzbekistan-tourism/
 │   ├── database/                # Supabase client, types, migrations
 │   ├── auth/                    # Shared authentication logic
 │   ├── config/                  # Shared ESLint, TypeScript, Tailwind configs
-│   ├── map-utils/               # Mapbox GL JS shared utilities
-│   ├── ai/                      # OpenAI API shared wrappers
 │   └── types/                   # Shared TypeScript type definitions
 ├── supabase/
 │   ├── migrations/              # PostgreSQL migration files
@@ -98,16 +96,23 @@ pnpm supabase db reset
 pnpm dev
 ```
 
+`.env.example` only covers the three Supabase variables above. The AI routes under
+`tourist-webapp`'s `/api/v1/ai/*` (chat, menu scanner, itinerary planner, translator) call
+Moonshot's OpenAI-compatible API and will return a 503 until `MOONSHOT_API_KEY` is also set in
+`.env.local`. `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` are optional — without them,
+those routes fall back to an in-process rate limiter, which is fine for local development but
+isn't a real distributed limit if you're running multiple instances.
+
 ### 2.3 Verify Setup
 
 After `pnpm dev`, verify all services are running:
 
 | Service | URL | Expected |
 |---|---|---|
-| Tourist App | `http://localhost:3000` | Login page |
-| Provider App | `http://localhost:3001` | Login page |
-| Agency Portal | `http://localhost:3002` | Login page |
-| Admin Portal | `http://localhost:3003` | Login page |
+| Tourist App | `http://localhost:3003` | Login page |
+| Provider App | `http://localhost:3002` | Login page |
+| Agency Portal | `http://localhost:3001` | Login page |
+| Admin Portal | `http://localhost:3000` | Login page |
 | Supabase Studio | `http://localhost:54323` | Database dashboard |
 
 ### 2.4 Seeding Demo Accounts
@@ -177,7 +182,7 @@ docs/api-specification-v2
 2. Create a feature branch: git checkout -b feature/T-123-survival-map
 3. Make changes with frequent small commits
 4. Write/update tests for your changes
-5. Run tests locally: pnpm test
+5. Run tests locally where applicable (see the note on `pnpm test` in 4.2)
 6. Push branch: git push origin feature/T-123-survival-map
 7. Create Pull Request → develop
 8. Address code review feedback
@@ -190,9 +195,6 @@ docs/api-specification-v2
 # Run a specific app only
 pnpm dev --filter=tourist-webapp
 
-# Run tests for a specific package
-pnpm test --filter=@repo/ui
-
 # Build a specific app
 pnpm build --filter=agency-portal
 
@@ -202,6 +204,15 @@ pnpm add lodash --filter=@repo/database
 # Add a shared package as dependency
 pnpm add @repo/ui --filter=tourist-webapp --workspace
 ```
+
+**Running tests:** the root `pnpm test` script is currently a stub (`echo "Error: no test
+specified"`) and doesn't run anything, and `turbo.json` doesn't define a `test` task either — no
+`apps/*` or `packages/*` package defines its own `test` script yet. Vitest and Playwright are
+installed as root devDependencies and test files already exist throughout the repo (e.g.
+`apps/tourist-webapp/src/components/ContextualTranslator.test.tsx`, `tests/e2e/`), but there's no
+single wired command to run them. Until a root/turbo test task is added, run the relevant test
+file directly with `pnpm exec vitest run <path>` (from the app that has a `vitest.config.ts`, e.g.
+`apps/tourist-webapp`) or `pnpm exec playwright test` for e2e specs.
 
 ### 4.3 Database Changes
 
@@ -291,10 +302,10 @@ import styles from './BookingCard.module.css';
 
 | Tool | Config File | Purpose |
 |---|---|---|
-| **ESLint** | `packages/config/eslint-config.js` | Code quality rules |
-| **Prettier** | `.prettierrc` | Code formatting |
-| **TypeScript** | `packages/config/tsconfig.json` | Type checking base config |
-| **Tailwind** | `packages/config/tailwind.config.js` | Shared design tokens |
+| **ESLint** | `packages/config/eslint-preset.js` | Code quality rules |
+| **Prettier** | `packages/config/prettier-preset.json` | Code formatting |
+| **TypeScript** | `packages/config/tsconfig.base.json` | Type checking base config |
+| **Tailwind** | `packages/ui/tailwind.config.ts` | Shared design tokens (apps extend this as a preset) |
 
 ---
 
@@ -521,7 +532,7 @@ pnpm supabase start
 **Type errors after pulling latest:**
 ```bash
 # Regenerate types from database
-pnpm supabase gen types typescript --local > packages/database/types.ts
+pnpm supabase gen types typescript --local > packages/database/src/types.ts
 ```
 
 **pnpm install fails:**

@@ -14,6 +14,8 @@
 - [ADR 004: Turborepo Monorepo Architecture](#adr-004-turborepo-monorepo-architecture)
 - [ADR 005: Mapbox GL JS for Geospatial Features](#adr-005-mapbox-gl-js-for-geospatial-features)
 - [ADR 006: OpenAI API for AI-Powered Features](#adr-006-openai-api-for-ai-powered-features)
+- [ADR 007: Moonshot Kimi API (OpenAI-Compatible) Supersedes OpenAI](#adr-007-moonshot-kimi-api-openai-compatible-supersedes-openai)
+- [ADR 008: Split Session-Cookie Strategy Across Apps](#adr-008-split-session-cookie-strategy-across-apps)
 
 ---
 
@@ -265,10 +267,12 @@ Use **Mapbox GL JS** as the primary mapping library for all geospatial rendering
 
 | Field | Value |
 |---|---|
-| **Status** | Accepted |
+| **Status** | Superseded by [ADR 007](#adr-007-moonshot-kimi-api-openai-compatible-supersedes-openai) |
 | **Date** | 2026-07-16 |
 | **Decision Makers** | Platform Engineering Team |
 | **Category** | AI & Machine Learning |
+
+> **Superseded:** The AI backend actually shipped for all AI-powered features is Moonshot's Kimi models (`kimi-k3`), accessed via an OpenAI-compatible SDK client, not OpenAI. This ADR is retained below as the historical record of the original decision; see ADR 007 for the current state.
 
 ### Context
 
@@ -318,6 +322,106 @@ Use **OpenAI's API** (GPT-4 for text, GPT-4 Vision for image analysis) as the pr
 | **DeepL** | Superior translation quality for European languages, but weak Uzbek support and no vision capabilities |
 | **Self-hosted LLM (LLaMA)** | Infeasible at MVP: requires GPU infrastructure, fine-tuning, and significant ML engineering effort |
 | **Anthropic Claude** | Strong alternative; kept as backup. OpenAI chosen for superior vision capabilities and broader community tooling |
+
+---
+
+## ADR 007: Moonshot Kimi API (OpenAI-Compatible) Supersedes OpenAI
+
+| Field | Value |
+|---|---|
+| **Status** | Accepted |
+| **Date** | 2026-08-13 |
+| **Decision Makers** | Platform Engineering Team |
+| **Category** | AI & Machine Learning |
+| **Supersedes** | [ADR 006: OpenAI API for AI-Powered Features](#adr-006-openai-api-for-ai-powered-features) |
+
+### Context
+
+ADR 006 committed the platform to OpenAI's API (GPT-4 / GPT-4 Vision) as the backend for AI-powered features. The AI-powered features that have since shipped are:
+
+1. **AI Chat Assistant** (`/ai-chat`, `POST`/`GET /api/v1/ai/chat`) — a persistent, Kimi-branded conversational assistant with per-user chat history.
+2. **Taste & Trust Dietary Scanner** (`POST /api/v1/ai/scan-menu`) — vision-based menu analysis producing dish translations, ingredients, allergens, and dietary flags.
+3. **Itinerary Suggest** (`POST /api/v1/ai/itinerary-suggest`) — a tourist-facing self-service trip planner that generates a day-by-day itinerary.
+4. **Contextual Translator** (`POST /api/v1/ai/translate`) — free-text translation with an embedded cultural-context note.
+
+All four route handlers, independently, construct an AI client as:
+
+```ts
+createOpenAI({
+  baseURL: "https://api.moonshot.ai/v1",
+  apiKey: process.env.MOONSHOT_API_KEY,
+})
+```
+
+and call the model as `moonshot.chat("kimi-k3")`. The `createOpenAI` helper (from the `ai` SDK's `@ai-sdk/openai` package) is being used purely as a generic OpenAI-compatible HTTP client pointed at Moonshot's endpoint — no request is made to OpenAI's own API, and no `OPENAI_API_KEY` is read anywhere in the application code. The platform now integrates **Moonshot's Kimi models via an OpenAI-compatible API**, not OpenAI itself.
+
+No `packages/ai` shared wrapper exists — each of the four routes duplicates the client-construction and rate-limiting boilerplate independently (this was the vendor-abstraction mitigation ADR 006 proposed; it was not built).
+
+### Decision
+
+Use **Moonshot's Kimi API** (model `kimi-k3`), accessed through the OpenAI-compatible client shape of the `ai` SDK, as the AI backend for the Chat Assistant, Dietary Scanner, Itinerary Suggest, and Contextual Translator features, superseding ADR 006's OpenAI decision.
+
+### Consequences
+
+#### Positive
+
+- **Drop-in SDK compatibility:** Because Moonshot exposes an OpenAI-compatible API surface, the existing `ai` SDK integration pattern (`generateText`, `generateObject`, structured JSON-schema output) required no framework change — only the `baseURL`, API key, and model identifier changed.
+
+#### Negative
+
+- **Required environment variable undocumented:** `MOONSHOT_API_KEY` is read by all four AI routes (each returns HTTP 503 if it is unset) but is **not listed in `.env.example`**, which still only documents the three Supabase variables. A fresh clone following `.env.example` alone cannot run any AI feature.
+- **`turbo.json`'s `globalEnv` is stale:** it still lists `OPENAI_API_KEY` (unused by any route) instead of `MOONSHOT_API_KEY`.
+- **No shared AI package:** the vendor-abstraction layer proposed as a mitigation in ADR 006 (`packages/ai`) was never built; each of the four routes independently constructs the Moonshot client and its own rate-limiting logic.
+- **Stale CSP entry:** `apps/tourist-webapp/src/middleware.ts`'s `connect-src` directive still allow-lists `https://api.openai.com` and does not list `https://api.moonshot.ai`. This has no functional impact today because all Moonshot calls are made server-side from Next.js route handlers, not fetched from the browser, but the directive no longer reflects the actual upstream dependency.
+- **Documentation drift:** `docs/TECHNICAL_PLAN.md` and `docs/DEPLOYMENT_GUIDE.md` still reference OpenAI, GPT-4, GPT-4 Vision, and `OPENAI_API_KEY` throughout (tech-stack tables, environment variable inventories, cost/risk sections, monitoring/alerting sections) and have not been updated for this change.
+
+### Notes
+
+No rationale for choosing Moonshot's Kimi models over OpenAI (cost, latency, regional availability, or otherwise) is recorded in the codebase or commit history available at the time of writing. This ADR documents the change in AI backend as a fact of the current implementation rather than asserting a motivation that has not been established.
+
+---
+
+## ADR 008: Split Session-Cookie Strategy Across Apps
+
+| Field | Value |
+|---|---|
+| **Status** | Accepted |
+| **Date** | 2026-08-13 |
+| **Decision Makers** | Platform Engineering Team |
+| **Category** | Authentication & Session Management |
+
+### Context
+
+The four apps in the monorepo share a single `packages/auth` package (`SessionProvider.tsx`) for client-side session state, but read that session on the server via two different mechanisms:
+
+1. **Tourist WebApp** uses `@supabase/ssr` (`createBrowserClient` / `createServerClient`). The browser client persists the session into cookies in the chunked format `@supabase/ssr`'s server client expects; `apps/tourist-webapp/src/utils/supabase/server.ts`'s `createClient(cookieStore)` reads those cookies and calls `supabase.auth.getUser()` — a server-verified, per-request check — for both its API routes and Server Actions.
+2. **Provider App, Agency Portal, and Admin Portal** do not use `@supabase/ssr`. Their Edge middleware instead reads a plain `sb-access-token` cookie and decodes the JWT payload directly, without a per-request network call to Supabase. `packages/auth/src/SessionProvider.tsx` writes this cookie by hand (`document.cookie = ...`) on every `onAuthStateChange`, alongside letting `getSupabaseBrowserClient()` write the `@supabase/ssr` cookie format for the Tourist WebApp's benefit. An inline comment in `SessionProvider.tsx` states this is intentional: it avoids `@supabase/ssr`'s cookie format and a per-request `getUser()` network call in these three apps' Edge middleware. `sb-refresh-token` is deliberately never written, since nothing reads it under this scheme.
+
+`packages/database/src/client.ts` mirrors the split on the query-client side: `getSupabase()` (plain `@supabase/supabase-js`, localStorage session, intended only for anonymous/public reads) coexists with `getSupabaseBrowserClient()` (`@supabase/ssr`'s `createBrowserClient`).
+
+Separately, three of Tourist WebApp's own route handlers (`/api/v1/bookings`, `/api/v1/destination-reviews`, `/api/v1/reviews`) work around both cookie schemes by minting a request-scoped Supabase client authenticated via an explicit `Authorization: Bearer` header sent from the client, because neither cookie format reliably propagated the caller's identity into PostgREST for Row-Level Security purposes at the time those routes were written.
+
+### Decision
+
+Maintain two distinct, coexisting session-cookie architectures within the monorepo:
+
+- **Tourist WebApp**: `@supabase/ssr` cookies, verified server-side via `supabase.auth.getUser()` on each request.
+- **Provider App, Agency Portal, Admin Portal**: a hand-set `sb-access-token` cookie, decoded as a JWT client-side in each app's Edge middleware without a server round-trip or signature verification.
+
+`packages/auth/src/SessionProvider.tsx` is the shared bridge that writes both cookie formats simultaneously so a single client-side auth component can serve all four apps' differing server-side session-reading strategies.
+
+### Consequences
+
+#### Positive
+
+- **No per-request Supabase network call in three apps' Edge middleware:** decoding the JWT locally avoids the latency and quota cost of calling `supabase.auth.getUser()` on every request routed through Provider App, Agency Portal, and Admin Portal middleware.
+- **Each app's session-reading strategy was addressable independently:** Tourist WebApp could adopt `@supabase/ssr` without requiring a coordinated migration of the other three apps' middleware in the same change.
+
+#### Negative
+
+- **Two divergent auth code paths to maintain:** a bug fix or security hardening applied to one cookie-reading strategy does not automatically apply to the other. As one symptom of this, `packages/auth/src/serverClaims.ts`'s docstring still states that its JWT-decoding pattern "mirrors the pattern already used in `apps/tourist-webapp/src/middleware.ts`" — no longer accurate, since Tourist WebApp's middleware moved to `@supabase/ssr` and no longer decodes the JWT manually; the comment was not updated when that migration happened.
+- **Unverified JWT decode in three apps:** Provider App, Agency Portal, and Admin Portal middleware decode the `sb-access-token` JWT payload without cryptographic signature verification against Supabase, relying on the cookie having been set only by the legitimate `SessionProvider` flow rather than on the token being independently re-verified per request.
+- **Not currently documented outside inline code comments:** `docs/SECURITY_AND_COMPLIANCE.md`'s description of cookie handling does not distinguish between the two schemes, describing httpOnly cookie handling uniformly across portals.
 
 ---
 

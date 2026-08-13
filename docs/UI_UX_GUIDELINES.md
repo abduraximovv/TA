@@ -8,10 +8,13 @@
 > "Immersive Minimalism" design language (source: Claude Design project `Design System Kitchen
 > Sink.dc.html`, Uzbekistan Digital Tourism Ecosystem — Design Tokens v1.0), currently
 > implemented on the **Tourist WebApp landing/marketing pages** (`apps/tourist-webapp/src/components/landing/*`,
-> `Navbar.tsx`, `Footer.tsx`). It's applied there via inline hex values, not yet wired into
-> `packages/ui/tailwind.config.ts` (which still carries an older, unrelated "Travelora"
-> blue/coral palette used by other in-progress screens). Treat this doc as the target system for
-> the shared component library; §2.1 lists the migration gap.
+> `Navbar.tsx`, `Footer.tsx`) **and, as of the AI features (chat, menu scanner, itinerary
+> planner), on those full-screen panels too** (`apps/tourist-webapp/src/components/ai/*`,
+> `apps/tourist-webapp/src/components/booking/ItineraryGenerator.tsx`,
+> `apps/tourist-webapp/src/app/ai-chat/page.tsx`). It's applied there via inline hex values, not
+> yet wired into `packages/ui/tailwind.config.ts` (which still carries an older, unrelated
+> "Travelora" blue/coral palette used by other in-progress screens). Treat this doc as the target
+> system for the shared component library; §2.1 lists the migration gap.
 
 ---
 
@@ -63,10 +66,13 @@ All four portals share a unified component library located in `packages/ui/`. Th
 
 > **Migration gap:** `packages/ui/tailwind.config.ts` has not yet been updated with the Immersive
 > Minimalism tokens in §4/§12 below — it still defines an older "Travelora" blue/coral palette.
-> The Tourist WebApp landing page currently implements the new system with inline hex values
-> instead of Tailwind theme classes. Moving those tokens into the shared Tailwind config (so
-> `bg-emerald-950`, `text-gold-400`, etc. work platform-wide) is outstanding follow-up work, not
-> yet done.
+> The Tourist WebApp landing page, and now the AI feature panels (`components/ai/GeometricLoader.tsx`,
+> `components/ai/MenuScanner.tsx`, `components/booking/ItineraryGenerator.tsx`, `app/ai-chat/page.tsx`),
+> implement the new system the same way — inline hex values on each element instead of Tailwind
+> theme classes. The color values themselves are correct and consistent with §4 wherever checked;
+> only the delivery mechanism (inline styles vs. Tailwind utilities) is the gap. Moving the tokens
+> into the shared Tailwind config (so `bg-emerald-950`, `text-gold-400`, etc. work platform-wide)
+> is outstanding follow-up work, not yet done.
 
 ```
 packages/ui/
@@ -242,6 +248,16 @@ straight edges read as more editorial, reserving fully-rounded shapes for pill/c
 | `rounded-lg` | 6px | Cards |
 | `rounded-xl` | 16px | Modals, sheets |
 | `rounded-full` | 9999px | Avatars, status dots, badges, frosted circular CTAs |
+
+> **Implementation note:** full-screen overlay panels — `AuthModal.tsx` and the newer AI feature
+> panels (`MenuScanner.tsx`, `ItineraryGenerator.tsx`, `app/ai-chat/page.tsx`) — consistently use
+> larger, softer radii than the table above for the surfaces inside them: **12px** for text/number/date
+> inputs and **16px** for cards, image previews, chat bubbles, and the upload dropzone, rather
+> than `rounded-sm` (3px, inputs) or `rounded-lg` (6px, cards). 16px is within the documented
+> `rounded-xl` value but that token is scoped above to "Modals, sheets," not card- or input-level
+> elements; 12px has no token in this scale at all. Treat 12px/16px as the de-facto radius pairing
+> for content inside modal/full-screen overlay surfaces until §12.1's token set is revisited to
+> include it explicitly.
 
 ---
 

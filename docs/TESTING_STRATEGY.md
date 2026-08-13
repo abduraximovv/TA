@@ -339,12 +339,16 @@ describe('POST /api/v1/bookings', () => {
 | 7 | Provider receives booking → accepts | Provider | P0 |
 | 8 | Agency views provider inventory → filters | Agency | P0 |
 | 9 | Agency creates itinerary → adds services | Agency | P1 |
-| 10 | Agency CRM kanban → drags booking card | Agency | P1 |
+| 10 | Agency reviews bookings → accepts/declines via data table | Agency | P1 |
 | 11 | Admin views pending providers → approves one | Admin | P0 |
 | 12 | Admin views analytics dashboard | Admin | P1 |
 | 13 | Admin views heatmap | Admin | P1 |
 | 14 | Full booking flow: Tourist books → Provider accepts → Confirmed | Cross-portal | P0 |
 | 15 | Tourist leaves review after completed booking | Tourist | P1 |
+| 16 | Tourist chats with the AI assistant (Kimi) for trip questions | Tourist | P1 |
+| 17 | Tourist generates an AI itinerary suggestion → saves it to My Trips | Tourist | P1 |
+
+> **Implementation status:** Flow #6 (Provider Online/Offline toggle) has no corresponding UI yet — `services.is_available` exists as a DB column but nothing in `provider-app` currently reads or writes it, so this flow is not yet testable end-to-end. Flow #10 reflects the agency booking management UI as actually shipped — the kanban board originally planned for this flow was formally descoped in favor of the data-table + detail-panel UI already in production. Flow #13 (Admin heatmap) currently renders a static placeholder ("Mapbox Integration Pending") with no real map or data binding, so there is no functional heatmap to assert against yet.
 
 ### 5.3 E2E Test Example
 
@@ -515,6 +519,8 @@ Run Lighthouse audits on every PR:
 ---
 
 ## 11. CI Pipeline Integration
+
+> **Current status:** No CI pipeline is wired up yet — there is no `.github/workflows` directory in the repository, `turbo.json` currently defines only `build`, `lint`, and `dev` tasks (no `test:unit`, `test:integration`, `test:e2e`, or `type-check`), and the root `package.json`'s `test` script is still the default placeholder (`echo "Error: no test specified" && exit 1`). The workflow and scripts below describe the CI setup this strategy calls for; wiring them up (the workflow file, the Turborepo tasks, and per-app test scripts) remains outstanding implementation work.
 
 ### 11.1 Test Stages in GitHub Actions
 

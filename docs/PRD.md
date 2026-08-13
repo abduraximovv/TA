@@ -184,6 +184,7 @@ Features are categorized into four levels based on technical complexity and busi
 | **Description** | Interactive Mapbox-powered map showing categorized pins for SOS hubs, clean public toilets, cultural sites, festivals, pharmacies, ATMs, and WiFi hotspots |
 | **User Story** | As a tourist, I want to see safety-critical locations on a map so I can navigate Uzbekistan safely and confidently. |
 | **Acceptance Criteria** | ① Map loads within 2 seconds ② At least 6 pin categories are visible ③ Tapping a pin shows name, description, and "Get Directions" button ④ Map data is cached for offline use ⑤ User's current location is shown on the map |
+| **Implementation Notes** | Shipped map (`/map`) is built on Leaflet with CartoDB tiles, not Mapbox, and surfaces only 3 pin categories — destinations, experiences, and events (sourced from the `destinations`/`services`/`events` tables). The 6 safety-critical categories in the spec (SOS hubs, toilets, pharmacies, ATMs, WiFi, cultural sites) are not present as a filterable layer, no offline caching was confirmed, and no "Get Directions" action was found. In their place, the page ships a rating/time-of-day-weighted "Live Activity" density overlay (explicitly labeled as not GPS-based), which functionally anticipates the Post-MVP F-T07 heatmap rather than fulfilling this feature's spec. |
 
 #### F-T02: Taste & Trust Dietary Scanner
 
@@ -194,6 +195,7 @@ Features are categorized into four levels based on technical complexity and busi
 | **Description** | Tourist photographs a Cyrillic/Uzbek menu; AI translates each dish, explains ingredients, and flags allergens (nuts, dairy, gluten, meat types) |
 | **User Story** | As a tourist with dietary restrictions, I want to scan a restaurant menu and understand what I can safely eat. |
 | **Acceptance Criteria** | ① Camera opens from a single button tap ② AI response returns within 5 seconds ③ Each dish shows: translated name, description, allergen icons ④ Supports Uzbek and Russian text ⑤ Works with low-quality images (phone camera in dim lighting) |
+| **Implementation Notes** | Implemented at `POST /api/v1/ai/scan-menu`, running on Moonshot's `kimi-k3` model rather than OpenAI. The returned dish schema (translated name, description, ingredients, allergens, dietary flags, pricing) matches the intended shape closely. Diverges from spec in three ways: sign-in is required (no anonymous scanning), the endpoint is rate-limited to 20 scans/hour with no daily cap currently enforced, and the response is returned as a flat JSON object rather than nested under a `data` key. |
 
 #### F-T03: Direct Discovery — Hidden Uzbekistan
 
@@ -204,6 +206,7 @@ Features are categorized into four levels based on technical complexity and busi
 | **Description** | Browse and book authentic local experiences (masterclasses, yurt stays, adventure activities) directly from verified providers |
 | **User Story** | As a tourist, I want to discover and book unique local experiences that aren't available on mainstream travel sites. |
 | **Acceptance Criteria** | ① Service cards show photo, title, price, rating, and distance ② Filter by category, price range, and distance ③ Booking flow: select date → confirm → notification sent to provider ④ Booking confirmation page with provider contact |
+| **Implementation Notes** | Discovery, filtering, and the date/time/guest booking flow (`POST /api/v1/bookings`) are implemented and create a `pending` booking. AC③ is not fully met — no notification is created for the provider on booking submission, and the provider app has no in-app notification UI (providers only see new bookings by having their Bookings page open, refreshed via Realtime). AC④ is not implemented — the flow shows a toast and redirects to `/profile?booked=true`, with no dedicated confirmation page or displayed provider contact. |
 
 #### F-T04: Contextual Translator
 
@@ -214,6 +217,7 @@ Features are categorized into four levels based on technical complexity and busi
 | **Description** | Built-in text/voice translator optimized for Uzbek travel scenarios (bargaining, taxi directions, dietary restrictions) |
 | **User Story** | As a tourist who doesn't speak Uzbek or Russian, I want to communicate basic needs to locals. |
 | **Acceptance Criteria** | ① Text input produces translation within 2 seconds ② Voice input supported (speech-to-text) ③ Common phrases pre-loaded for offline use ④ Cultural context notes included where relevant |
+| **Implementation Notes** | The backing endpoint (`POST /api/v1/ai/translate`) was changed to a new request/response contract (`{text, context_situation, target_language}` → `{success, translation}`, a single non-streamed JSON response) and now runs on Moonshot's `kimi-k3` model. The `/translator` page's component (`ContextualTranslator.tsx`) was not updated to match — it still posts the old `{prompt}` shape and expects a streamed response, so submissions from this page currently fail. The page has also been removed from all in-app navigation (Navbar, bottom nav, floating widgets); the FAB that used to open it now opens the AI chat assistant instead (see F-T09). The `/translator` route and component still exist and remain reachable by direct URL. Voice input and the offline common-phrases fallback remain functional within the page itself. |
 
 #### F-T05: User Authentication
 
@@ -224,6 +228,18 @@ Features are categorized into four levels based on technical complexity and busi
 | **Description** | Registration and login via email/password or Google OAuth |
 | **User Story** | As a tourist, I want to create an account quickly to save my preferences and bookings. |
 | **Acceptance Criteria** | ① Registration in under 60 seconds ② Google OAuth single-click login ③ Profile page with name, photo, and travel dates ④ Session persists across browser closes |
+| **Implementation Notes** | Email/password and Google OAuth are both implemented, and sessions persist across browser closes. AC③ is only partially met — the profile page shows name, email, and a verification badge, but has no photo/avatar upload and no travel-dates field. |
+
+#### F-T09: AI Chat Assistant (net-new, not in original spec)
+
+| Field | Details |
+|---|---|
+| **Priority** | Not originally scoped — shipped 2026-08-12 |
+| **Level** | N/A — implemented ahead of, and outside, this document's formal feature list |
+| **Description** | Persistent AI chat assistant ("Kimi," powered by Moonshot's `kimi-k3` model) with per-user conversation history, reached via a global floating action button across tourist-webapp. Replaced the previous pair of separate AI-assistant and translator floating buttons. |
+| **User Story** | As a tourist, I want to ask a general-purpose AI assistant questions about my trip and have it remember our conversation, so I don't have to re-explain context every time. |
+| **Acceptance Criteria** | *(not defined in advance — feature was implemented without a preceding spec in this document)* |
+| **Implementation Notes** | Implemented as `GET/POST /api/v1/ai/chat`, backed by a new `ai_chat_messages` table (RLS-scoped to `auth.uid() = user_id`, insert/select only — no update or delete policy). Signed-in users get server-persisted history (last 20 turns used as model context, last 50 returned to the client on load); anonymous users get an unpersisted, client-supplied and server-sanitized history instead. Rate-limited to 60 requests/hour with no daily cap. This feature has no prior entry in this PRD. |
 
 ---
 
@@ -238,6 +254,7 @@ Features are categorized into four levels based on technical complexity and busi
 | **Description** | Dead-simple "Online/Offline" toggle that updates provider availability in real-time across all portals |
 | **User Story** | As a local provider, I want to toggle my availability with one tap so agencies and tourists know when I'm available. |
 | **Acceptance Criteria** | ① Single toggle button on the main screen ② Status updates in under 1 second ③ Agencies see updated availability instantly ④ Toggle state persists if app is closed |
+| **Implementation Notes** | Not implemented. A backing `services.is_available` column exists in the database, but no UI in provider-app reads or writes it. |
 
 #### F-P02: Booking Management
 
@@ -248,6 +265,7 @@ Features are categorized into four levels based on technical complexity and busi
 | **Description** | Receive push notifications for new booking requests; 1-click Accept/Decline interface |
 | **User Story** | As a local provider, I want to be notified immediately when I receive a booking so I can respond quickly. |
 | **Acceptance Criteria** | ① Push notification received within 10 seconds of booking ② Accept/Decline buttons on notification card ③ Accepted bookings appear in "My Bookings" list ④ Tourist receives confirmation/decline notification |
+| **Implementation Notes** | Accept/Decline (AC③) and tourist notification on decision (AC④) are implemented — status changes are written to `booking_status_history` and a `notifications` row is inserted for the tourist. AC① and AC② are not implemented — there is no push notification of any kind; providers only learn of a new booking by having the Bookings page open, where a Realtime subscription refetches the list. |
 
 #### F-P03: Micro-Franchise Profile
 
@@ -258,6 +276,7 @@ Features are categorized into four levels based on technical complexity and busi
 | **Description** | Basic form to upload photos, set prices, describe services. AI auto-translates from Uzbek to English/Russian |
 | **User Story** | As a local provider, I want to create a professional profile for my service so tourists and agencies can find and book me. |
 | **Acceptance Criteria** | ① Form fields: title, description, photos (up to 5), price, duration, max guests ② AI auto-translates descriptions ③ Preview card shows how tourists will see the listing ④ Submitted profile enters verification queue |
+| **Implementation Notes** | The listing form supports a single `image_url` rather than up to 5 photos, and has no duration or max-guests fields. AI auto-translation of descriptions is not implemented. There is no distinct "preview card" step in the form flow. Verification exists as a separate, account-level `provider_verifications` flow rather than a per-listing queue. |
 
 #### F-P04: Provider Authentication
 
@@ -268,6 +287,7 @@ Features are categorized into four levels based on technical complexity and busi
 | **Description** | Simplified registration with phone number or email |
 | **User Story** | As a local provider with limited tech skills, I want to register easily without complicated forms. |
 | **Acceptance Criteria** | ① Registration in under 2 minutes ② Phone number OTP verification ③ Minimal required fields (name, phone, service type) |
+| **Implementation Notes** | Registration collects business name, email, phone, and password as plain text fields; there is no OTP verification step and no service-type field. |
 
 ---
 
@@ -282,6 +302,7 @@ Features are categorized into four levels based on technical complexity and busi
 | **Description** | Live dashboard showing all available local providers, updated in real-time based on their Online/Offline toggle |
 | **User Story** | As an agency manager, I want to see which providers are currently available so I can build itineraries with real-time data. |
 | **Acceptance Criteria** | ① Provider cards show: name, service, status (green/red), price, rating ② Filters by category, location, price, availability ③ Real-time updates without page refresh ④ Click to view full provider profile |
+| **Implementation Notes** | The agency-portal "Inventory" page manages only the agency's own listed services, not a live cross-platform view of other providers. There is no browsing UI for other providers' listings, no availability status indicators, and no real-time cross-provider updates anywhere in agency-portal. |
 
 #### F-A02: Booking CRM
 
@@ -292,6 +313,7 @@ Features are categorized into four levels based on technical complexity and busi
 | **Description** | Kanban-style board tracking tourist bookings across states (Pending → Accepted → Confirmed → Completed) |
 | **User Story** | As an agency manager, I want to track all my bookings in one place so I never lose track of a client's reservation. |
 | **Acceptance Criteria** | ① Kanban columns match booking statuses ② Drag-and-drop cards between columns ③ Click card to see full booking details ④ Filter by date range, provider, tourist |
+| **Implementation Notes** | Implemented as a data table with a details side panel and binary Accept/Decline actions, not a Kanban board — there is no drag-and-drop between statuses. This was a deliberate simplification rather than an oversight. |
 
 #### F-A03: Itinerary Canvas V1
 
@@ -302,6 +324,7 @@ Features are categorized into four levels based on technical complexity and busi
 | **Description** | Drag-and-drop calendar where agencies assign booked services to specific days, with automatic price calculation |
 | **User Story** | As an agency manager, I want to visually build trip itineraries by dragging services onto a calendar. |
 | **Acceptance Criteria** | ① Calendar view with day columns ② Drag services from inventory sidebar ③ Total price updates on every change ④ Export itinerary as PDF ⑤ Share with tourist via link |
+| **Implementation Notes** | Implemented as a plain form-based CRUD flow ("Packages") for bundling services into an itinerary with a title, date range, and status — there is no calendar view, drag-and-drop, PDF export, or shareable link. This was a deliberate simplification rather than an oversight. |
 
 #### F-A04: Agency Authentication
 
@@ -312,6 +335,7 @@ Features are categorized into four levels based on technical complexity and busi
 | **Description** | Agency registration with company details; team member invitation system |
 | **User Story** | As an agency manager, I want to create a team account so my colleagues can manage bookings together. |
 | **Acceptance Criteria** | ① Company registration with license number ② Invite team members via email ③ Role-based access (manager, agent) |
+| **Implementation Notes** | Registration collects company name, email, phone, and password; there is no license-number field, no team-member invitation system, and no role-based access. |
 
 ---
 
@@ -336,6 +360,7 @@ Features are categorized into four levels based on technical complexity and busi
 | **Description** | Macro-view dashboard showing total active tourists, providers, bookings, and GMV |
 | **User Story** | As an admin, I want to see platform health metrics at a glance to demonstrate value to stakeholders. |
 | **Acceptance Criteria** | ① KPI cards: active tourists, verified providers, bookings (today/week/month), GMV ② Line charts for trends ③ Date range selector ④ Data refreshes every 5 minutes |
+| **Implementation Notes** | KPI cards (active tourists, pending verifications, total bookings, GMV) and bar-chart breakdowns (bookings by status, users by role, top services, 7-day revenue) are implemented, fetched once per page load. There is no dedicated "verified providers" KPI card, no date-range selector, no confirmed 5-minute auto-refresh, and trend visualizations are bar charts rather than line charts. |
 
 #### F-M03: Heatmap Oversight
 
@@ -346,6 +371,7 @@ Features are categorized into four levels based on technical complexity and busi
 | **Description** | Real-time heatmap of tourist clustering using anonymized geolocation data from active PWA sessions |
 | **User Story** | As an admin, I want to see where tourists are concentrated to identify bottleneck areas and inform policy decisions. |
 | **Acceptance Criteria** | ① Mapbox heatmap layer updates every 60 seconds ② Color intensity reflects tourist density ③ Filter by city/region ④ Data is anonymized (no individual tracking) |
+| **Implementation Notes** | Not implemented. The admin dashboard renders a placeholder card containing the literal text "Mapbox Integration Pending (Stage 2)" with no map, PostGIS query, or bound data. |
 
 ---
 
@@ -353,19 +379,19 @@ Features are categorized into four levels based on technical complexity and busi
 
 ### Level 2 (Post-MVP Enhancement)
 
-| ID | Feature | Portal | Priority |
-|---|---|---|---|
-| F-T06 | Contextual Notification Engine | Tourist | P2 |
-| F-T07 | Live Hidden Uzbekistan Heatmap | Tourist | P2 |
-| F-T08 | Trust-Based Impact Passport | Tourist | P2 |
+| ID | Feature | Portal | Priority | Implementation Notes |
+|---|---|---|---|---|
+| F-T06 | Contextual Notification Engine | Tourist | P2 | Minimal/partial. Only booking-accepted/declined Realtime toasts exist (`components/providers/RealtimeNotifications.tsx`); no general contextual or proximity-based engine. |
+| F-T07 | Live Hidden Uzbekistan Heatmap | Tourist | P2 | Substantially implemented ahead of its Post-MVP priority — see F-T01's Implementation Notes. The `/map` "Live Activity" overlay is a rating/time-of-day-weighted estimate, explicitly not GPS-based. |
+| F-T08 | Trust-Based Impact Passport | Tourist | P2 | Not implemented. No passport/impact-stamp UI exists in tourist-webapp. |
 
 ### Level 3 (Pitch-Winning Features)
 
-| ID | Feature | Portal | Priority |
-|---|---|---|---|
-| F-A05 | Collaborative AI Itinerary Canvas | Agency + Tourist | P2 |
-| F-P05 | AI-Powered Service Standardization | Provider | P2 |
-| F-A06 | E-Mehmon & Gov-Compliance Automation | Agency + Admin | P3 |
+| ID | Feature | Portal | Priority | Implementation Notes |
+|---|---|---|---|---|
+| F-A05 | Collaborative AI Itinerary Canvas | Agency + Tourist | P2 | Shipped as a different feature than described here: `POST /api/v1/ai/itinerary-suggest` is a sign-in-required, tourist-facing AI self-service trip planner (request: `{days, budget_usd, interests, start_date}`), not an agency-facing collaborative canvas — there is no agency collaboration and no drag-and-drop canvas UI involved. It generates a day-by-day plan via Moonshot's `kimi-k3` model, grounds suggestions in real `services` listings from a fixed set of rural regions, and the result can be saved to a tourist-owned (`tourist_id`) itinerary. Rate-limited to 10 requests/hour with no daily cap. |
+| F-P05 | AI-Powered Service Standardization | Provider | P2 | Not implemented — same gap as F-P03's missing AI auto-translation of descriptions. |
+| F-A06 | E-Mehmon & Gov-Compliance Automation | Agency + Admin | P3 | Not implemented. |
 
 ### Level 4 (Post-Funding Vision)
 
@@ -471,9 +497,9 @@ Features are categorized into four levels based on technical complexity and busi
 
 1. Tourists will use QR codes at airports/hotels to access the PWA without App Store downloads.
 2. Rural providers have basic smartphone access (Android, 3G minimum).
-3. OpenAI API will remain available and affordable for Uzbekistan-based requests.
+3. OpenAI API will remain available and affordable for Uzbekistan-based requests. *(Implementation note: shipped AI features currently run on Moonshot's `kimi-k3` model rather than OpenAI.)*
 4. Government (E-Mehmon system) will eventually provide API access for compliance automation.
-5. Mapbox provides adequate map coverage for rural Uzbekistan.
+5. Mapbox provides adequate map coverage for rural Uzbekistan. *(Implementation note: the shipped `/map` page currently uses Leaflet with CartoDB tiles rather than Mapbox.)*
 
 ### 9.2 Constraints
 
@@ -490,8 +516,8 @@ Features are categorized into four levels based on technical complexity and busi
 | Dependency | Type | Risk | Mitigation |
 |---|---|---|---|
 | Supabase platform availability | External service | Medium | Open-source; can self-host if needed |
-| OpenAI API access from Uzbekistan | External service | Medium | Use proxy/edge function; cache common translations |
-| Mapbox coverage in rural areas | External service | Low | Supplement with OpenStreetMap data |
+| OpenAI API access from Uzbekistan | External service | Medium | Use proxy/edge function; cache common translations. *Shipped AI routes currently call Moonshot's `kimi-k3` model instead of OpenAI.* |
+| Mapbox coverage in rural areas | External service | Low | Supplement with OpenStreetMap data. *The shipped map currently uses Leaflet + CartoDB tiles, not Mapbox.* |
 | Government E-Mehmon API | External (future) | High | Build manual fallback; automate OCR independently |
 | Stripe payment processing in UZS | External service | High | Integrate Payme/Click (local) as primary payment |
 | Rural internet infrastructure | Infrastructure | High | Aggressive PWA offline caching strategy |
