@@ -76,6 +76,51 @@ export interface Review {
   created_at: string;
 }
 
+/**
+ * Lean, AI-facing projection of a `services` row -- deliberately not the full `Service` shape
+ * from packages/database (which the DB itself doesn't fully match anymore either -- e.g. it's
+ * missing is_rural_provider/provider_name, both present on the live table). Used by
+ * GET /api/v1/ai/search-services, capped to 5 results so it's cheap to feed into a Kimi prompt.
+ */
+export interface AIServiceSearchResult {
+  id: string;
+  title: string;
+  description: string | null;
+  category: string;
+  price: number;
+  currency: string;
+  region: string | null;
+  city: string | null;
+  /** Drives the platform's "Hidden Uzbekistan" decentralization mission -- see PRD.md §2. */
+  is_rural_provider: boolean;
+  provider_name: string | null;
+  rating_avg: number;
+  rating_count: number;
+  duration_minutes: number | null;
+  max_guests: number | null;
+  image_url: string | null;
+}
+
+export interface PlanTripMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
+/** Response shape for POST /api/v1/ai/plan-trip -- recommended_services is a subset of the
+ *  actual rows returned by the search-services call made mid-conversation (never model-invented;
+ *  the route filters by ID against the real result set, then maps back to full rows, so the
+ *  Compass can render cards without a second round-trip). Empty when the tourist hasn't given
+ *  the coordinator enough to search on yet. travel_date/guest_count are best-effort extractions
+ *  from the conversation (server-validated; travel_date is null unless it's a real YYYY-MM-DD),
+ *  used to pre-fill the one-click booking flow -- the Compass still asks the tourist to fill
+ *  in a date if the conversation never gave one. */
+export interface PlanTripResponse {
+  reply_text: string;
+  recommended_services: AIServiceSearchResult[];
+  travel_date: string | null;
+  guest_count: number;
+}
+
 export interface ItinerarySuggestRequest {
   days: number;
   budget_usd: number;

@@ -2,29 +2,12 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
-import { X, MapPin, Check, Loader2 } from "lucide-react";
+import { X, Send, Compass } from "lucide-react";
 import { useAuth } from "@repo/auth";
-import { Button } from "@repo/ui";
-import type { ItinerarySuggestResponse } from "@repo/types";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { GeometricLoader } from "@/components/ai/GeometricLoader";
-import { saveGeneratedItinerary } from "@/app/actions/itinerary";
-
-const INTEREST_OPTIONS = ["Culture", "Nature", "Food", "Adventure"];
-
-// Full generation runs 60-170+ seconds on Kimi -- these cycle every few seconds so the wait
-// reads as "working" rather than "stuck".
-const LOADING_MESSAGES = [
-  "Analyzing your interests…",
-  "Mapping decentralized routes across Uzbekistan…",
-  "Finding hidden yurts, artisans and mountain trails…",
-  "Balancing your budget day by day…",
-  "Almost there — finalizing your itinerary…",
-];
-
-function todayIso() {
-  return new Date().toISOString().slice(0, 10);
-}
+import { RecommendedServiceCard } from "@/components/booking/RecommendedServiceCard";
+import type { AIServiceSearchResult } from "@repo/types";
 
 interface ItineraryGeneratorProps {
   /** Controlled, same pattern as MenuScanner/AuthModal -- lets each host screen supply its own trigger. */
@@ -32,370 +15,280 @@ interface ItineraryGeneratorProps {
   onOpenChange: (open: boolean) => void;
 }
 
+type CompassMessage = {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  /** Only ever set on assistant messages, straight from that turn's /api/v1/ai/plan-trip response. */
+  recommendedServices?: AIServiceSearchResult[];
+  travelDate?: string | null;
+  guestCount?: number;
+};
+
+const WELCOME_MESSAGE: CompassMessage = {
+  id: "welcome",
+  role: "assistant",
+  content:
+    "Assalomu Alaykum! I am your AI Travel Coordinator. Tell me about your ideal trip to Uzbekistan (budget, interests, dates) and I'll build a custom package for you!",
+};
+
+function createId() {
+  if (typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID();
+  return `msg-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
 export function ItineraryGenerator({ isOpen, onOpenChange }: ItineraryGeneratorProps) {
   const { user } = useAuth();
   const prefersReducedMotion = useReducedMotion();
 
-  const [days, setDays] = useState(5);
-  const [budgetUsd, setBudgetUsd] = useState(300);
-  const [interests, setInterests] = useState<string[]>(["Culture"]);
-  const [startDate, setStartDate] = useState(todayIso());
-
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
-  const [result, setResult] = useState<ItinerarySuggestResponse | null>(null);
+  const [messages, setMessages] = useState<CompassMessage[]>([WELCOME_MESSAGE]);
+  const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const [isSaving, setIsSaving] = useState(false);
-  const [saveState, setSaveState] = useState<"idle" | "saved" | "error">("idle");
+  const bottomRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (!isGenerating) {
-      setLoadingMessageIndex(0);
-      return;
+    if (isOpen && user) {
+      bottomRef.current?.scrollIntoView({ behavior: prefersReducedMotion ? "auto" : "smooth" });
     }
-    const interval = setInterval(() => {
-      setLoadingMessageIndex((i) => (i + 1) % LOADING_MESSAGES.length);
-    }, 8000);
-    return () => clearInterval(interval);
-  }, [isGenerating]);
+  }, [messages, isLoading, isOpen, user, prefersReducedMotion]);
 
-  const reset = () => {
-    setResult(null);
-    setError(null);
-    setIsGenerating(false);
-    setSaveState("idle");
-  };
+  useEffect(() => {
+    if (!isOpen || !user) return;
+    // Let the slide-up settle before stealing focus, otherwise the on-screen keyboard fights
+    // the drawer's entrance animation on mobile.
+    const t = setTimeout(() => inputRef.current?.focus(), 320);
+    return () => clearTimeout(t);
+  }, [isOpen, user]);
 
   const close = () => {
     onOpenChange(false);
-    reset();
   };
 
-  const toggleInterest = (interest: string) => {
-    setInterests((prev) => (prev.includes(interest) ? prev.filter((i) => i !== interest) : [...prev, interest]));
-  };
+  const handleSend = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const text = input.trim();
+    if (!text || isLoading) return;
 
-  const handleGenerate = async () => {
-    if (interests.length === 0) {
-      setError("Pick at least one interest.");
-      return;
-    }
-    setIsGenerating(true);
+    const userMessage: CompassMessage = { id: createId(), role: "user", content: text };
+    const history = [...messages, userMessage];
+    setMessages(history);
+    setInput("");
     setError(null);
-    setResult(null);
-    setSaveState("idle");
+    setIsLoading(true);
 
     try {
-      const res = await fetch("/api/v1/ai/itinerary-suggest", {
+      const res = await fetch("/api/v1/ai/plan-trip", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ days, budget_usd: budgetUsd, interests, start_date: startDate }),
+        body: JSON.stringify({
+          // The new user message is already appended to `history` above, and plan-trip requires
+          // the last entry in the array to be the user's turn -- unlike the old /api/v1/ai/chat
+          // shape (separate content + history), everything goes in one ordered array here.
+          messages: history.filter((m) => m.id !== "welcome").map((m) => ({ role: m.role, content: m.content })),
+        }),
       });
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        throw new Error(
-          data.error === "RATE_LIMITED"
-            ? "You've hit the hourly limit for trip planning. Try again in a bit."
-            : data.error || "Couldn't plan your trip. Please try again."
-        );
+        if (res.status === 429) throw new Error("You've reached the hourly limit for trip planning. Please try again later.");
+        throw new Error(data.error || "Couldn't reach your travel coordinator right now.");
       }
 
-      setResult({ total_estimated_cost: data.total_estimated_cost, days: data.days });
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: createId(),
+          role: "assistant",
+          content: data.reply_text,
+          recommendedServices: data.recommended_services,
+          travelDate: data.travel_date,
+          guestCount: data.guest_count,
+        },
+      ]);
     } catch (err: any) {
       setError(err.message || "Something went wrong. Please try again.");
     } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  const handleSave = async () => {
-    if (!result) return;
-    setIsSaving(true);
-    setSaveState("idle");
-    try {
-      const res = await saveGeneratedItinerary({
-        ...result,
-        title: `${days}-Day Uzbekistan Trip`,
-        start_date: startDate,
-        interests,
-      });
-      setSaveState(res.success ? "saved" : "error");
-    } catch {
-      setSaveState("error");
-    } finally {
-      setIsSaving(false);
+      setIsLoading(false);
     }
   };
 
   return (
     <>
-      {/* No account yet: swap the planner panel for the sign-in prompt instead of opening it. */}
+      {/* No account yet: swap the coordinator drawer for the sign-in prompt instead of opening it. */}
       <AuthModal isOpen={isOpen && !user} onOpenChange={(open) => { if (!open) onOpenChange(false); }} />
 
       <AnimatePresence>
         {isOpen && user && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: prefersReducedMotion ? 0 : 0.25 }}
-            className="fixed inset-0 z-[110] flex flex-col"
-            style={{ background: "#F9F8F5" }}
-          >
-            <header
-              className="flex-shrink-0 flex items-center justify-between border-b"
+          <React.Fragment key="compass-drawer">
+            {/* Backdrop */}
+            <motion.div
+              key="backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: prefersReducedMotion ? 0 : 0.25 }}
+              onClick={close}
+              className="fixed inset-0 z-[109]"
+              style={{ background: "rgba(10,35,32,0.45)" }}
+            />
+
+            {/* Sliding mini-chat drawer -- tightly integrated, not a full-screen takeover */}
+            <motion.div
+              key="drawer"
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={prefersReducedMotion ? { duration: 0 } : { type: "spring", damping: 32, stiffness: 320 }}
+              className="fixed inset-x-0 bottom-0 z-[110] flex flex-col mx-auto"
               style={{
-                paddingTop: "calc(var(--safe-top) + 14px)",
-                paddingBottom: 14,
-                paddingLeft: 16,
-                paddingRight: 16,
-                background: "#FFFFFF",
-                borderColor: "rgba(10,35,32,0.08)",
+                height: "min(82vh, 640px)",
+                maxWidth: 560,
+                background: "#F9F8F5",
+                borderRadius: "24px 24px 0 0",
+                boxShadow: "0 -20px 60px rgba(0,0,0,0.35)",
+                overflow: "hidden",
               }}
             >
-              <div className="font-serif font-semibold text-[17px]" style={{ color: "#0A2320" }}>
-                Itinerary Canvas
-              </div>
-              <button
-                onClick={close}
-                aria-label="Close itinerary planner"
-                className="tap-target tap-active flex items-center justify-center rounded-full"
-                style={{ width: 36, height: 36, background: "rgba(10,35,32,0.05)", color: "#0A2320" }}
+              {/* Grabber + header */}
+              <div
+                className="flex-shrink-0"
+                style={{ padding: "10px 20px 16px", background: "#FFFFFF", borderBottom: "1px solid rgba(10,35,32,0.08)" }}
               >
-                <X className="w-5 h-5" />
-              </button>
-            </header>
-
-            <div className="flex-1 overflow-y-auto px-5 py-6" style={{ paddingBottom: "calc(var(--safe-bottom) + 24px)" }}>
-              <div className="max-w-lg mx-auto flex flex-col gap-6">
-                {!result && !isGenerating && (
-                  <>
-                    <p className="text-[13.5px] leading-relaxed" style={{ color: "rgba(10,35,32,0.65)" }}>
-                      Kimi designs a day-by-day plan that favors real yurt camps, artisan workshops and mountain
-                      homestays over crowded landmarks.
-                    </p>
-
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <label className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "rgba(10,35,32,0.5)" }}>
-                          Duration
-                        </label>
-                        <span className="font-mono text-[13px] font-semibold" style={{ color: "#0A2320" }}>
-                          {days} {days === 1 ? "day" : "days"}
-                        </span>
-                      </div>
-                      <input
-                        type="range"
-                        min={1}
-                        max={14}
-                        value={days}
-                        onChange={(e) => setDays(Number(e.target.value))}
-                        className="w-full accent-[#0A2320]"
-                      />
+                <div
+                  className="mx-auto mb-3"
+                  style={{ width: 36, height: 4, borderRadius: 9999, background: "rgba(10,35,32,0.15)" }}
+                />
+                <div className="flex items-center gap-3">
+                  <div
+                    className="rounded-full flex items-center justify-center shrink-0"
+                    style={{ width: 38, height: 38, background: "linear-gradient(135deg, #006B70, #0A2320)" }}
+                  >
+                    <Compass className="w-[18px] h-[18px]" style={{ color: "#FFFFFF" }} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-serif font-semibold text-[16px] truncate" style={{ color: "#0A2320" }}>
+                      AI Travel Coordinator
                     </div>
+                    <div className="text-[12px]" style={{ color: "rgba(10,35,32,0.5)" }}>
+                      Compass · Plan My Trip
+                    </div>
+                  </div>
+                  <button
+                    onClick={close}
+                    aria-label="Close"
+                    className="tap-target tap-active flex items-center justify-center rounded-full shrink-0"
+                    style={{ width: 32, height: 32, background: "rgba(10,35,32,0.05)", color: "#0A2320" }}
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
 
-                    <div>
-                      <label
-                        className="text-[11px] font-bold uppercase tracking-wider mb-2 block"
-                        style={{ color: "rgba(10,35,32,0.5)" }}
+              {/* Messages */}
+              <div className="flex-1 overflow-y-auto px-4 py-4">
+                <div className="flex flex-col gap-3">
+                  <AnimatePresence initial={false}>
+                    {messages.map((message) => (
+                      <motion.div
+                        key={message.id}
+                        initial={{ opacity: 0, scale: 0.92 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: prefersReducedMotion ? 0 : 0.25, ease: [0.4, 0, 0.2, 1] }}
+                        className="flex flex-col"
+                        style={{ alignItems: message.role === "user" ? "flex-end" : "flex-start" }}
                       >
-                        Budget (USD)
-                      </label>
-                      <input
-                        type="number"
-                        min={1}
-                        value={budgetUsd}
-                        onChange={(e) => setBudgetUsd(Number(e.target.value))}
-                        className="w-full text-[15px] outline-none"
-                        style={{
-                          background: "#FFFFFF",
-                          border: "1px solid rgba(10,35,32,0.15)",
-                          borderRadius: 12,
-                          padding: "11px 16px",
-                          color: "#0A2320",
-                        }}
-                      />
-                    </div>
-
-                    <div>
-                      <label
-                        className="text-[11px] font-bold uppercase tracking-wider mb-2 block"
-                        style={{ color: "rgba(10,35,32,0.5)" }}
-                      >
-                        Start Date
-                      </label>
-                      <input
-                        type="date"
-                        min={todayIso()}
-                        value={startDate}
-                        onChange={(e) => setStartDate(e.target.value)}
-                        className="w-full text-[15px] outline-none"
-                        style={{
-                          background: "#FFFFFF",
-                          border: "1px solid rgba(10,35,32,0.15)",
-                          borderRadius: 12,
-                          padding: "11px 16px",
-                          color: "#0A2320",
-                        }}
-                      />
-                    </div>
-
-                    <div>
-                      <label
-                        className="text-[11px] font-bold uppercase tracking-wider mb-2 block"
-                        style={{ color: "rgba(10,35,32,0.5)" }}
-                      >
-                        Interests
-                      </label>
-                      <div className="flex flex-wrap gap-2">
-                        {INTEREST_OPTIONS.map((interest) => {
-                          const active = interests.includes(interest);
-                          return (
-                            <button
-                              key={interest}
-                              type="button"
-                              onClick={() => toggleInterest(interest)}
-                              className="tap-active text-[13px] font-semibold rounded-full"
-                              style={{
-                                padding: "7px 16px",
-                                border: `1px solid ${active ? "#0A2320" : "rgba(10,35,32,0.15)"}`,
-                                background: active ? "#0A2320" : "#FFFFFF",
-                                color: active ? "#FFFFFF" : "#0A2320",
-                              }}
-                            >
-                              {interest}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {error && (
-                      <div
-                        className="text-[13px] rounded-xl px-4 py-3"
-                        style={{ background: "rgba(201,59,59,0.08)", color: "#C93B3B", border: "1px solid rgba(201,59,59,0.2)" }}
-                      >
-                        {error}
-                      </div>
-                    )}
-
-                    <Button variant="default" className="w-full h-12" onClick={handleGenerate}>
-                      Generate Itinerary
-                    </Button>
-                  </>
-                )}
-
-                {isGenerating && (
-                  <>
-                    <GeometricLoader label={LOADING_MESSAGES[loadingMessageIndex]} />
-                    <p className="text-[12px] text-center -mt-4" style={{ color: "rgba(10,35,32,0.45)" }}>
-                      A full itinerary can take a minute or two — worth the wait.
-                    </p>
-                  </>
-                )}
-
-                {result && (
-                  <>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="font-serif font-semibold text-[22px]" style={{ color: "#0A2320" }}>
-                          Your {result.days.length}-Day Trip
-                        </div>
-                        <div className="text-[13px]" style={{ color: "rgba(10,35,32,0.55)" }}>
-                          Starting {startDate}
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="font-mono text-[11px] uppercase tracking-wide" style={{ color: "rgba(10,35,32,0.45)" }}>
-                          Est. Total
-                        </div>
-                        <div className="font-mono text-[18px] font-bold" style={{ color: "#C5A880" }}>
-                          ${result.total_estimated_cost.toFixed(0)}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col gap-8">
-                      {result.days.map((day, dayIdx) => (
-                        <motion.div
-                          key={day.day_number}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ duration: prefersReducedMotion ? 0 : 0.3, delay: prefersReducedMotion ? 0 : dayIdx * 0.08 }}
+                        <div
+                          className="max-w-[85%] px-4 py-3 text-[14px] leading-relaxed whitespace-pre-wrap"
+                          style={{
+                            background: message.role === "user" ? "#0A2320" : "#FFFFFF",
+                            color: message.role === "user" ? "#F9F8F5" : "#0A2320",
+                            borderRadius: message.role === "user" ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
+                            boxShadow: "0 2px 10px rgba(10,35,32,0.06)",
+                            border: message.role === "user" ? "none" : "1px solid rgba(10,35,32,0.06)",
+                          }}
                         >
-                          <div className="flex items-baseline gap-3 mb-4">
-                            <div
-                              className="font-mono text-[11px] font-bold rounded-full flex items-center justify-center shrink-0"
-                              style={{ width: 26, height: 26, background: "#0A2320", color: "#F9F8F5" }}
-                            >
-                              {day.day_number}
-                            </div>
-                            <div className="font-serif font-semibold text-[17px]" style={{ color: "#0A2320" }}>
-                              {day.theme}
-                            </div>
-                          </div>
+                          {message.content}
+                        </div>
 
-                          <div className="flex flex-col" style={{ borderLeft: "2px solid rgba(10,35,32,0.1)", marginLeft: 13 }}>
-                            {day.activities.map((activity, actIdx) => (
-                              <div key={actIdx} className="relative pl-6 pb-6 last:pb-0">
-                                <div
-                                  className="absolute rounded-full"
-                                  style={{ width: 9, height: 9, background: "#006B70", left: -5.5, top: 4 }}
-                                />
-                                <div className="font-mono text-[11px] font-semibold mb-1" style={{ color: "#006B70" }}>
-                                  {activity.time}
-                                </div>
-                                <div className="font-semibold text-[14.5px] mb-1" style={{ color: "#0A2320" }}>
-                                  {activity.title}
-                                </div>
-                                <p className="text-[13px] leading-relaxed mb-1.5" style={{ color: "rgba(10,35,32,0.65)" }}>
-                                  {activity.description}
-                                </p>
-                                <div className="flex items-center gap-3 text-[11.5px]" style={{ color: "rgba(10,35,32,0.5)" }}>
-                                  <span className="flex items-center gap-1">
-                                    <MapPin className="w-3 h-3" /> {activity.location_name}
-                                  </span>
-                                  <span className="font-mono font-semibold" style={{ color: "#C5A880" }}>
-                                    ${activity.estimated_cost}
-                                  </span>
-                                </div>
-                              </div>
+                        {!!message.recommendedServices?.length && (
+                          <div className="w-full flex gap-3 overflow-x-auto scrollbar-hide" style={{ marginTop: 10, paddingBottom: 2 }}>
+                            {message.recommendedServices.map((service) => (
+                              <RecommendedServiceCard
+                                key={service.id}
+                                service={service}
+                                travelDate={message.travelDate ?? null}
+                                guestCount={message.guestCount ?? 1}
+                              />
                             ))}
                           </div>
-                        </motion.div>
-                      ))}
-                    </div>
+                        )}
+                      </motion.div>
+                    ))}
 
-                    <div className="flex gap-3">
-                      <Button variant="outline" className="flex-1" onClick={reset}>
-                        Plan Another
-                      </Button>
-                      <Button
-                        variant="default"
-                        className="flex-1 flex items-center justify-center gap-2"
-                        onClick={handleSave}
-                        disabled={isSaving || saveState === "saved"}
+                    {isLoading && (
+                      <motion.div
+                        key="thinking"
+                        initial={{ opacity: 0, scale: 0.92 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: prefersReducedMotion ? 0 : 0.25 }}
                       >
-                        {isSaving ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : saveState === "saved" ? (
-                          <Check className="w-4 h-4" />
-                        ) : null}
-                        {saveState === "saved" ? "Saved to My Trips" : "Save to My Trips"}
-                      </Button>
-                    </div>
-                    {saveState === "error" && (
-                      <div className="text-[13px] text-center" style={{ color: "#C93B3B" }}>
-                        Couldn't save your trip. Please try again.
-                      </div>
+                        <GeometricLoader label="Your coordinator is thinking…" />
+                      </motion.div>
                     )}
-                  </>
-                )}
+                  </AnimatePresence>
+
+                  {error && (
+                    <div className="text-[13px] text-center py-1" style={{ color: "#C93B3B" }}>
+                      {error}
+                    </div>
+                  )}
+
+                  <div ref={bottomRef} />
+                </div>
               </div>
-            </div>
-          </motion.div>
+
+              {/* Input */}
+              <form
+                onSubmit={handleSend}
+                className="flex-shrink-0 flex items-center gap-2"
+                style={{
+                  padding: "12px 16px",
+                  paddingBottom: "calc(var(--safe-bottom) + 12px)",
+                  background: "#FFFFFF",
+                  borderTop: "1px solid rgba(10,35,32,0.08)",
+                }}
+              >
+                <input
+                  ref={inputRef}
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder="Tell me about your trip..."
+                  aria-label="Message your AI Travel Coordinator"
+                  disabled={isLoading}
+                  className="flex-1 min-w-0 outline-none text-[14px]"
+                  style={{
+                    background: "#F9F8F5",
+                    border: "1px solid rgba(10,35,32,0.12)",
+                    borderRadius: 9999,
+                    padding: "11px 18px",
+                    color: "#0A2320",
+                  }}
+                />
+                <button
+                  type="submit"
+                  disabled={isLoading || !input.trim()}
+                  aria-label="Send"
+                  className="tap-active flex items-center justify-center rounded-full shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={{ width: 42, height: 42, background: "#006B70", color: "#FFFFFF" }}
+                >
+                  <Send className="w-[17px] h-[17px]" />
+                </button>
+              </form>
+            </motion.div>
+          </React.Fragment>
         )}
       </AnimatePresence>
     </>
