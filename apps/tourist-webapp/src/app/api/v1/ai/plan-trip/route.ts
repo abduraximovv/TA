@@ -258,32 +258,35 @@ CRITICAL RULES:
       // Hoist category/region so both searchServices and matchPackages use identical resolved values.
       const category = KNOWN_CATEGORIES.includes(intent.object.category ?? "") ? intent.object.category : null;
       const region = intent.object.region || null;
+      const maxPriceUzs = intent.object.max_price_uzs || null;
+      const normalizedTravelDate = normalizeTravelDate(intent.object.travel_date);
 
       let servicesContext = "No services context yet. The user just started the conversation.";
       const servicesById = new Map<string, AIServiceSearchResult>();
+      // Whichever filter combination actually produced servicesById below -- reused by the
+      // per-day exclusion re-fetch in the day loop further down so it draws from the same pool
+      // (category/region/maxPrice/travelDate), not a differently-filtered one.
+      let activeSearchFilters: { category: string | null; region: string | null; maxPrice: number | null; travelDate: string | null } = {
+        category,
+        region,
+        maxPrice: maxPriceUzs,
+        travelDate: normalizedTravelDate,
+      };
 
       // Always search — the bar for ready_to_search is now very low.
       if (intent.object.ready_to_search) {
-        const outcome = await searchServices(supabase, {
-          category,
-          region,
-          maxPrice: intent.object.max_price_uzs || null,
-          travelDate: normalizeTravelDate(intent.object.travel_date),
-        });
+        const outcome = await searchServices(supabase, activeSearchFilters);
         if (outcome.success && outcome.services.length > 0) {
           for (const svc of outcome.services) servicesById.set(svc.id, svc);
           servicesContext = `REAL_SERVICES (use ONLY these IDs):\n${JSON.stringify(outcome.services, null, 2)}`;
         } else {
           // Even with no matches, try a broader search with no filters at all
-          const broadOutcome = await searchServices(supabase, {
-            category: null,
-            region: null,
-            maxPrice: null,
-            travelDate: null,
-          });
+          const broadFilters = { category: null, region: null, maxPrice: null, travelDate: null };
+          const broadOutcome = await searchServices(supabase, broadFilters);
           if (broadOutcome.success && broadOutcome.services.length > 0) {
             for (const svc of broadOutcome.services) servicesById.set(svc.id, svc);
             servicesContext = `The user asked for something specific but no exact matches were found. Here are our BEST AVAILABLE services — use these to build an inspiring alternative itinerary. PIVOT AND SELL.\nREAL_SERVICES (use ONLY these IDs):\n${JSON.stringify(broadOutcome.services, null, 2)}`;
+            activeSearchFilters = broadFilters;
           } else {
             servicesContext = "No services are currently available in the database. Apologize warmly and let the user know we are onboarding new partners soon.";
           }
@@ -331,10 +334,16 @@ CRITICAL RULES:
         : "";
 
       // ── Pass 2a: reply text + day outline (fast) ───────────────────────────────────────
+      // DURATION RULE is scoped to this call specifically (not folded into COORDINATOR_SYSTEM,
+      // which the per-day slot calls below also use) -- it governs how many day_outline entries
+      // to generate, a decision that only happens here. Fixes the "AI recommends a 10-day
+      // package in text but outlines a 5-day DIY timeline" mismatch: without an explicit day
+      // count from the user, the model had nothing tying day_outline's length to whatever
+      // package it was verbally pitching via THE HOTEL RULE.
       const outlineResult = await generateObject({
         model: moonshot.chat("kimi-k3"),
         schema: outlineSchema,
-        system: `${COORDINATOR_SYSTEM}\n\n${servicesContext}\n\n${packagesContext}\n\n${anchorContext}`,
+        system: `${COORDINATOR_SYSTEM}\n\n${servicesContext}\n\n${packagesContext}\n\n${anchorContext}\n\nDURATION RULE: If the user does not explicitly state how many days their trip is, you MUST check the packagesContext. If you are recommending a specific package, your outline MUST generate the exact same number of days as that package's duration. Do not default to 3 or 5 days if a 10-day package is your primary recommendation.`,
         messages,
       });
 
@@ -386,17 +395,52 @@ CRITICAL RULES:
               //    Promise.all) so Day 1 is guaranteed to be the first thing enqueued -- matches
               //    what the user actually sees ("Day 1 appears fast, Day 5 still catching up"),
               //    rather than parallel calls that could resolve in any order.
-              const usedServiceIds = new Set<string>();
+              const usedServiceIds: Set<string> = new Set<string>();
               for (const day of outline) {
                 try {
+                  // Re-query per day once something has actually been used, instead of reusing
+                  // the single pre-loop servicesContext for every day and just *telling* the
+                  // model which ids to avoid -- that prompt instruction was observed being
+                  // ignored (e.g. the same Heliskiing service scheduled on multiple days).
+                  // excludeIds is enforced inside the RPC itself (see searchServices.ts /
+                  // search_available_services), so a used id is structurally absent from what
+                  // this day's call can even see -- not just discouraged. As a side effect this
+                  // also surfaces the "next best" services once the original top-N pool from
+                  // before the loop gets exhausted by earlier days.
+                  let dayServicesContext = servicesContext;
+                  let dayServicesById = servicesById;
+
+                  if (usedServiceIds.size > 0) {
+                    const excludeIds: string[] = Array.from(usedServiceIds);
+                    const freshOutcome = await searchServices(supabase, {
+                      ...activeSearchFilters,
+                      excludeIds,
+                    });
+
+                    if (freshOutcome.success && freshOutcome.services.length > 0) {
+                      dayServicesById = new Map(servicesById);
+                      const newlyDiscovered: AIServiceSearchResult[] = [];
+                      for (const svc of freshOutcome.services) {
+                        if (!dayServicesById.has(svc.id)) newlyDiscovered.push(svc);
+                        dayServicesById.set(svc.id, svc);
+                      }
+                      // The client's DICT: handler merges into its own map keyed by id (see
+                      // SafronCoordinator.tsx), so sending another DICT: chunk here is additive,
+                      // not a replacement -- safe even though the first DICT: chunk already went
+                      // out before this loop started.
+                      if (newlyDiscovered.length > 0) {
+                        controller.enqueue(encoder.encode(`DICT:${JSON.stringify(newlyDiscovered)}\n`));
+                      }
+                      dayServicesContext = `REAL_SERVICES (use ONLY these IDs -- already-used services from earlier days have been removed from this list, everything here is guaranteed unused so far):\n${JSON.stringify(freshOutcome.services, null, 2)}`;
+                    } else {
+                      dayServicesContext = "No further distinct services are available beyond what's already been scheduled on earlier days -- keep this day lighter (fewer slots) rather than repeating an earlier service.";
+                    }
+                  }
+
                   const dayResult = await generateObject({
                     model: moonshot.chat("kimi-k3"),
                     schema: daySlotsSchema,
-                    system: `${COORDINATOR_SYSTEM}\n\n${servicesContext}\n\n${packagesContext}\n\n${anchorContext}\n\nBuild ONLY Day ${day.day_number} ("${day.label}", in ${day.location}) of the itinerary already outlined below. Pick 2-3 REAL_SERVICES IDs for this day only, UNLESS the CRITICAL CONTEXT above says the user has an anchored package -- in that case pick only 1-2 filler services for this day, per THE ANCHOR RULE. Apply THE TIME MATH RULE, THE GEOFENCE RULE (every service picked must be in or near ${day.location} -- do not pick a service from a different city/district), and THE GASTRONOMY RULE (include a nearby lunch and/or dinner "food"/"dining"-category service at a realistic time, logically following the activity right before it) from the CRITICAL PLANNING ALGORITHM above.${
-                      usedServiceIds.size > 0
-                        ? ` Already used on earlier days (avoid repeating unless nothing else fits): ${Array.from(usedServiceIds).join(", ")}.`
-                        : ""
-                    }\n\nFULL OUTLINE (for context only, do not regenerate other days):\n${JSON.stringify(outline)}`,
+                    system: `${COORDINATOR_SYSTEM}\n\n${dayServicesContext}\n\n${packagesContext}\n\n${anchorContext}\n\nBuild ONLY Day ${day.day_number} ("${day.label}", in ${day.location}) of the itinerary already outlined below. Pick 2-3 REAL_SERVICES IDs for this day only, UNLESS the CRITICAL CONTEXT above says the user has an anchored package -- in that case pick only 1-2 filler services for this day, per THE ANCHOR RULE. Apply THE TIME MATH RULE, THE GEOFENCE RULE (every service picked must be in or near ${day.location} -- do not pick a service from a different city/district), and THE GASTRONOMY RULE (include a nearby lunch and/or dinner "food"/"dining"-category service at a realistic time, logically following the activity right before it) from the CRITICAL PLANNING ALGORITHM above.\n\nFULL OUTLINE (for context only, do not regenerate other days):\n${JSON.stringify(outline)}`,
                     messages,
                   });
 
@@ -407,7 +451,7 @@ CRITICAL RULES:
                       : [];
                   } catch { parsedSlots = []; }
 
-                  const validSlots = parsedSlots.filter(s => servicesById.has(s.service_id));
+                  const validSlots = parsedSlots.filter(s => dayServicesById.has(s.service_id));
                   if (validSlots.length > 0) {
                     for (const s of validSlots) usedServiceIds.add(s.service_id);
                     controller.enqueue(encoder.encode(`DAY:${JSON.stringify({ ...day, slots: validSlots })}\n`));

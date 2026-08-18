@@ -12,6 +12,12 @@ export interface ServiceSearchFilters {
   region?: string | null;
   maxPrice?: number | null;
   excludeId?: string | null;
+  /** Service IDs to hide from the candidate set entirely (e.g. already scheduled on earlier days
+   *  of a multi-day itinerary) -- enforced inside the RPC itself, not just filtered client-side,
+   *  so a service that's been excluded is structurally impossible for a caller (including an
+   *  LLM reading the result) to pick again. Independent of excludeId above, which a different
+   *  call site still uses for its own single-id case. */
+  excludeIds?: string[] | null;
   /** YYYY-MM-DD. When set, services with a full/blocked service_inventory row for this date are
    *  excluded; services with no inventory configured for the date are still included (unmanaged
    *  services are treated as always-open, see the service_inventory migration). */
@@ -52,6 +58,8 @@ export async function searchServices(
   // "5 highly relevant items" -- absent a real search-relevance score, highest-rated first is
   // the closest honest proxy (and matches the platform's "Trust Through Design" principle);
   // enforced inside the RPC itself (ORDER BY rating_avg DESC, LIMIT).
+  const excludeIds = filters.excludeIds && filters.excludeIds.length > 0 ? filters.excludeIds : null;
+
   const { data, error } = await supabase.rpc("search_available_services", {
     p_category: category,
     p_region: region,
@@ -59,6 +67,7 @@ export async function searchServices(
     p_exclude_id: filters.excludeId || null,
     p_travel_date: travelDate,
     p_limit: SEARCH_RESULT_LIMIT,
+    p_exclude_ids: excludeIds,
   });
 
   if (error) {
