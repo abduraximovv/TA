@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(env)",
+      "Bash(export SUPABASE_DB_PASSWORD=\"Abdurohman2007@\")",
+      "Bash(npx supabase *)",
+      "Bash(PGPASSWORD=\"Abdurohman2007@\" psql -h db.foatmzdgdidvtzryqrsv.supabase.co -U postgres -d postgres -f supabase/migrations/20260816010000_package_showcase.sql)"
+    ]
+  }
+}

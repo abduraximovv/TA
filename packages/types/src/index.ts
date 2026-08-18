@@ -82,6 +82,15 @@ export interface Review {
  * missing is_rural_provider/provider_name, both present on the live table). Used by
  * GET /api/v1/ai/search-services, capped to 5 results so it's cheap to feed into a Kimi prompt.
  */
+/** One bookable time slot for a service on the searched travel_date, sourced from
+ *  service_inventory. Only real timed slots (start_time set, not blocked, capacity remaining) --
+ *  an unmanaged/all-day service has no entries here and stays directly bookable as today. */
+export interface AIServiceAvailableSlot {
+  start_time: string;
+  end_time: string;
+  remaining_capacity: number;
+}
+
 export interface AIServiceSearchResult {
   id: string;
   title: string;
@@ -97,14 +106,53 @@ export interface AIServiceSearchResult {
   rating_avg: number;
   rating_count: number;
   duration_minutes: number | null;
+  /** Micro-location for proximity grouping, e.g. "Old City", "Chorsu Area" -- lets the AI planner
+   *  enforce THE GEOFENCE RULE / THE GASTRONOMY RULE (see plan-trip/route.ts's system prompt)
+   *  more precisely than city/region alone. */
+  neighborhood: string | null;
   max_guests: number | null;
   image_url: string | null;
+  /** Populated only when a travel_date was part of the search; empty for unmanaged services or
+   *  when no date was given. See searchServices.ts. */
+  available_slots: AIServiceAvailableSlot[];
 }
 
 export interface PlanTripMessage {
   role: "user" | "assistant";
   content: string;
 }
+
+/** One item inside an AIPackageSearchResult — either references a real service (service_id set)
+ *  or is a custom line item authored by the agency (service_id null). */
+export interface AIPackageItemResult {
+  id: string;
+  service_id: string | null;
+  title: string | null;
+  description: string | null;
+  price: number | null;
+  image_url: string | null;
+}
+
+/** Returned whole by the match_relevant_packages() RPC streamed as PACKAGES: from plan-trip.
+ *  Unlike the ItineraryWithMeta shape used by the /packages browse flow (which can afford two
+ *  round-trips), this single payload carries BOTH the card-summary fields AND the full nested
+ *  item list so the coordinator's detail sheet can open with zero extra fetch. */
+export interface AIPackageSearchResult {
+  id: string;
+  title: string;
+  description: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  total_price: number;
+  currency: string;
+  agency_id: string | null;
+  agency_name: string | null;
+  image_url: string | null;
+  cities: string[];
+  item_count: number;
+  items: AIPackageItemResult[];
+}
+
 
 /** Response shape for POST /api/v1/ai/plan-trip -- recommended_services is a subset of the
  *  actual rows returned by the search-services call made mid-conversation (never model-invented;

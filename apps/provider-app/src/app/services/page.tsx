@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { useAuth } from "@repo/auth";
 import { getSupabase } from "@repo/database";
 import { Button, Card, Badge, LoadingPulse, Toast } from "@repo/ui";
-import { Plus, Pencil, Trash2, Star, ImageOff } from "lucide-react";
+import { Plus, Pencil, Trash2, Star, ImageOff, CalendarClock } from "lucide-react";
 import { ServiceFormModal, type ServiceFormValues } from "@/components/ServiceFormModal";
 
 interface ServiceRow {
@@ -151,6 +152,14 @@ export default function ServicesPage() {
                     {service.price.toLocaleString()} {service.currency}
                   </span>
                   <div className="flex gap-1">
+                    <Link
+                      href={`/services/${service.id}/availability`}
+                      className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-primary transition-colors"
+                      aria-label={`Manage availability for ${service.title}`}
+                      title="Manage availability"
+                    >
+                      <CalendarClock className="w-4 h-4" />
+                    </Link>
                     <button
                       onClick={() => openEdit(service)}
                       className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-primary transition-colors"

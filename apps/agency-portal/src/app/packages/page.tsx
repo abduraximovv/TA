@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { useAuth } from "@repo/auth";
 import { getSupabase } from "@repo/database";
 import { Button, Card, Badge, LoadingPulse, Toast } from "@repo/ui";
-import { Plus, Pencil, Trash2, Package as PackageIcon, Calendar } from "lucide-react";
+import { Plus, Pencil, Trash2, Package as PackageIcon, Calendar, CalendarClock } from "lucide-react";
 import {
   PackageFormModal,
   type PackageFormValues,
@@ -219,6 +220,14 @@ export default function PackagesPage() {
                     {pkg.total_price.toLocaleString()} {pkg.currency}
                   </span>
                   <div className="flex gap-1">
+                    <Link
+                      href={`/packages/${pkg.id}/departures`}
+                      className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-primary transition-colors"
+                      aria-label={`Manage departures for ${pkg.title}`}
+                      title="Manage departures"
+                    >
+                      <CalendarClock className="w-4 h-4" />
+                    </Link>
                     <button
                       onClick={() => openEdit(pkg)}
                       className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-primary transition-colors"

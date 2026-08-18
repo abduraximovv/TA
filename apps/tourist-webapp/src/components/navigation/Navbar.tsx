@@ -58,9 +58,9 @@ export function Navbar() {
     setMobileQuery("");
   };
 
-  // /ai-chat renders its own full-screen header (back button, Kimi status, brand mark) --
-  // checked after every hook above has run, so the hook count stays constant across renders.
-  if (pathname === "/ai-chat") {
+  // /coordinator renders its own full-screen header (back button, AI status, brand mark) --
+  // we hide the global nav here to prevent double-headers.
+  if (pathname === "/coordinator") {
     return null;
   }
 

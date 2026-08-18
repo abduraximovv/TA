@@ -86,11 +86,41 @@ export interface Service {
   is_available: boolean;
   city: string | null;
   region: string | null;
+  /** Micro-location for proximity grouping, e.g. "Old City", "Chorsu Area" -- see
+   *  20260818000000_service_spatial_temporal.sql. */
+  neighborhood: string | null;
   latitude: number | null;
   longitude: number | null;
   rating_avg: number;
   rating_count: number;
   is_featured: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ServiceInventory {
+  id: string;
+  service_id: string;
+  available_date: string;
+  start_time: string | null;
+  end_time: string | null;
+  total_capacity: number;
+  booked_capacity: number;
+  is_blocked: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export type PackageDepartureStatus = "scheduled" | "sold_out" | "cancelled";
+
+export interface PackageDeparture {
+  id: string;
+  itinerary_id: string;
+  start_date: string;
+  end_date: string;
+  max_guests: number;
+  booked_guests: number;
+  status: PackageDepartureStatus;
   created_at: string;
   updated_at: string;
 }
@@ -297,6 +327,7 @@ export interface Database {
           max_guests?: number | null;
           city?: string | null;
           region?: string | null;
+          neighborhood?: string | null;
           latitude?: number | null;
           longitude?: number | null;
           rating_avg?: number;
@@ -320,6 +351,7 @@ export interface Database {
           max_guests?: number | null;
           city?: string | null;
           region?: string | null;
+          neighborhood?: string | null;
           latitude?: number | null;
           longitude?: number | null;
           rating_avg?: number;
@@ -330,6 +362,75 @@ export interface Database {
       };
       events: {
         Row: Event;
+      };
+      service_inventory: {
+        Row: ServiceInventory;
+        Insert: {
+          id?: string;
+          service_id: string;
+          available_date: string;
+          start_time?: string | null;
+          end_time?: string | null;
+          total_capacity: number;
+          booked_capacity?: number;
+          is_blocked?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          service_id?: string;
+          available_date?: string;
+          start_time?: string | null;
+          end_time?: string | null;
+          total_capacity?: number;
+          booked_capacity?: number;
+          is_blocked?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      package_departures: {
+        Row: PackageDeparture;
+        Insert: {
+          id?: string;
+          itinerary_id: string;
+          start_date: string;
+          end_date: string;
+          max_guests: number;
+          booked_guests?: number;
+          status?: PackageDepartureStatus;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          itinerary_id?: string;
+          start_date?: string;
+          end_date?: string;
+          max_guests?: number;
+          booked_guests?: number;
+          status?: PackageDepartureStatus;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      coordinator_sessions: {
+        Row: {
+          user_id: string;
+          state: Json;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          state: Json;
+          updated_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          state?: Json;
+          updated_at?: string;
+        };
       };
       itineraries: {
         Row: Itinerary;
@@ -511,7 +612,7 @@ export interface Database {
       };
     };
     Views: Record<string, unknown>;
-    Functions: { 
+    Functions: {
       get_locations_in_radius: {
         Args: {
           p_lat: number;
@@ -527,6 +628,61 @@ export interface Database {
           lng: number;
           distance_meters: number;
         }[];
+      };
+      search_available_services: {
+        Args: {
+          p_category?: string | null;
+          p_region?: string | null;
+          p_max_price?: number | null;
+          p_exclude_id?: string | null;
+          p_travel_date?: string | null;
+          p_limit?: number;
+        };
+        Returns: Service[];
+      };
+      create_booking_with_capacity_check: {
+        Args: {
+          p_service_id: string;
+          p_booking_date: string;
+          p_guest_count: number;
+          p_special_requests?: string | null;
+          p_passenger_manifest?: Json | null;
+          p_dietary_preferences?: string | null;
+          p_pickup_location?: string | null;
+          p_total_price?: number | null;
+          p_currency?: string | null;
+        };
+        Returns: Booking;
+      };
+      match_relevant_packages: {
+        Args: {
+          p_category?: string | null;
+          p_region?: string | null;
+          p_limit?: number;
+          p_offset?: number;
+        };
+        Returns: {
+          id: string;
+          title: string;
+          description: string | null;
+          start_date: string | null;
+          end_date: string | null;
+          total_price: number;
+          currency: string;
+          agency_id: string | null;
+          agency_name: string | null;
+          image_url: string | null;
+          cities: string[];
+          item_count: number;
+          match_score: number;
+          items: Json;
+        }[];
+      };
+      process_multi_item_booking: {
+        Args: {
+          p_intents: Json;
+        };
+        Returns: Booking[];
       };
     };
     Enums: {

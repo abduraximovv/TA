@@ -68,3 +68,4 @@ const withPWA = withPWAInit({
 });
 
 export default withPWA(nextConfig);
+// Trigger dev server restart
