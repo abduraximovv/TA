@@ -425,4 +425,50 @@ Maintain two distinct, coexisting session-cookie architectures within the monore
 
 ---
 
+## ADR 009: Per-App Cookie Namespacing to Prevent Cross-App Session Leakage
+
+| Field | Value |
+|---|---|
+| **Status** | Accepted |
+| **Date** | 2026-08-18 |
+| **Decision Makers** | Platform Engineering Team |
+| **Category** | Authentication & Session Management |
+
+### Context
+
+ADR 008 documented (and accepted) that the four apps use two different session-cookie *formats*, but neither ADR 008 nor `docs/SECURITY_AND_COMPLIANCE.md` considered the cookie *name* each format used. In practice, both formats used the same name across all four apps:
+
+- Tourist WebApp's `@supabase/ssr` client (`createBrowserClient` / `createServerClient`) was created with no `cookieOptions.name` override, so it used the library's default name, deterministically derived from the Supabase project URL (`sb-<project-ref>-auth-token`) — identical for every app that shares this Supabase project.
+- Provider App, Agency Portal, and Admin Portal's hand-set cookie (`packages/auth/src/SessionProvider.tsx`) used the literal name `sb-access-token` for all three apps.
+
+HTTP cookies are scoped by `(domain, path)`, never by port. In local development all four apps run on `localhost` differing only by port (3000–3003), so a cookie written by any one app was sent by the browser to all the others. A tourist signing into Admin Portal (or vice versa) was silently treated as signed in — with that same account and role — by every other app running locally. This was reported directly by a user testing the platform: signing into Admin Portal on port 3000 left Tourist WebApp on port 3003 also showing them as logged in (as the admin account), which then made a subsequent `/profile` visit on Tourist WebApp bounce them to Admin Portal's dashboard entirely, per the existing role-based redirect in `apps/tourist-webapp/src/middleware.ts`.
+
+Admin Portal's own middleware already carried a defensive role check ("only admins may reach protected admin routes, even if they hold a valid session for another app") with a comment acknowledging the leak existed — but that check only protected Admin Portal's own routes from a foreign token; it did nothing to stop the other three apps from accepting an Admin Portal session as their own, and did nothing to address the leak at its source.
+
+### Decision
+
+Each app now sets its own `NEXT_PUBLIC_APP_ROLE` (`tourist` / `provider` / `agency` / `admin`) in its `.env`. Both cookie mechanisms derive their cookie name from this value instead of using a fixed, shared name:
+
+- Tourist WebApp: `cookieOptions: { name: `sb-${role}-auth-token` }` passed to both `createBrowserClient()` (`packages/database/src/client.ts`'s `getSupabaseBrowserClient()`, exported as `appScopedCookieName()`) and `createServerClient()` (`apps/tourist-webapp/src/utils/supabase/{server,middleware}.ts`) — the browser and server clients must compute the identical name or the server will never see the session the browser wrote.
+- Provider App / Agency Portal / Admin Portal: the hand-set cookie is now named `sb-${role}-access-token` (`packages/auth/src/SessionProvider.tsx`'s `accessTokenCookieName()`), and each app's `middleware.ts` reads its own name explicitly (e.g. Admin Portal reads `sb-admin-access-token`, not the old shared `sb-access-token`).
+
+Admin Portal's existing role check is kept as defense in depth, not removed — the cookie-name split is the primary fix, the role check is a second layer in case a non-admin token ever ends up under `sb-admin-access-token` by some other means.
+
+This does not change either cookie *format* decided in ADR 008 — `@supabase/ssr` chunked cookies for Tourist WebApp, a hand-set unverified-JWT cookie for the other three remain as they were. Only the *name* changed.
+
+### Consequences
+
+#### Positive
+
+- **Signing into one app no longer authenticates another.** Verified directly: after this change, a session cookie set under one app's name has zero effect when sent to a different app's origin, even on the same host — confirmed for Provider App, Agency Portal, and Admin Portal by sending a request with a role-claiming token under each app's cookie name to every other app and observing each of the other apps correctly redirect to its own login instead of accepting it.
+- **No change to either app's actual login flow, RLS enforcement, or the underlying cookie format decided in ADR 008** — this is purely a naming fix layered on top of that decision.
+- **Defensive even against a future shared-domain production deployment.** Cookies set without an explicit `Domain=` attribute are host-only by default, so subdomains on a shared apex domain (e.g. `admin.example.com` vs `app.example.com`) would likely not have leaked this way even before this fix — but namespacing the cookie name removes the ambiguity entirely regardless of future deployment topology, rather than relying on that default going unconfigured.
+
+#### Negative
+
+- **Existing browser sessions are invalidated.** Anyone already signed in under the old shared cookie name(s) will need to sign in again after this change ships — the old cookie is simply never looked for again, not migrated.
+- **A fifth app that forgets to set `NEXT_PUBLIC_APP_ROLE`** falls back to the old shared name (with a `console.warn`) rather than failing loudly — chosen so a missing env var degrades to the previous (already-shipped) behavior instead of breaking auth outright, but it does mean the protection is opt-in per app rather than structurally guaranteed.
+
+---
+
 *New ADRs will be added as significant architectural decisions are made during development. Each ADR is immutable once accepted — superseding decisions create new ADRs referencing the original.*

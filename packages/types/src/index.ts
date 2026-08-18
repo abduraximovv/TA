@@ -153,6 +153,23 @@ export interface AIPackageSearchResult {
   items: AIPackageItemResult[];
 }
 
+/** Returned by matchEvents() / streamed as EVENTS: from plan-trip. Unlike services/packages,
+ *  this is deliberately never a "closest match" or "greatest hits" set -- an event only ever
+ *  appears here when it genuinely overlaps both the trip's resolved dates AND region, so an
+ *  empty array is the normal, expected result for most trips (see matchEvents.ts). */
+export interface AIEventSearchResult {
+  id: string;
+  title: string;
+  description: string | null;
+  location: string;
+  image_url: string | null;
+  start_date: string;
+  end_date: string;
+  event_type: string;
+  ticket_url: string | null;
+  slug: string | null;
+}
+
 
 /** Response shape for POST /api/v1/ai/plan-trip -- recommended_services is a subset of the
  *  actual rows returned by the search-services call made mid-conversation (never model-invented;

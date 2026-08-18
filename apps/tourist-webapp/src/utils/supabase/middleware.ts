@@ -1,4 +1,5 @@
 import { createServerClient } from "@supabase/ssr";
+import { appScopedCookieName } from "@repo/database";
 import { type NextRequest, NextResponse } from "next/server";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -16,6 +17,9 @@ export const updateSession = async (request: NextRequest) => {
     supabaseUrl!,
     supabaseKey!,
     {
+      // See utils/supabase/server.ts's identical comment -- must match
+      // getSupabaseBrowserClient()'s cookie name exactly.
+      cookieOptions: { name: appScopedCookieName() },
       cookies: {
         getAll() {
           return request.cookies.getAll()

@@ -25,6 +25,30 @@ export const getSupabase = () => {
 
 let supabaseBrowserInstance: ReturnType<typeof createBrowserClient<Database>> | null = null;
 
+// All four apps (tourist-webapp, provider-app, agency-portal, admin-portal) share this same
+// Supabase project AND, in local dev, the same `localhost` host -- only the port differs. HTTP
+// cookies are scoped by (domain, path), never by port, so without an app-specific cookie name
+// every app would write/read the exact same default `sb-<project-ref>-auth-token` cookie and
+// silently authenticate as whichever app's session happened to be sitting in the shared cookie
+// jar (this is exactly the cross-app session leak: signing into admin-portal made tourist-webapp
+// appear signed in too). Each app sets its own NEXT_PUBLIC_APP_ROLE in its .env so its cookie
+// name is namespaced and invisible to the other three, even if a future prod deployment ever puts
+// them on a shared parent domain.
+// Exported so an app's own server-side @supabase/ssr client (createServerClient in Next.js
+// middleware/route handlers) can compute the IDENTICAL cookie name this browser client uses --
+// the two MUST match exactly or the server will never see the session the browser just wrote.
+export function appScopedCookieName(): string {
+  const role = process.env.NEXT_PUBLIC_APP_ROLE;
+  if (!role) {
+    console.warn(
+      "NEXT_PUBLIC_APP_ROLE is not set -- falling back to the default @supabase/ssr cookie name, " +
+      "which is SHARED across all four apps on the same host. Set NEXT_PUBLIC_APP_ROLE in this app's .env."
+    );
+    return `sb-auth-token`;
+  }
+  return `sb-${role}-auth-token`;
+}
+
 // Session-aware browser client for sign-in/sign-up/sign-out (see packages/auth's
 // SessionProvider). Unlike getSupabase() above, this writes the session into cookies in the
 // exact format @supabase/ssr's server-side createServerClient expects -- required for any
@@ -40,7 +64,9 @@ export const getSupabaseBrowserClient = () => {
         "Supabase credentials missing. Ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set."
       );
     }
-    supabaseBrowserInstance = createBrowserClient<Database>(supabaseUrl, supabaseAnonKey);
+    supabaseBrowserInstance = createBrowserClient<Database>(supabaseUrl, supabaseAnonKey, {
+      cookieOptions: { name: appScopedCookieName() },
+    });
   }
   return supabaseBrowserInstance!;
 };

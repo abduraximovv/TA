@@ -21,6 +21,25 @@ export interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Provider App, Agency Portal, and Admin Portal's Edge middleware all read this cookie by name
+// (see each app's middleware.ts) to decode role/verification claims without a network round trip
+// -- see ADR 008. It used to be the single literal "sb-access-token" for all three apps, which,
+// combined with cookies not being scoped by port, meant signing into ANY of the three (including
+// admin-portal) wrote a cookie that ALL of them -- and, via a separate but equally unscoped
+// @supabase/ssr cookie, tourist-webapp too -- would treat as their own valid session. Each app now
+// sets NEXT_PUBLIC_APP_ROLE in its own .env so this cookie name is namespaced per app.
+function accessTokenCookieName(): string {
+  const role = process.env.NEXT_PUBLIC_APP_ROLE;
+  if (!role) {
+    console.warn(
+      "NEXT_PUBLIC_APP_ROLE is not set -- falling back to the legacy shared \"sb-access-token\" " +
+      "cookie name, which is READABLE BY EVERY APP on this host. Set NEXT_PUBLIC_APP_ROLE in this app's .env."
+    );
+    return "sb-access-token";
+  }
+  return `sb-${role}-access-token`;
+}
+
 export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
@@ -59,8 +78,9 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     // provider-app/agency-portal/admin-portal's Edge middleware are a different consumer,
     // though: they intentionally avoid @supabase/ssr's cookie format and a per-request
     // getUser() network call (see packages/auth/src/verificationGuard.ts's comment), decoding
-    // a plain JWT out of a plain `sb-access-token` cookie instead. That cookie has no other
-    // purpose now -- keep writing *only* it (not sb-refresh-token, which nothing ever read).
+    // a plain JWT out of a plain, app-scoped access-token cookie instead (see
+    // accessTokenCookieName above). That cookie has no other purpose now -- keep writing *only*
+    // it (not a refresh-token cookie, which nothing ever read).
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: AuthChangeEvent, currentSession: Session | null) => {
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
@@ -68,11 +88,12 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       setIsVerified(getIsVerifiedFromSession(currentSession));
       setIsLoading(false);
 
+      const cookieName = accessTokenCookieName();
       const secureFlag = window.location.protocol === "https:" ? "; Secure" : "";
       if (currentSession) {
-        document.cookie = `sb-access-token=${currentSession.access_token}; path=/; max-age=${currentSession.expires_in}; SameSite=Lax${secureFlag}`;
+        document.cookie = `${cookieName}=${currentSession.access_token}; path=/; max-age=${currentSession.expires_in}; SameSite=Lax${secureFlag}`;
       } else {
-        document.cookie = `sb-access-token=; path=/; max-age=0; SameSite=Lax${secureFlag}`;
+        document.cookie = `${cookieName}=; path=/; max-age=0; SameSite=Lax${secureFlag}`;
       }
     });
 

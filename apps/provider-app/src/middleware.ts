@@ -5,7 +5,10 @@ import { evaluateVerificationGuard } from "@repo/auth";
 export function middleware(request: NextRequest) {
   const decision = evaluateVerificationGuard({
     pathname: request.nextUrl.pathname,
-    accessToken: request.cookies.get("sb-access-token")?.value,
+    // Must match accessTokenCookieName() in packages/auth/src/SessionProvider.tsx for this app's
+    // NEXT_PUBLIC_APP_ROLE ("provider") -- was the shared literal "sb-access-token" before, which
+    // any of the other three apps' sign-ins would also write on this same host.
+    accessToken: request.cookies.get("sb-provider-access-token")?.value,
     appRole: "provider",
   });
 
