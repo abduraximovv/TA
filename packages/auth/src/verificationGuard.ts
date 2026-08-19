@@ -45,7 +45,22 @@ export function evaluateVerificationGuard({
     return { action: "next" };
   }
 
-  const isPending = claims.role === appRole && !claims.isVerified;
+  // A token is valid but belongs to a DIFFERENT app entirely -- e.g. a tourist or admin account
+  // signing in (with their own correct password) directly on provider-app or agency-portal's own
+  // login form. This must be checked, and must return, BEFORE isPending below: isPending's own
+  // condition (claims.role === appRole && !isVerified) is also false for a mismatched role, and
+  // falling through to the "not pending -> redirect to dashboard" branch further down would bounce
+  // a mismatched user back and forth between /auth/login and /dashboard forever. Denied outright
+  // rather than forwarded to whatever app the role DOES belong to -- this app has no reliable way
+  // to know that app's URL in every environment, and not revealing it is the safer default anyway.
+  if (claims.role !== appRole) {
+    if (isPublicRoute) {
+      return { action: "next" }; // let /auth/login itself render (with its own error message) without looping
+    }
+    return { action: "redirect", to: "/auth/login?error=wrong_portal" };
+  }
+
+  const isPending = !claims.isVerified;
 
   if (isPending && pathname !== "/auth/pending") {
     return { action: "redirect", to: "/auth/pending" };

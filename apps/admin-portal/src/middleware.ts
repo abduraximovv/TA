@@ -29,11 +29,13 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
-  // Defense in depth: only admins may reach the protected admin routes even if a non-admin
-  // token somehow ends up in this app's cookie (the app-scoped cookie name above is the primary
-  // defense against that happening at all -- see its comment).
+  // A valid token whose role isn't admin -- e.g. a tourist/provider/agency account signing in
+  // (with their own correct password) directly on this app's own login form. Denied outright with
+  // the same ?error=wrong_portal signal used by provider-app/agency-portal/tourist-webapp (see
+  // packages/auth/src/verificationGuard.ts), rather than forwarded to whichever app the role DOES
+  // belong to -- this app has no reliable way to know that app's URL in every environment.
   if (token && !isAuthPage && !isAdmin) {
-    return NextResponse.redirect(new URL("/login", request.url));
+    return NextResponse.redirect(new URL("/login?error=wrong_portal", request.url));
   }
 
   return NextResponse.next();

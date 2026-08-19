@@ -1,17 +1,28 @@
 "use client";
 
-import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import React, { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@repo/auth";
 import { AuthCard, Button, Input, LoadingPulse } from "@repo/ui";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { signInWithEmail } = useAuth();
+  const searchParams = useSearchParams();
+  const { signInWithEmail, signOut } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Set by middleware when a valid session's role isn't admin -- e.g. a tourist/provider/agency
+  // account signing in here with their own correct password. Sign them back out so the mismatched
+  // session doesn't linger and this form is left in a clean, retryable state.
+  useEffect(() => {
+    if (searchParams.get("error") === "wrong_portal") {
+      setError("This account isn't registered for the Admin Portal.");
+      signOut().catch(() => {});
+    }
+  }, [searchParams, signOut]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

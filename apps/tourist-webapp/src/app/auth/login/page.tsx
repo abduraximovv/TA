@@ -1,20 +1,32 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useAuth } from "@repo/auth";
 import { Button, Input, LoadingPulse } from "@repo/ui";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { Mail, Key, Chrome, ArrowLeft } from "lucide-react";
 
 export default function LoginPage() {
-  const { signInWithEmail, signInWithGoogle } = useAuth();
+  const { signInWithEmail, signInWithGoogle, signOut } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Set by middleware (see apps/tourist-webapp/src/middleware.ts) when a valid session's role
+  // isn't tourist -- e.g. a provider/agency/admin account signing in here with their own correct
+  // password. Sign them back out so the mismatched session doesn't linger and this form is left
+  // in a clean, retryable state, rather than leaving them "signed in" but blocked on every page.
+  useEffect(() => {
+    if (searchParams.get("error") === "wrong_portal") {
+      setError("This account isn't registered as a tourist account.");
+      signOut().catch(() => {});
+    }
+  }, [searchParams, signOut]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

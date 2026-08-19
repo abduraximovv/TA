@@ -1,18 +1,30 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@repo/auth";
 import { AuthCard, Button, Input, LoadingPulse } from "@repo/ui";
 
 export default function LoginPage() {
-  const { signInWithEmail } = useAuth();
+  const { signInWithEmail, signOut } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Set by middleware (see packages/auth/src/verificationGuard.ts) when a valid session's role
+  // doesn't belong in THIS app -- e.g. a tourist account signing in here with their own correct
+  // password. Sign them back out so the mismatched session doesn't linger and this form is left
+  // in a clean, retryable state, rather than leaving them "signed in" but blocked on every page.
+  useEffect(() => {
+    if (searchParams.get("error") === "wrong_portal") {
+      setError("This account isn't registered for the Provider Portal.");
+      signOut().catch(() => {});
+    }
+  }, [searchParams, signOut]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

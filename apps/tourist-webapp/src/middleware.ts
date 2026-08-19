@@ -56,15 +56,17 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL(nextParam || "/profile", request.url));
     }
 
+    // A valid session whose role isn't tourist -- e.g. a provider/agency/admin account signing in
+    // (with their own correct password) directly on tourist-webapp's own login form. Denied
+    // outright with the same ?error=wrong_portal signal used by the other three apps (see
+    // packages/auth/src/verificationGuard.ts), rather than forwarded across to whichever app the
+    // role DOES belong to (the previous behavior here) -- this app has no reliable way to know
+    // that app's URL in every environment, and not revealing it is the safer default anyway.
     if (isProtectedRoute && userRole !== "tourist") {
-      switch (userRole) {
-        case "provider":
-          return NextResponse.redirect("http://localhost:3002/dashboard");
-        case "agency":
-          return NextResponse.redirect("http://localhost:3001/dashboard");
-        case "admin":
-          return NextResponse.redirect("http://localhost:3000/dashboard");
-      }
+      const url = request.nextUrl.clone();
+      url.pathname = "/auth/login";
+      url.searchParams.set("error", "wrong_portal");
+      return NextResponse.redirect(url);
     }
   }
 
