@@ -132,9 +132,9 @@ export default function Dashboard() {
             <div style={{ fontSize: 14, color: "rgba(10,35,32,0.55)" }}>Here's what's happening across your itineraries today.</div>
           </div>
           
-          <Link href="/inventory" style={{ textDecoration: 'none' }}>
+          <Link href="/packages" style={{ textDecoration: 'none' }}>
             <button style={{ background: '#006B70', color: '#FFFFFF', padding: '10px 18px', borderRadius: 4, border: 'none', cursor: 'pointer', fontFamily: "'Inter', sans-serif", fontWeight: 600, fontSize: 13, display: 'flex', alignItems: 'center', gap: 8 }}>
-              Manage Inventory →
+              Manage Itineraries →
             </button>
           </Link>
         </div>

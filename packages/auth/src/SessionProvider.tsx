@@ -40,6 +40,42 @@ function accessTokenCookieName(): string {
   return `sb-${role}-access-token`;
 }
 
+// One-time sweep (mount only) that deletes ONLY genuinely-dead, pre-namespacing cookie names left
+// over from before this app-scoping scheme existed: the single shared "sb-access-token" (used by
+// all three JWT-decode apps) and @supabase/ssr's un-namespaced default "sb-<project-ref>-auth-token"
+// (used by whichever app didn't pass cookieOptions.name yet). Both are permanently obsolete --
+// nothing anywhere ever reads them again after this fix -- so it's always safe to delete them.
+//
+// Deliberately does NOT touch any OTHER cookie starting with "sb-": an earlier version of this
+// swept every "sb-*" cookie that wasn't this app's own two, which seemed right (clean up whatever
+// isn't mine) but actively broke multi-app usage -- signing into provider-app in one tab would
+// delete tourist-webapp's perfectly valid, still-in-use cookie sitting in the same shared
+// `localhost` jar the moment provider-app's SessionProvider mounted, logging tourist-webapp out on
+// its next reload even though nothing was wrong with its session. Another app's own namespaced
+// cookie is never "foreign cruft" to clean up -- it's someone else's legitimate, currently-active
+// session, and the whole point of namespacing cookie names per app (see appScopedCookieName's
+// comment) is that apps must never need to reach into or judge each other's cookies at all.
+function sweepForeignAuthCookies() {
+  if (typeof document === "undefined") return;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+  const projectRefMatch = supabaseUrl.match(/^https?:\/\/([^.]+)\.supabase\.co/);
+  const legacySsrPrefix = projectRefMatch ? `sb-${projectRefMatch[1]}-auth-token` : null;
+
+  const cookieNames = document.cookie
+    .split("; ")
+    .map((c) => c.split("=")[0])
+    .filter(Boolean);
+  for (const name of cookieNames) {
+    const isLegacyAccessToken = name === "sb-access-token";
+    const isLegacySsrCookie = legacySsrPrefix
+      ? name === legacySsrPrefix || name.startsWith(`${legacySsrPrefix}.`)
+      : false;
+    if (isLegacyAccessToken || isLegacySsrCookie) {
+      document.cookie = `${name}=; path=/; max-age=0; SameSite=Lax`;
+    }
+  }
+}
+
 export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
@@ -64,6 +100,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
+    sweepForeignAuthCookies();
     const supabase = getSupabaseBrowserClient();
 
     // onAuthStateChange fires an INITIAL_SESSION event immediately on subscribe (supabase-js v2),

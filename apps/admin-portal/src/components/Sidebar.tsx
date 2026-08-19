@@ -4,7 +4,10 @@ import React from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@repo/auth";
-import { LogOut } from "lucide-react";
+import {
+  LayoutDashboard, ShieldCheck, MapPin, CalendarDays, Users,
+  Building2, MessageSquare, Mail, BarChart3, Settings as SettingsIcon, LogOut,
+} from "lucide-react";
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -18,16 +21,16 @@ export function Sidebar() {
   };
 
   const navItems = [
-    { label: "Dashboard", href: "/dashboard" },
-    { label: "Verification Hub", href: "/verification-hub" },
-    { label: "Destinations", href: "/destinations" },
-    { label: "Events", href: "/events" },
-    { label: "Providers", href: "/providers" },
-    { label: "Agencies", href: "/agencies" },
-    { label: "Messages", href: "/messages" },
-    { label: "Newsletter", href: "/newsletter" },
-    { label: "Analytics", href: "/analytics" },
-    { label: "Settings", href: "/settings" },
+    { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+    { label: "Verification Hub", href: "/verification-hub", icon: ShieldCheck },
+    { label: "Destinations", href: "/destinations", icon: MapPin },
+    { label: "Events", href: "/events", icon: CalendarDays },
+    { label: "Providers", href: "/providers", icon: Users },
+    { label: "Agencies", href: "/agencies", icon: Building2 },
+    { label: "Messages", href: "/messages", icon: MessageSquare },
+    { label: "Newsletter", href: "/newsletter", icon: Mail },
+    { label: "Analytics", href: "/analytics", icon: BarChart3 },
+    { label: "Settings", href: "/settings", icon: SettingsIcon },
   ];
 
   return (
@@ -69,38 +72,34 @@ export function Sidebar() {
       <div style={{ display: "flex", flexDirection: "column", gap: 2, padding: "0 14px" }}>
         {navItems.map((item) => {
           const isActive = pathname.startsWith(item.href);
+          const Icon = item.icon;
           return (
             <Link
               key={item.href}
               href={item.href}
               style={{ textDecoration: "none" }}
             >
-              <div 
-                style={{ 
-                  display: "flex", 
-                  alignItems: "center", 
-                  gap: 12, 
-                  padding: "11px 12px", 
-                  borderRadius: 5, 
-                  cursor: "pointer", 
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  padding: "11px 12px",
+                  borderRadius: 5,
+                  cursor: "pointer",
                   background: isActive ? "rgba(197,168,128,0.14)" : "transparent",
                   transition: "background 0.2s"
                 }}
                 className="admin-nav-item"
               >
-                <div 
-                  style={{ 
-                    width: 7, 
-                    height: 7, 
-                    borderRadius: 2, 
-                    flexShrink: 0, 
-                    background: isActive ? "#C5A880" : "rgba(249,248,245,0.4)" 
-                  }}
+                <Icon
+                  size={16}
+                  style={{ flexShrink: 0, color: isActive ? "#C5A880" : "rgba(249,248,245,0.55)" }}
                 />
-                <div 
-                  style={{ 
-                    fontSize: 14, 
-                    fontWeight: isActive ? 600 : 500, 
+                <div
+                  style={{
+                    fontSize: 14,
+                    fontWeight: isActive ? 600 : 500,
                     color: isActive ? "#C5A880" : "rgba(249,248,245,0.75)",
                     fontFamily: "'Inter', sans-serif"
                   }}
@@ -115,8 +114,8 @@ export function Sidebar() {
 
       <div style={{ marginTop: "auto", padding: "16px 24px 0", borderTop: "1px solid rgba(249,248,245,0.1)" }}>
         
-        {/* User Info & Logout */}
-        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+        {/* User Info */}
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
           <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(249,248,245,0.1)", display: "flex", alignItems: "center", justifyContent: "center", color: "#F9F8F5", fontWeight: 600, fontSize: 13, flexShrink: 0 }}>
              {user?.email?.charAt(0).toUpperCase() || "A"}
           </div>
@@ -128,14 +127,32 @@ export function Sidebar() {
               Super Admin
             </div>
           </div>
-          <button 
-            onClick={handleSignOut}
-            style={{ background: "transparent", border: "none", color: "rgba(249,248,245,0.5)", cursor: "pointer", padding: 4 }}
-            title="Sign Out"
-          >
-            <LogOut size={16} />
-          </button>
         </div>
+
+        {/* Sign Out */}
+        <button
+          onClick={handleSignOut}
+          className="admin-nav-item"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            width: "100%",
+            padding: "11px 12px",
+            borderRadius: 5,
+            background: "transparent",
+            border: "none",
+            color: "rgba(249,248,245,0.75)",
+            cursor: "pointer",
+            fontSize: 14,
+            fontWeight: 500,
+            fontFamily: "'Inter', sans-serif",
+            marginBottom: 4,
+          }}
+        >
+          <LogOut size={16} style={{ flexShrink: 0, color: "rgba(249,248,245,0.55)" }} />
+          Sign Out
+        </button>
 
         {/* System Status */}
         <div style={{ display: "flex", alignItems: "center", gap: 10, paddingTop: 16, borderTop: "1px solid rgba(249,248,245,0.1)" }}>
