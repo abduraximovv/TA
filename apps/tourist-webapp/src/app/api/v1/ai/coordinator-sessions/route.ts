@@ -17,7 +17,10 @@ function bearerToken(req: Request): string | null {
   return authHeader?.split(" ")[1] ?? null;
 }
 
-// GET -- load the signed-in tourist's saved SafronCoordinator session, if any.
+// GET -- list the signed-in tourist's saved SafronCoordinator sessions, most recently updated
+// first. Deliberately lightweight: id/title/timestamps only, NOT the full state jsonb blob (which
+// can carry a full itinerary + matched packages' nested items) -- the history list only needs
+// enough to render itself, individual sessions are fetched in full via GET [id] on demand.
 export async function GET(req: Request) {
   try {
     const token = bearerToken(req);
@@ -29,49 +32,21 @@ export async function GET(req: Request) {
 
     const { data, error } = await supabase
       .from("coordinator_sessions")
-      .select("state, updated_at")
+      .select("id, title, created_at, updated_at")
       .eq("user_id", user.id)
-      .maybeSingle();
+      .order("updated_at", { ascending: false });
 
     if (error) throw error;
 
-    return NextResponse.json({ state: data?.state ?? null, updated_at: data?.updated_at ?? null });
+    return NextResponse.json({ sessions: data ?? [] });
   } catch (error: any) {
-    console.error("Coordinator session load failed:", error);
-    return NextResponse.json({ error: error.message || "Failed to load session" }, { status: 400 });
+    console.error("Coordinator sessions list failed:", error);
+    return NextResponse.json({ error: error.message || "Failed to list sessions" }, { status: 400 });
   }
 }
 
-// PUT -- upsert the current session state. Body: { state: <arbitrary JSON snapshot> }.
-export async function PUT(req: Request) {
-  try {
-    const token = bearerToken(req);
-    if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-    const supabase = authedClient(token);
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-    if (authError || !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-    const body = await req.json();
-    if (body?.state === undefined) {
-      return NextResponse.json({ error: "Missing state" }, { status: 400 });
-    }
-
-    const { error } = await supabase
-      .from("coordinator_sessions")
-      .upsert({ user_id: user.id, state: body.state, updated_at: new Date().toISOString() } as never, { onConflict: "user_id" });
-
-    if (error) throw error;
-
-    return NextResponse.json({ success: true });
-  } catch (error: any) {
-    console.error("Coordinator session save failed:", error);
-    return NextResponse.json({ error: error.message || "Failed to save session" }, { status: 400 });
-  }
-}
-
-// DELETE -- clear the saved session (called once a booking actually completes; an already-booked
-// draft has nothing left to resume).
+// DELETE -- clear ALL of the signed-in tourist's saved sessions ("Clear history" in the panel,
+// as distinct from deleting one session at a time via DELETE [id]).
 export async function DELETE(req: Request) {
   try {
     const token = bearerToken(req);
@@ -86,7 +61,7 @@ export async function DELETE(req: Request) {
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
-    console.error("Coordinator session clear failed:", error);
-    return NextResponse.json({ error: error.message || "Failed to clear session" }, { status: 400 });
+    console.error("Coordinator sessions clear-all failed:", error);
+    return NextResponse.json({ error: error.message || "Failed to clear history" }, { status: 400 });
   }
 }

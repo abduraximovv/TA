@@ -1,4 +1,5 @@
 import { createServerClient } from "@supabase/ssr";
+import { appScopedCookieName } from "@repo/database";
 import { cookies } from "next/headers";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -9,6 +10,11 @@ export const createClient = (cookieStore: Awaited<ReturnType<typeof cookies>>) =
     supabaseUrl!,
     supabaseKey!,
     {
+      // Must match getSupabaseBrowserClient()'s cookieOptions.name exactly (see
+      // appScopedCookieName's own comment) -- otherwise this server client would never see the
+      // session the browser just wrote, or worse, would fall back to reading the other apps'
+      // shared default cookie name.
+      cookieOptions: { name: appScopedCookieName() },
       cookies: {
         getAll() {
           return cookieStore.getAll()

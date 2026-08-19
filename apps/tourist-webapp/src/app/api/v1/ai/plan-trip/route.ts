@@ -7,7 +7,8 @@ import { cookies } from "next/headers";
 import { createClient } from "@/utils/supabase/server";
 import { searchServices } from "@/lib/ai/searchServices";
 import { matchPackages } from "@/lib/ai/matchPackages";
-import type { AIServiceSearchResult, AIPackageSearchResult, PlanTripMessage } from "@repo/types";
+import { matchEvents } from "@/lib/ai/matchEvents";
+import type { AIServiceSearchResult, AIPackageSearchResult, AIEventSearchResult, PlanTripMessage } from "@repo/types";
 
 export const maxDuration = 120;
 
@@ -142,6 +143,15 @@ function normalizeGuestCount(raw: number): number {
 function normalizeRequestedDays(raw: number): number | null {
   if (!raw || !Number.isFinite(raw) || raw < 1) return null;
   return Math.min(Math.floor(raw), 30);
+}
+
+// Trip's last day, inclusive, given a YYYY-MM-DD start and a day count -- used to build the
+// window matchEvents() checks for a genuine date overlap. Plain UTC arithmetic on a date-only
+// string, no timezone ambiguity to worry about since these are calendar dates, not instants.
+function addDaysIso(startIso: string, daysToAdd: number): string {
+  const d = new Date(`${startIso}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + daysToAdd);
+  return d.toISOString().slice(0, 10);
 }
 
 // THE ANCHOR RULE (see COORDINATOR_SYSTEM below) needs to know whether the tourist has a package
@@ -411,7 +421,63 @@ CRITICAL RULES:
               controller.enqueue(encoder.encode(`TEXT:${JSON.stringify(outlineResult.object.reply_text)}\n`));
             }
 
-            const outline = outlineResult.object.day_outline ?? [];
+            let outline = outlineResult.object.day_outline ?? [];
+
+            // THE ANCHOR RULE's prompt asks the model to return exactly
+            // snappedPackage.duration_days entries -- but that's an instruction, not a guarantee.
+            // For a long package (10-11 days) the fast/small outline call frequently
+            // under-generates (observed: asked for 11, model returned ~5) since reliably counting
+            // out a long structured array is a known weak spot for smaller/faster models, and
+            // nothing here previously enforced the count afterward. Duration is a real, known
+            // number already (not something that needs LLM judgment at all), so pad/truncate to
+            // the exact length deterministically instead of hoping the model counted correctly.
+            if (snappedPackage?.duration_days) {
+              const target = snappedPackage.duration_days;
+              const cities = snappedPackage.cities.length > 0 ? snappedPackage.cities : ["Uzbekistan"];
+              // Always renumber 1..target sequentially rather than trusting the model's own
+              // day_number values -- if the model returned a gap or a duplicate (plausible for
+              // the same "unreliable at counting" reason this whole fix exists), padding by
+              // array position alone could produce two entries with the same day_number, which
+              // the client silently drops one of via its own dedup-by-dayNum logic. Reusing the
+              // model's label/location for whichever entries it did produce, generic fallback
+              // for the rest.
+              outline = Array.from({ length: target }, (_, i) => {
+                const src = outline[i];
+                return {
+                  day_number: i + 1,
+                  label: src?.label ?? "Free time & local flavor",
+                  location: src?.location ?? cities[i % cities.length],
+                };
+              });
+            }
+
+            // 4.5. Genuinely-overlapping local events (date range AND region -- see matchEvents.ts
+            // for why there's no "closest match" fallback here, unlike services/packages). Runs
+            // AFTER outline is finalized (including the padding above) so the date window checked
+            // is the trip's actual, final day count -- not a pre-outline guess. Both a resolved
+            // travel_date and a non-empty outline are required; without a real start date there's
+            // no way to establish a genuine date overlap at all.
+            let matchedEvents: AIEventSearchResult[] = [];
+            if (normalizedTravelDate && outline.length > 0) {
+              const tripEndDate = addDaysIso(normalizedTravelDate, outline.length - 1);
+              const eventOutcome = await matchEvents(supabase, {
+                region,
+                tripStartDate: normalizedTravelDate,
+                tripEndDate,
+              });
+              if (eventOutcome.success) matchedEvents = eventOutcome.events;
+            }
+            controller.enqueue(encoder.encode(`EVENTS:${JSON.stringify(matchedEvents)}\n`));
+            if (matchedEvents.length > 0) {
+              // A short, deterministic chat mention rather than asking the model to weave it in --
+              // reliably naming a specific event/date/location is a better fit for a template than
+              // for a small/fast model, and this keeps the existing reply_text call untouched.
+              const first = matchedEvents[0];
+              const mentionText = matchedEvents.length === 1
+                ? `\n\n✦ Perfect timing — **${first.title}** falls right within your trip dates, in ${first.location}. I've flagged it on your itinerary below!`
+                : `\n\n✦ Perfect timing — your trip overlaps with ${matchedEvents.length} local events, including **${first.title}** in ${first.location}. I've flagged them on your itinerary below!`;
+              controller.enqueue(encoder.encode(`TEXT:${JSON.stringify(mentionText)}\n`));
+            }
 
             if (outline.length > 0 && servicesArray.length > 0) {
               // 5. One small generateObject() call per day, awaited SEQUENTIALLY (not

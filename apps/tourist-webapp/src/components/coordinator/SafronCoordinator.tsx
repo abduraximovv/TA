@@ -16,14 +16,18 @@ import {
   ChevronRight,
   Sparkles,
   CheckCircle2,
+  History,
+  Plus,
 } from "lucide-react";
 import { ActivityCard, SwapPanel } from "./ActivityCard";
 import { useAuth } from "@repo/auth";
 import { AuthModal } from "@/components/auth/AuthModal";
-import type { AIServiceSearchResult, AIPackageSearchResult } from "@repo/types";
+import type { AIServiceSearchResult, AIPackageSearchResult, AIEventSearchResult } from "@repo/types";
 import { TripControlBar } from "./TripControlBar";
 import { PackageCarousel, SnappedPackageTimeline } from "./PackageCarousel";
 import { PackageDetailSheet } from "./PackageDetailSheet";
+import { HistoryPanel } from "./HistoryPanel";
+import { EventHighlight } from "./EventHighlight";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -48,6 +52,15 @@ Tell me your dream trip and I'll build a real itinerary from our database of vet
 interface SafronCoordinatorProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
+}
+
+/** Lightweight row shape for the history panel -- matches exactly what GET
+ *  /api/v1/ai/coordinator-sessions returns (no state blob, see that route's own comment). */
+export interface SavedSessionSummary {
+  id: string;
+  title: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 interface Msg {
@@ -99,6 +112,24 @@ function packageDurationDays(pkg: AIPackageSearchResult): number | null {
   return Math.round((end - start) / (1000 * 60 * 60 * 24)) + 1;
 }
 
+// Auto-titles a saved chat from its first user message -- same idea as ChatGPT's conversation
+// titling, kept intentionally cheap (no extra LLM call just to name a chat).
+function deriveSessionTitle(msgs: Msg[]): string {
+  const firstUser = msgs.find((m) => m.role === "user" && m.text.trim());
+  if (!firstUser) return "New Trip";
+  const text = firstUser.text.trim().replace(/\s+/g, " ");
+  return text.length > 60 ? `${text.slice(0, 60)}…` : text;
+}
+
+// Mirrors addDaysIso in plan-trip/route.ts -- needed here to figure out which calendar day each
+// DayPlan actually falls on (days only carry a relative dayNum, not an absolute date) so a
+// matched event can be attached to the right day.
+function addDaysIso(startIso: string, daysToAdd: number): string {
+  const d = new Date(`${startIso}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + daysToAdd);
+  return d.toISOString().slice(0, 10);
+}
+
 function cid(): string {
   return typeof crypto !== "undefined" && crypto.randomUUID
     ? crypto.randomUUID()
@@ -139,6 +170,19 @@ export function SafronCoordinator({ isOpen, onOpenChange }: SafronCoordinatorPro
   const [lastPackageFilters, setLastPackageFilters] = useState<{ category: string | null; region: string | null }>({ category: null, region: null });
   const [isFindingMorePackages, setIsFindingMorePackages] = useState(false);
   const [findMorePackagesError, setFindMorePackagesError] = useState<string | null>(null);
+
+  // Genuinely date+region-overlapping local events for the current trip (see matchEvents.ts) --
+  // usually empty; only populated when the EVENTS: line from plan-trip actually carries something.
+  const [events, setEvents] = useState<AIEventSearchResult[]>([]);
+
+  // Chat history (multi-session). currentSessionId is null for a brand-new, not-yet-saved chat --
+  // the auto-save effect below generates one client-side the first time there's anything worth
+  // persisting, then reuses it for every subsequent save (upsert by id). savedSessions is the
+  // lightweight list (no state blobs) that drives the history panel.
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+  const [savedSessions, setSavedSessions] = useState<SavedSessionSummary[]>([]);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [isHistoryLoading, setIsHistoryLoading] = useState(false);
 
   const toggleSelection = useCallback((uid: string) => {
     setSelectedUids((prev) => {
@@ -198,99 +242,204 @@ export function SafronCoordinator({ isOpen, onOpenChange }: SafronCoordinatorPro
   // Removed limit for testing
   const MAX_PLANS = 9999;
 
+  // Everything a fresh, empty, not-yet-saved chat looks like -- shared by the reset-on-open
+  // effect and the explicit "New Chat" button, so the two can never drift apart.
+  const resetToFreshChat = useCallback(() => {
+    sessionLoadedRef.current = false;
+    setCurrentSessionId(null);
+    setMsgs([]);
+    setDays([]);
+    setMobileView("chat");
+    setPlanCount(0);
+    setInput("");
+    setSending(false);
+    setHasOpenedDrawer(false);
+    setSelectedUids(new Set());
+    setGlobalBookStatus("idle");
+    setGuestCount(1);
+    setPackages([]);
+    setSelectedPackage(null);
+    setSnappedPackage(null);
+    setPackageBookedId(null);
+    setLastPackageFilters({ category: null, region: null });
+    setIsFindingMorePackages(false);
+    setFindMorePackagesError(null);
+    setEvents([]);
+  }, []);
+
   // reset on open
   useEffect(() => {
-    if (isOpen) {
-      sessionLoadedRef.current = false;
-      setMsgs([]);
-      setDays([]);
-      setMobileView("chat");
-      setPlanCount(0);
-      setInput("");
-      setSending(false);
-      setHasOpenedDrawer(false);
-      setSelectedUids(new Set());
-      setGlobalBookStatus("idle");
-      setGuestCount(1);
-      setPackages([]);
-      setSelectedPackage(null);
-      setSnappedPackage(null);
-      setPackageBookedId(null);
-      setLastPackageFilters({ category: null, region: null });
-      setIsFindingMorePackages(false);
-      setFindMorePackagesError(null);
-    }
+    if (isOpen) resetToFreshChat();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
-  // Restore any saved session for this user, once open and authenticated. Runs after the reset
-  // effect above (React runs effects in declaration order), so this only ever adds data on top
-  // of the fresh/empty state, never races it.
+  // Applies a fetched session's saved state fields onto the live UI state. Shared by the
+  // auto-resume-most-recent effect below and the explicit "load this chat from history" handler
+  // -- both need to do exactly the same restoration, just triggered differently.
+  const applySessionState = useCallback((id: string, state: any) => {
+    // See isRestoringSessionRef's declaration -- this must be true before setSnappedPackage
+    // below, so the "snappedPackage changed" effect can tell this apart from a fresh click.
+    isRestoringSessionRef.current = true;
+    setCurrentSessionId(id);
+
+    // Only fields that actually represent "the plan" are restored. sending/mobileView/
+    // hasOpenedDrawer/globalBookStatus/globalBookError/input are deliberately left at their
+    // fresh defaults -- transient UI state, not something worth resuming stale.
+    if (Array.isArray(state?.msgs)) setMsgs(state.msgs);
+    if (Array.isArray(state?.days)) setDays(state.days);
+    if (typeof state?.guestCount === "number") setGuestCount(state.guestCount);
+    if (Array.isArray(state?.packages)) setPackages(state.packages);
+    if (Array.isArray(state?.events)) setEvents(state.events);
+    setSnappedPackage(state?.snappedPackage ?? null);
+    setPackageBookedId(state?.packageBookedId ?? null);
+    if (Array.isArray(state?.selectedUids)) setSelectedUids(new Set(state.selectedUids));
+    if (typeof state?.planCount === "number") setPlanCount(state.planCount);
+    setLastPackageFilters(state?.lastPackageFilters ?? { category: null, region: null });
+    if ((state?.msgs?.length ?? 0) > 0 || (state?.days?.length ?? 0) > 0) {
+      setMobileView("canvas");
+    }
+    // Cleared on the next macrotask, i.e. after React has committed this render and run every
+    // effect (including the snappedPackage watcher) for it -- see the ref's own comment.
+    setTimeout(() => { isRestoringSessionRef.current = false; }, 0);
+  }, []);
+
+  // On open + authenticated: fetch the history list (for the panel) and auto-resume the most
+  // recently updated chat, if any -- same "pick up where I left off" behavior as before, now
+  // generalized to "most recent of possibly many" instead of "the one and only draft". Explicitly
+  // starting a New Chat (see startNewChat below) does NOT touch this -- it's only the initial
+  // load path.
   useEffect(() => {
     if (!isOpen || !session?.access_token) return;
     let cancelled = false;
     (async () => {
+      setIsHistoryLoading(true);
       try {
-        const res = await fetch("/api/v1/ai/coordinator-session", {
+        const listRes = await fetch("/api/v1/ai/coordinator-sessions", {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        if (!listRes.ok || cancelled) return;
+        const { sessions } = await listRes.json();
+        if (cancelled) return;
+        setSavedSessions(Array.isArray(sessions) ? sessions : []);
+
+        const mostRecent = sessions?.[0]; // already ordered updated_at DESC by the route
+        if (!mostRecent) return;
+
+        const res = await fetch(`/api/v1/ai/coordinator-sessions/${mostRecent.id}`, {
           headers: { Authorization: `Bearer ${session.access_token}` },
         });
         if (!res.ok || cancelled) return;
-        const { state } = await res.json();
-        if (cancelled || !state) return;
-
-        // See isRestoringSessionRef's declaration -- this must be true before setSnappedPackage
-        // below, so the "snappedPackage changed" effect can tell this apart from a fresh click.
-        isRestoringSessionRef.current = true;
-
-        // Only fields that actually represent "the plan" are restored. sending/mobileView/
-        // hasOpenedDrawer/globalBookStatus/globalBookError/input are deliberately left at their
-        // fresh defaults -- transient UI state, not something worth resuming stale.
-        if (Array.isArray(state.msgs)) setMsgs(state.msgs);
-        if (Array.isArray(state.days)) setDays(state.days);
-        if (typeof state.guestCount === "number") setGuestCount(state.guestCount);
-        if (Array.isArray(state.packages)) setPackages(state.packages);
-        if (state.snappedPackage) setSnappedPackage(state.snappedPackage);
-        if (state.packageBookedId) setPackageBookedId(state.packageBookedId);
-        if (Array.isArray(state.selectedUids)) setSelectedUids(new Set(state.selectedUids));
-        if (typeof state.planCount === "number") setPlanCount(state.planCount);
-        if (state.lastPackageFilters) setLastPackageFilters(state.lastPackageFilters);
-        if ((state.msgs?.length ?? 0) > 0 || (state.days?.length ?? 0) > 0) {
-          setMobileView("canvas");
-        }
-        // Cleared on the next macrotask, i.e. after React has committed this render and run
-        // every effect (including the snappedPackage watcher) for it -- see the ref's own comment.
-        setTimeout(() => { isRestoringSessionRef.current = false; }, 0);
+        const { session: loaded } = await res.json();
+        if (cancelled || !loaded) return;
+        applySessionState(loaded.id, loaded.state);
       } catch (e) {
-        console.error("Failed to load coordinator session:", e);
+        console.error("Failed to load coordinator sessions:", e);
       } finally {
-        if (!cancelled) sessionLoadedRef.current = true;
+        if (!cancelled) {
+          sessionLoadedRef.current = true;
+          setIsHistoryLoading(false);
+        }
       }
     })();
     return () => { cancelled = true; };
-  }, [isOpen, session?.access_token]);
+  }, [isOpen, session?.access_token, applySessionState]);
 
   // Debounced auto-save -- waits 1.5s after the last change before writing, so a burst of
   // updates (e.g. several DAY: lines streaming in quickly) collapses into one PUT instead of one
   // per state change. Gated on sessionLoadedRef so this can never fire before the restore effect
   // above has had a chance to run (see that ref's declaration for why that ordering matters).
+  // Lazily creates currentSessionId the first time a fresh chat has anything worth saving, then
+  // reuses that same id for every later save (a plain upsert, never a second "create" call).
   useEffect(() => {
     if (!isOpen || !session?.access_token || !sessionLoadedRef.current) return;
     // Nothing worth persisting yet -- skip so every visit to /coordinator doesn't create a saved
     // row even when the user never actually did anything.
     if (msgs.length === 0 && days.length === 0 && !snappedPackage) return;
 
+    const id = currentSessionId ?? cid();
+    if (!currentSessionId) setCurrentSessionId(id);
+
     const state = {
-      msgs, days, guestCount, packages, snappedPackage, packageBookedId,
+      msgs, days, guestCount, packages, events, snappedPackage, packageBookedId,
       selectedUids: Array.from(selectedUids), planCount, lastPackageFilters,
     };
+    const title = deriveSessionTitle(msgs);
     const timer = setTimeout(() => {
-      fetch("/api/v1/ai/coordinator-session", {
+      fetch(`/api/v1/ai/coordinator-sessions/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
-        body: JSON.stringify({ state }),
-      }).catch((e) => console.error("Failed to save coordinator session:", e));
+        body: JSON.stringify({ state, title }),
+      })
+        .then((res) => { if (!res.ok) throw new Error("save failed"); })
+        .then(() => {
+          const now = new Date().toISOString();
+          setSavedSessions((prev) => {
+            const existing = prev.find((s) => s.id === id);
+            const entry: SavedSessionSummary = existing
+              ? { ...existing, title, updated_at: now }
+              : { id, title, created_at: now, updated_at: now };
+            return [entry, ...prev.filter((s) => s.id !== id)];
+          });
+        })
+        .catch((e) => console.error("Failed to save coordinator session:", e));
     }, 1500);
     return () => clearTimeout(timer);
-  }, [isOpen, session?.access_token, msgs, days, guestCount, packages, snappedPackage, packageBookedId, selectedUids, planCount, lastPackageFilters]);
+  }, [isOpen, session?.access_token, currentSessionId, msgs, days, guestCount, packages, events, snappedPackage, packageBookedId, selectedUids, planCount, lastPackageFilters]);
+
+  // ── History panel actions ────────────────────────────────────────────────────────
+  const startNewChat = useCallback(() => {
+    resetToFreshChat();
+    sessionLoadedRef.current = true; // nothing to wait on -- this IS the fresh state already
+    setIsHistoryOpen(false);
+  }, [resetToFreshChat]);
+
+  const loadSession = useCallback(async (id: string) => {
+    if (!session?.access_token || id === currentSessionId) { setIsHistoryOpen(false); return; }
+    try {
+      const res = await fetch(`/api/v1/ai/coordinator-sessions/${id}`, {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      if (!res.ok) throw new Error("Failed to load that chat.");
+      const { session: loaded } = await res.json();
+      resetToFreshChat();
+      applySessionState(loaded.id, loaded.state);
+      sessionLoadedRef.current = true;
+    } catch (e) {
+      console.error("Failed to load session:", e);
+    } finally {
+      setIsHistoryOpen(false);
+    }
+  }, [session?.access_token, currentSessionId, resetToFreshChat, applySessionState]);
+
+  const deleteSession = useCallback(async (id: string) => {
+    if (!session?.access_token) return;
+    setSavedSessions((prev) => prev.filter((s) => s.id !== id)); // optimistic
+    try {
+      const res = await fetch(`/api/v1/ai/coordinator-sessions/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      if (!res.ok) throw new Error("delete failed");
+    } catch (e) {
+      console.error("Failed to delete session:", e);
+    }
+    if (id === currentSessionId) startNewChat();
+  }, [session?.access_token, currentSessionId, startNewChat]);
+
+  const clearAllHistory = useCallback(async () => {
+    if (!session?.access_token) return;
+    setSavedSessions([]); // optimistic
+    try {
+      const res = await fetch("/api/v1/ai/coordinator-sessions", {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      if (!res.ok) throw new Error("clear failed");
+    } catch (e) {
+      console.error("Failed to clear history:", e);
+    }
+    startNewChat();
+  }, [session?.access_token, startNewChat]);
 
   // focus input
   useEffect(() => {
@@ -494,14 +643,18 @@ export function SafronCoordinator({ isOpen, onOpenChange }: SafronCoordinatorPro
 
     if (failures.length === 0) {
       setGlobalBookStatus("done");
-      // The draft has been acted on in full -- nothing left to resume, so clear the saved
-      // session rather than let a future visit restore an already-booked plan. Fire-and-forget:
-      // booking already succeeded, a failed cleanup here shouldn't surface as an error to the user.
-      if (session?.access_token) {
-        fetch("/api/v1/ai/coordinator-session", {
+      // The draft has been acted on in full -- nothing left to resume, so clear THIS saved
+      // session (by id, now that sessions are multi-row -- see coordinator-sessions/[id]/route.ts)
+      // rather than let a future visit restore an already-booked plan. Fire-and-forget: booking
+      // already succeeded, a failed cleanup here shouldn't surface as an error to the user.
+      if (session?.access_token && currentSessionId) {
+        const bookedId = currentSessionId;
+        fetch(`/api/v1/ai/coordinator-sessions/${bookedId}`, {
           method: "DELETE",
           headers: { Authorization: `Bearer ${session.access_token}` },
-        }).catch((e) => console.error("Failed to clear coordinator session:", e));
+        })
+          .then(() => setSavedSessions((prev) => prev.filter((s) => s.id !== bookedId)))
+          .catch((e) => console.error("Failed to clear coordinator session:", e));
       }
     } else {
       setGlobalBookError(failures.join(" "));
@@ -525,6 +678,10 @@ export function SafronCoordinator({ isOpen, onOpenChange }: SafronCoordinatorPro
       setDays([]);
       setSelectedUids(new Set());
       setGlobalBookStatus("idle");
+      // Unlike packages (which keep showing a still-plausible earlier match), events are tied to
+      // this turn's specific day dates -- start clean so a stale badge from an unrelated earlier
+      // region/date can't linger once days are rebuilt for this new request.
+      setEvents([]);
 
       try {
         const history = [...msgs, userMsg]
@@ -590,6 +747,14 @@ export function SafronCoordinator({ isOpen, onOpenChange }: SafronCoordinatorPro
                 const pkgs = JSON.parse(line.slice(9));
                 if (Array.isArray(pkgs) && pkgs.length > 0) setPackages(pkgs);
               } catch (e) { console.error("Parse packages error", e); }
+            } else if (line.startsWith('EVENTS:')) {
+              try {
+                const evts = JSON.parse(line.slice(7));
+                // Unconditional, unlike PACKAGES: above -- an empty array here is a real, meaningful
+                // "no genuine overlap this turn" signal (see matchEvents.ts), not a lack of data to
+                // fall back from, so it should actually clear any stale badge from an earlier turn.
+                setEvents(Array.isArray(evts) ? evts : []);
+              } catch (e) { console.error("Parse events error", e); }
             } else if (line.startsWith('META:')) {
               try {
                 const meta = JSON.parse(line.slice(5));
@@ -768,6 +933,24 @@ export function SafronCoordinator({ isOpen, onOpenChange }: SafronCoordinatorPro
           style={{ width: 36, height: 36, background: "rgba(10,35,32,0.05)", color: "#0A2320" }}
         >
           <ArrowLeft style={{ width: 16, height: 16 }} />
+        </button>
+
+        <button
+          onClick={() => setIsHistoryOpen(true)}
+          aria-label="Trip history"
+          className="tap-active flex items-center justify-center rounded-full flex-shrink-0"
+          style={{ width: 36, height: 36, background: "rgba(10,35,32,0.05)", color: "#0A2320" }}
+        >
+          <History style={{ width: 15, height: 15 }} />
+        </button>
+
+        <button
+          onClick={startNewChat}
+          aria-label="New chat"
+          className="tap-active flex items-center justify-center rounded-full flex-shrink-0"
+          style={{ width: 36, height: 36, background: "rgba(10,35,32,0.05)", color: "#0A2320" }}
+        >
+          <Plus style={{ width: 16, height: 16 }} />
         </button>
 
         <div className="flex items-center gap-2.5 flex-1 min-w-0">
@@ -1125,7 +1308,14 @@ export function SafronCoordinator({ isOpen, onOpenChange }: SafronCoordinatorPro
 
                   {/* Day sections */}
                   <AnimatePresence>
-                    {days.map((day, dayIdx) => (
+                    {days.map((day, dayIdx) => {
+                      // Attach any event that genuinely overlaps THIS specific day's calendar date
+                      // (tripDate + dayNum offset) -- events only ever carries genuine matches to
+                      // begin with (see matchEvents.ts), so no further "is this relevant" check
+                      // is needed here, just "which day does it fall on".
+                      const dayDate = addDaysIso(tripDate, day.dayNum - 1);
+                      const dayEvents = events.filter((e) => e.start_date <= dayDate && e.end_date >= dayDate);
+                      return (
                       <motion.section
                         key={day.dayNum}
                         initial={{ opacity: 0, x: 20 }}
@@ -1134,7 +1324,7 @@ export function SafronCoordinator({ isOpen, onOpenChange }: SafronCoordinatorPro
                         className="mb-12 relative"
                       >
                         {/* Circle on the timeline */}
-                        <div 
+                        <div
                           className="absolute left-[24px] w-3.5 h-3.5 -ml-[6px] top-3 rounded-full z-10"
                           style={{ background: "#C5A880", boxShadow: "0 0 0 4px #FFFFFF" }}
                         />
@@ -1160,6 +1350,15 @@ export function SafronCoordinator({ isOpen, onOpenChange }: SafronCoordinatorPro
                             </div>
                           </div>
                         </div>
+
+                        {/* Local events genuinely overlapping this day */}
+                        {dayEvents.length > 0 && (
+                          <div className="pl-14">
+                            {dayEvents.map((ev) => (
+                              <EventHighlight key={ev.id} event={ev} />
+                            ))}
+                          </div>
+                        )}
 
                         {/* Slots */}
                         <div className="flex flex-col gap-5 pl-14">
@@ -1201,7 +1400,8 @@ export function SafronCoordinator({ isOpen, onOpenChange }: SafronCoordinatorPro
                           ))}
                         </div>
                       </motion.section>
-                    ))}
+                      );
+                    })}
                   </AnimatePresence>
 
                   {/* Crafting Next Day Spinner */}
@@ -1326,6 +1526,20 @@ export function SafronCoordinator({ isOpen, onOpenChange }: SafronCoordinatorPro
         guestCount={guestCount}
         isActive={snappedPackage?.id === selectedPackage?.id}
         onReplacePlan={handleReplacePlan}
+        prefersReducedMotion={!!prefersReducedMotion}
+      />
+
+      {/* Trip History Panel */}
+      <HistoryPanel
+        isOpen={isHistoryOpen}
+        onOpenChange={setIsHistoryOpen}
+        sessions={savedSessions}
+        currentSessionId={currentSessionId}
+        isLoading={isHistoryLoading}
+        onNewChat={startNewChat}
+        onSelectSession={loadSession}
+        onDeleteSession={deleteSession}
+        onClearAll={clearAllHistory}
         prefersReducedMotion={!!prefersReducedMotion}
       />
     </motion.div>
