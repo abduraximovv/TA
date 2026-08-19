@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@repo/auth";
-import { getSupabase } from "@repo/database";
+import { getSupabaseBrowserClient } from "@repo/database";
 import type { Review } from "@repo/types";
 import { Star, MessageSquareReply, CheckCircle2 } from "lucide-react";
 import { LoadingPulse } from "@repo/ui";
@@ -23,7 +23,7 @@ export default function ReviewsPage() {
         return;
       }
       try {
-        const supabase = getSupabase();
+        const supabase = getSupabaseBrowserClient();
         // 1. Fetch agency's itineraries
         const { data: itineraries } = await (supabase as any)
           .from("itineraries")

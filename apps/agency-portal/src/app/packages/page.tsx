@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@repo/auth";
-import { getSupabase } from "@repo/database";
+import { getSupabaseBrowserClient } from "@repo/database";
 import { Button, Card, Badge, LoadingPulse, Toast } from "@repo/ui";
 import { Plus, Pencil, Trash2, Package as PackageIcon, Calendar, CalendarClock } from "lucide-react";
 import {
@@ -45,7 +45,7 @@ export default function PackagesPage() {
   const fetchData = useCallback(async () => {
     if (!session?.user?.id) return;
     setIsLoading(true);
-    const supabase = getSupabase();
+    const supabase = getSupabaseBrowserClient();
 
     const { data: itineraries, error: itinError } = await supabase
       .from("itineraries")
@@ -107,7 +107,7 @@ export default function PackagesPage() {
 
   const handleSubmit = async (values: PackageFormValues) => {
     if (!session?.user?.id) return;
-    const supabase = getSupabase();
+    const supabase = getSupabaseBrowserClient();
     const totalPrice = values.items.reduce((sum, item) => sum + (item.price || 0), 0);
 
     const itineraryPayload = {
@@ -152,7 +152,7 @@ export default function PackagesPage() {
 
   const handleDelete = async (pkg: ItineraryRow) => {
     if (!confirm(`Delete "${pkg.title}"? This can't be undone.`)) return;
-    const supabase = getSupabase();
+    const supabase = getSupabaseBrowserClient();
     const { error } = await supabase.from("itineraries").delete().eq("id", pkg.id);
     if (error) {
       setToastMessage(error.message);

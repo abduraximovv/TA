@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@repo/auth";
-import { getSupabase } from "@repo/database";
+import { getSupabaseBrowserClient } from "@repo/database";
 import type { PackageDeparture } from "@repo/database";
 import { Button, Toast, LoadingPulse } from "@repo/ui";
 import { ArrowLeft, Plus, Trash2, Ban, RotateCcw } from "lucide-react";
@@ -55,7 +55,7 @@ export default function PackageDeparturesPage({ params }: DeparturesPageProps) {
   const fetchData = useCallback(async () => {
     if (!session?.user?.id) return;
     setIsLoading(true);
-    const supabase = getSupabase();
+    const supabase = getSupabaseBrowserClient();
 
     // RLS already scopes `itineraries` reads/writes to the caller's own agency_id, so this
     // second .eq() is belt-and-suspenders -- it's what turns "RLS silently returned zero rows"
@@ -95,11 +95,13 @@ export default function PackageDeparturesPage({ params }: DeparturesPageProps) {
 
   const handleAddDeparture = async (values: DepartureFormValues) => {
     if (!pkg) return;
-    const supabase = getSupabase();
+    const supabase = getSupabaseBrowserClient();
     const payload = {
       itinerary_id: pkg.id,
       start_date: values.start_date,
       end_date: values.end_date,
+      start_time: values.start_time || null,
+      end_time: values.end_time || null,
       max_guests: Number(values.max_guests) || 0,
     };
 
@@ -112,7 +114,7 @@ export default function PackageDeparturesPage({ params }: DeparturesPageProps) {
 
   const handleCancel = async (departure: PackageDeparture) => {
     if (!confirm(`Cancel the departure starting ${departure.start_date}? Travelers with existing bookings should be notified separately.`)) return;
-    const supabase = getSupabase();
+    const supabase = getSupabaseBrowserClient();
     const { error } = await supabase
       .from("package_departures")
       .update({ status: "cancelled" } as never)
@@ -126,7 +128,7 @@ export default function PackageDeparturesPage({ params }: DeparturesPageProps) {
   };
 
   const handleReopen = async (departure: PackageDeparture) => {
-    const supabase = getSupabase();
+    const supabase = getSupabaseBrowserClient();
     const nextStatus = departure.booked_guests >= departure.max_guests ? "sold_out" : "scheduled";
     const { error } = await supabase
       .from("package_departures")
@@ -146,7 +148,7 @@ export default function PackageDeparturesPage({ params }: DeparturesPageProps) {
       return;
     }
     if (!confirm(`Remove the departure starting ${departure.start_date}?`)) return;
-    const supabase = getSupabase();
+    const supabase = getSupabaseBrowserClient();
     const { error } = await supabase.from("package_departures").delete().eq("id", departure.id);
     if (error) {
       notify(error.message, "danger");
@@ -202,7 +204,8 @@ export default function PackageDeparturesPage({ params }: DeparturesPageProps) {
         <div className="p-12 text-center rounded-xl border-dashed border-2 border-gray-200 bg-gray-50/50">
           <p className="text-gray-500 font-medium">No fixed departures set yet.</p>
           <p className="text-sm text-gray-400 mt-1">
-            Without any departures here, this package stays bookable on any date a traveler picks.
+            Without at least one departure here, travelers have no date to book -- the package page
+            shows "no upcoming sessions" until you add one.
           </p>
           <Button onClick={() => setModalOpen(true)} className="mt-4 flex items-center gap-2 mx-auto">
             <Plus className="w-4 h-4" />
@@ -224,8 +227,18 @@ export default function PackageDeparturesPage({ params }: DeparturesPageProps) {
             <tbody className="divide-y divide-gray-100">
               {departures.map((departure) => (
                 <tr key={departure.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4 font-medium text-gray-900">{departure.start_date}</td>
-                  <td className="px-6 py-4 text-gray-500">{departure.end_date}</td>
+                  <td className="px-6 py-4 font-medium text-gray-900">
+                    {departure.start_date}
+                    {departure.start_time && (
+                      <span className="block text-xs font-normal text-gray-400">{departure.start_time.slice(0, 5)}</span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 text-gray-500">
+                    {departure.end_date}
+                    {departure.end_time && (
+                      <span className="block text-xs font-normal text-gray-400">{departure.end_time.slice(0, 5)}</span>
+                    )}
+                  </td>
                   <td className="px-6 py-4 text-gray-600">
                     {departure.booked_guests} / {departure.max_guests}
                   </td>

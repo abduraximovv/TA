@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@repo/auth";
-import { getSupabase, getMyBookings, subscribeToBookingUpdates } from "@repo/database";
+import { getSupabase, getSupabaseBrowserClient, getMyBookings, subscribeToBookingUpdates } from "@repo/database";
 import { LoadingPulse, Toast } from "@repo/ui";
 import type { Booking } from "@repo/types";
 import { BookingsDataTable } from "@/components/bookings/BookingsDataTable";
@@ -69,7 +69,10 @@ export default function BookingsPage() {
     if (!session?.user?.id) return;
     const channel = subscribeToBookingUpdates(session.user.id, "provider", () => fetchBookings());
     return () => {
-      getSupabase().removeChannel(channel);
+      // Must match the client subscribeToBookingUpdates actually subscribed with
+      // (getSupabaseBrowserClient(), not the plain getSupabase() used elsewhere in this file) --
+      // removeChannel() looks the channel up in that specific client's own registry.
+      getSupabaseBrowserClient().removeChannel(channel);
     };
   }, [session, fetchBookings]);
 

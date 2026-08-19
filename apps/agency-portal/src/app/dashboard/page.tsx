@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@repo/auth";
-import { getSupabase } from "@repo/database";
+import { getSupabaseBrowserClient } from "@repo/database";
 
 interface UserProfile {
   full_name: string | null;
@@ -30,7 +30,7 @@ export default function Dashboard() {
         setLoading(false);
         return;
       }
-      const supabase = getSupabase();
+      const supabase = getSupabaseBrowserClient();
 
       const { data: profileData } = await supabase
         .from("user_profiles")

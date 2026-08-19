@@ -10,10 +10,9 @@ import type { ItineraryDetail, ReviewWithAuthor } from "@repo/database";
 interface PackageDetailClientProps {
   itinerary: ItineraryDetail;
   reviews: ReviewWithAuthor[];
-  isLoggedIn: boolean;
 }
 
-export function PackageDetailClient({ itinerary, reviews, isLoggedIn }: PackageDetailClientProps) {
+export function PackageDetailClient({ itinerary, reviews }: PackageDetailClientProps) {
   const tourPhotos = itinerary.items
     .filter((item) => item.service_image)
     .map((item) => item.service_image!);
@@ -34,7 +33,7 @@ export function PackageDetailClient({ itinerary, reviews, isLoggedIn }: PackageD
   const avgRating = reviews.length > 0 ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1) : "4.8";
 
   return (
-    <main className="min-h-screen bg-white pb-32 text-[#0A2320]">
+    <main className="min-h-screen bg-white pb-56 md:pb-32 text-[#0A2320]">
       
       {/* Fixed Back and Favorite Buttons */}
       <div className="fixed top-[90px] left-5 right-5 max-w-[900px] mx-auto flex justify-between items-center z-[45] pointer-events-none">
@@ -265,12 +264,7 @@ export function PackageDetailClient({ itinerary, reviews, isLoggedIn }: PackageD
         )}
       </div>
 
-      <PackageBookingModal
-        itineraryId={itinerary.id}
-        price={itinerary.total_price}
-        currency={itinerary.currency}
-        isLoggedIn={isLoggedIn}
-      />
+      <PackageBookingModal packageId={itinerary.id} />
     </main>
   );
 }

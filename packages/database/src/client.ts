@@ -333,7 +333,11 @@ export const createBooking = async (input: BookingInput): Promise<Booking> => {
 };
 
 export const getMyBookings = async (userId: string, role: 'tourist' | 'provider' | 'agency'): Promise<Booking[]> => {
-  const supabase = getSupabase();
+  // bookings' RLS ("Users can view own bookings") requires auth.uid() = tourist_id/provider_id.
+  // getSupabase() never carries a session (see its own comment above) -- auth.uid() would be
+  // NULL and RLS would silently filter every row, same root cause as the realtime-subscription
+  // bug fixed earlier for subscribeToBookingUpdates. Needs the cookie-authenticated client.
+  const supabase = getSupabaseBrowserClient();
   const filterColumn = role === 'tourist' ? 'tourist_id' : 'provider_id';
   const { data, error } = await supabase
     .from("bookings")
@@ -378,7 +382,10 @@ export const getReviewsForItineraries = async (itineraryIds: string[]): Promise<
 };
 
 export const updateReviewResponse = async (reviewId: string, response: string): Promise<Review> => {
-  const supabase = getSupabase();
+  // Gated by "Providers/Agencies can read/write reviews for their bookings" (auth.uid()-based) --
+  // getSupabase() carries no session, so this UPDATE would be silently rejected by RLS for every
+  // real provider/agency. Same root cause as getMyBookings above.
+  const supabase = getSupabaseBrowserClient();
   const { data, error } = await (supabase as any).from('reviews').update({
     response,
     response_at: new Date().toISOString()
@@ -389,7 +396,14 @@ export const updateReviewResponse = async (reviewId: string, response: string): 
 
 export const subscribeToBookingUpdates = (
 userId: string, role: 'tourist' | 'provider' | 'agency', onChange: (payload: any) => void) => {
-  const supabase = getSupabase();
+  // Must be the same authenticated client SessionProvider manages, not the anonymous
+  // getSupabase() singleton -- bookings' RLS SELECT policy is `auth.uid() = tourist_id OR
+  // auth.uid() = provider_id`, and Realtime's postgres_changes enforces that same RLS using
+  // the *subscribing connection's* JWT. getSupabase() never signs in (it's a separate client
+  // instance nothing ever authenticates), so auth.uid() resolved to null on that socket and
+  // every event was silently filtered out before delivery -- no error, the subscription just
+  // never received anything, which is why this looked like it was "implemented but not showing."
+  const supabase = getSupabaseBrowserClient();
   const filterColumn = role === 'tourist' ? 'tourist_id' : 'provider_id';
 
   // supabase-js reuses an existing channel object when the topic string already exists

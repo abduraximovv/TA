@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { LayoutDashboard, Package, CalendarCheck, LogOut, Compass, ShieldCheck, MessageSquare } from "lucide-react";
 import { useAuth } from "@repo/auth";
-import { getMyBookings, getSupabase, subscribeToBookingUpdates } from "@repo/database";
+import { getMyBookings, getSupabaseBrowserClient, subscribeToBookingUpdates } from "@repo/database";
 
 const navItems = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -39,7 +39,7 @@ export function Sidebar() {
     });
 
     return () => {
-      getSupabase().removeChannel(channel);
+      getSupabaseBrowserClient().removeChannel(channel);
     };
   }, [user]);
 

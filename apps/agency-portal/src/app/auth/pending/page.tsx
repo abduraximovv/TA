@@ -3,7 +3,7 @@
 import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@repo/auth";
-import { getSupabase } from "@repo/database";
+import { getSupabaseBrowserClient } from "@repo/database";
 import { LoadingPulse } from "@repo/ui";
 import { Clock, FileCheck2, ShieldCheck } from "lucide-react";
 
@@ -25,7 +25,10 @@ export default function PendingPage() {
 
   useEffect(() => {
     if (!user) return;
-    const supabase = getSupabase();
+    // postgres_changes enforces RLS using the subscribing connection's own JWT -- getSupabase()
+    // never carries a session, so this realtime subscription would never actually fire (same
+    // root cause fixed for subscribeToBookingUpdates earlier).
+    const supabase = getSupabaseBrowserClient();
 
     const channel = supabase
       .channel(`agency-verification-${user.id}`)

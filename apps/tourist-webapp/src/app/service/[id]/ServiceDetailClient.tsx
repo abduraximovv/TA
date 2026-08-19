@@ -11,10 +11,9 @@ import type { Service, ReviewWithAuthor } from "@repo/database";
 interface ServiceDetailClientProps {
   service: Service;
   reviews: ReviewWithAuthor[];
-  isLoggedIn: boolean;
 }
 
-export function ServiceDetailClient({ service, reviews, isLoggedIn }: ServiceDetailClientProps) {
+export function ServiceDetailClient({ service, reviews }: ServiceDetailClientProps) {
   const duration = formatDuration(service.duration_minutes);
   const locationText = [service.city, service.region].filter(Boolean).join(", ");
   const heroImage = service.image_url || "/images/registan_4k.png";
@@ -24,7 +23,7 @@ export function ServiceDetailClient({ service, reviews, isLoggedIn }: ServiceDet
   const avgRating = reviews.length > 0 ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1) : (service.rating_avg > 0 ? service.rating_avg.toFixed(1) : null);
 
   return (
-    <main className="min-h-screen bg-[#F9F8F5] pb-32 text-[#0A2320]">
+    <main className="min-h-screen bg-[#F9F8F5] pb-56 md:pb-32 text-[#0A2320]">
 
       {/* Hero Image Section */}
       <div className="relative w-full aspect-[4/3] md:aspect-[16/7] max-h-[500px] md:max-h-[600px]">
@@ -223,17 +222,12 @@ export function ServiceDetailClient({ service, reviews, isLoggedIn }: ServiceDet
         )}
       </div>
 
-      {/* Fixed Bottom Booking Button */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 md:p-6 z-40">
-        <div className="max-w-[900px] mx-auto">
-          <ServiceBookingModal
-            serviceId={service.id}
-            price={service.price}
-            currency={service.currency}
-            isLoggedIn={isLoggedIn}
-          />
-        </div>
-      </div>
+      <ServiceBookingModal
+        serviceId={service.id}
+        price={service.price}
+        currency={service.currency}
+        maxGuests={service.max_guests}
+      />
     </main>
   );
 }

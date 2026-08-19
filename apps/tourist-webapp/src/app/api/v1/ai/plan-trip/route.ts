@@ -61,6 +61,7 @@ const intentSchema = jsonSchema<{
   travel_date: string;
   guest_count: number;
   guest_count_mentioned: boolean;
+  requested_days: number;
 }>({
   type: "object",
   properties: {
@@ -71,8 +72,9 @@ const intentSchema = jsonSchema<{
     travel_date: { type: "string" },
     guest_count: { type: "number" },
     guest_count_mentioned: { type: "boolean" },
+    requested_days: { type: "number" },
   },
-  required: ["ready_to_search", "category", "region", "max_price_uzs", "travel_date", "guest_count", "guest_count_mentioned"],
+  required: ["ready_to_search", "category", "region", "max_price_uzs", "travel_date", "guest_count", "guest_count_mentioned", "requested_days"],
 });
 
 // ─── Schema: Outline ─────────────────────────────────────────────────────────
@@ -131,6 +133,15 @@ function normalizeTravelDate(raw: string): string | null {
 function normalizeGuestCount(raw: number): number {
   if (!raw || !Number.isFinite(raw) || raw < 1) return 1;
   return Math.min(Math.floor(raw), 50);
+}
+
+// 0 means "the tourist never stated a length" (per intent's own extraction rule below) -- kept
+// distinct from null-means-unset elsewhere in this file only because intentSchema's numeric
+// fields all use 0-as-unset already (max_price_uzs, guest_count), so this matches that
+// established convention rather than introducing a different one.
+function normalizeRequestedDays(raw: number): number | null {
+  if (!raw || !Number.isFinite(raw) || raw < 1) return null;
+  return Math.min(Math.floor(raw), 30);
 }
 
 // THE ANCHOR RULE (see COORDINATOR_SYSTEM below) needs to know whether the tourist has a package
@@ -246,7 +257,7 @@ export async function POST(req: NextRequest) {
 
 CRITICAL RULES:
 1. Set ready_to_search=true for ANY message that mentions travel, trips, visiting, honeymoon, vacation, exploring, or Uzbekistan in any way. The bar is extremely low — if they're talking about travel at all, search.
-2. If the user does not specify how many days, ALWAYS assume 3 days. Never leave it at 0 or unresolved.
+2. Extract requested_days: if the tourist has explicitly stated a trip length in ANY message so far (e.g. "4 days", "4 дня", "a week" -> 7, "long weekend" -> 3, "10-day trip"), set requested_days to that exact number. If no length has ever been mentioned, set requested_days=0 — do not guess or default it here, that decision belongs to a later step.
 3. If the user is vague (e.g. "I don't know what to do", "honeymoon ideas", "what's good in Uzbekistan"), set ready_to_search=true with region and category as empty strings. This triggers a broad "Greatest Hits" search.
 4. If no region is mentioned but the user mentions a type of activity (nature, culture, food), map it to a known category if possible.
 5. TODAY=${today}. Resolve relative dates ("next week", "in 2 weeks") against it. If no date mentioned, leave travel_date empty.
@@ -336,14 +347,26 @@ CRITICAL RULES:
       // ── Pass 2a: reply text + day outline (fast) ───────────────────────────────────────
       // DURATION RULE is scoped to this call specifically (not folded into COORDINATOR_SYSTEM,
       // which the per-day slot calls below also use) -- it governs how many day_outline entries
-      // to generate, a decision that only happens here. Fixes the "AI recommends a 10-day
-      // package in text but outlines a 5-day DIY timeline" mismatch: without an explicit day
-      // count from the user, the model had nothing tying day_outline's length to whatever
-      // package it was verbally pitching via THE HOTEL RULE.
+      // to generate, a decision that only happens here.
+      //
+      // Two cases, checked in priority order:
+      // 1. The tourist explicitly stated a trip length ("4 days") -- requestedDays is non-null,
+      //    extracted in Pass 1 above. This must win over everything else: a tourist who asks for
+      //    4 days and gets a 3-day (or 10-day) outline back is the exact bug this branch exists
+      //    to close, independent of whatever packages happen to be in context.
+      // 2. No explicit length was ever given, but the model is verbally recommending a specific
+      //    package (via THE HOTEL RULE) -- falls back to matching that package's own duration, so
+      //    the outline doesn't silently default to a generic 3-5 days while the reply text is
+      //    pitching a 10-day package.
+      const requestedDays = normalizeRequestedDays(intent.object.requested_days);
+      const durationRule = requestedDays
+        ? `DURATION RULE: The tourist explicitly asked for a ${requestedDays}-day trip. Your day_outline MUST contain EXACTLY ${requestedDays} entries (day_number 1 through ${requestedDays}) -- no more, no fewer. Honor this exact count even if you are also recommending or referencing a package with a different duration in packagesContext.`
+        : `DURATION RULE: The tourist did not state a specific number of days. If you are recommending a specific package, your outline MUST generate the exact same number of days as that package's duration. Do not default to 3 or 5 days if a 10-day package is your primary recommendation.`;
+
       const outlineResult = await generateObject({
         model: moonshot.chat("kimi-k3"),
         schema: outlineSchema,
-        system: `${COORDINATOR_SYSTEM}\n\n${servicesContext}\n\n${packagesContext}\n\n${anchorContext}\n\nDURATION RULE: If the user does not explicitly state how many days their trip is, you MUST check the packagesContext. If you are recommending a specific package, your outline MUST generate the exact same number of days as that package's duration. Do not default to 3 or 5 days if a 10-day package is your primary recommendation.`,
+        system: `${COORDINATOR_SYSTEM}\n\n${servicesContext}\n\n${packagesContext}\n\n${anchorContext}\n\n${durationRule}`,
         messages,
       });
 
@@ -433,7 +456,15 @@ CRITICAL RULES:
                       }
                       dayServicesContext = `REAL_SERVICES (use ONLY these IDs -- already-used services from earlier days have been removed from this list, everything here is guaranteed unused so far):\n${JSON.stringify(freshOutcome.services, null, 2)}`;
                     } else {
-                      dayServicesContext = "No further distinct services are available beyond what's already been scheduled on earlier days -- keep this day lighter (fewer slots) rather than repeating an earlier service.";
+                      // No fresh options left for this day/region. Falling back to the ORIGINAL
+                      // (already-used-included) pool here, instead of telling the model there's
+                      // nothing to pick, is deliberate: an empty slots_json silently drops the
+                      // whole day downstream (see the validSlots.length check below), which is
+                      // strictly worse than a day that repeats an earlier service -- especially
+                      // now that DURATION RULE above can make hitting an exact day count a hard
+                      // requirement. Repetition-avoidance is a preference; matching the day count
+                      // the tourist asked for is not.
+                      dayServicesContext = `REAL_SERVICES (use ONLY these IDs). No further DISTINCT services are available for this day/region -- every option below has already been used on an earlier day. You MUST still pick 1-2 services for this day rather than leaving it empty; reusing an already-scheduled service here is expected and fine:\n${JSON.stringify(Array.from(servicesById.values()), null, 2)}`;
                     }
                   }
 

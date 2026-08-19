@@ -1,7 +1,5 @@
 import React from "react";
 import Link from "next/link";
-import { createClient } from "@/utils/supabase/server";
-import { cookies } from "next/headers";
 import { getServiceById, getReviewsForService } from "@repo/database";
 import type { ReviewWithAuthor } from "@repo/database";
 import { ServiceDetailClient } from "./ServiceDetailClient";
@@ -13,9 +11,7 @@ export default async function ServiceDetailPage({
 }: {
   params: { id: string };
 }) {
-  const supabase = createClient(cookies());
-  const [{ data: { user } }, service, reviews] = await Promise.all([
-    supabase.auth.getUser(),
+  const [service, reviews] = await Promise.all([
     getServiceById(params.id),
     getReviewsForService(params.id).catch(() => [] as ReviewWithAuthor[]),
   ]);
@@ -46,5 +42,5 @@ export default async function ServiceDetailPage({
     );
   }
 
-  return <ServiceDetailClient service={service} reviews={reviews} isLoggedIn={!!user} />;
+  return <ServiceDetailClient service={service} reviews={reviews} />;
 }

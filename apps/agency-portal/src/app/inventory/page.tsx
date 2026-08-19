@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@repo/auth";
-import { getSupabase } from "@repo/database";
+import { getSupabaseBrowserClient } from "@repo/database";
 import { Button, Card, Badge, LoadingPulse, Toast } from "@repo/ui";
 import { Plus, Pencil, Trash2, Star, ImageOff } from "lucide-react";
 import { ServiceFormModal, type ServiceFormValues } from "@/components/ServiceFormModal";
@@ -31,7 +31,7 @@ export default function InventoryPage() {
   const fetchServices = useCallback(async () => {
     if (!session?.user?.id) return;
     setIsLoading(true);
-    const supabase = getSupabase();
+    const supabase = getSupabaseBrowserClient();
     const { data, error } = await supabase
       .from("services")
       .select("*")
@@ -63,7 +63,7 @@ export default function InventoryPage() {
 
   const handleSubmit = async (values: ServiceFormValues) => {
     if (!session?.user?.id) return;
-    const supabase = getSupabase();
+    const supabase = getSupabaseBrowserClient();
     const payload = {
       title: values.title,
       description: values.description || null,
@@ -87,7 +87,7 @@ export default function InventoryPage() {
 
   const handleDelete = async (service: ServiceRow) => {
     if (!confirm(`Delete "${service.title}"? This can't be undone.`)) return;
-    const supabase = getSupabase();
+    const supabase = getSupabaseBrowserClient();
     const { error } = await supabase.from("services").delete().eq("id", service.id);
     if (error) {
       setToastMessage(error.message);

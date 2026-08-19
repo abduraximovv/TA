@@ -118,6 +118,8 @@ export interface PackageDeparture {
   itinerary_id: string;
   start_date: string;
   end_date: string;
+  start_time: string | null;
+  end_time: string | null;
   max_guests: number;
   booked_guests: number;
   status: PackageDepartureStatus;
@@ -397,6 +399,8 @@ export interface Database {
           itinerary_id: string;
           start_date: string;
           end_date: string;
+          start_time?: string | null;
+          end_time?: string | null;
           max_guests: number;
           booked_guests?: number;
           status?: PackageDepartureStatus;
@@ -408,6 +412,8 @@ export interface Database {
           itinerary_id?: string;
           start_date?: string;
           end_date?: string;
+          start_time?: string | null;
+          end_time?: string | null;
           max_guests?: number;
           booked_guests?: number;
           status?: PackageDepartureStatus;
@@ -683,6 +689,27 @@ export interface Database {
           p_intents: Json;
         };
         Returns: Booking[];
+      };
+      create_package_booking: {
+        Args: {
+          p_departure_id: string;
+          p_guests: number;
+          p_special_requests?: string | null;
+          p_passenger_manifest?: Json | null;
+          p_total_price?: number | null;
+          p_currency?: string | null;
+        };
+        Returns: Booking;
+      };
+      cancel_booking: {
+        Args: {
+          p_booking_id: string;
+        };
+        Returns: Booking;
+      };
+      release_expired_bookings: {
+        Args: Record<string, never>;
+        Returns: { released_booking_id: string; released_kind: string }[];
       };
     };
     Enums: {

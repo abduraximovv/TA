@@ -1,7 +1,5 @@
 import React from "react";
 import Link from "next/link";
-import { createClient } from "@/utils/supabase/server";
-import { cookies } from "next/headers";
 import { getItineraryById, getReviewsForItinerary } from "@repo/database";
 import type { ReviewWithAuthor } from "@repo/database";
 import { PackageDetailClient } from "./PackageDetailClient";
@@ -13,9 +11,7 @@ export default async function PackageDetailPage({
 }: {
   params: { id: string };
 }) {
-  const supabase = createClient(cookies());
-  const [{ data: { user } }, itinerary, reviews] = await Promise.all([
-    supabase.auth.getUser(),
+  const [itinerary, reviews] = await Promise.all([
     getItineraryById(params.id),
     getReviewsForItinerary(params.id).catch(() => [] as ReviewWithAuthor[]),
   ]);
@@ -46,5 +42,5 @@ export default async function PackageDetailPage({
     );
   }
 
-  return <PackageDetailClient itinerary={itinerary} reviews={reviews} isLoggedIn={!!user} />;
+  return <PackageDetailClient itinerary={itinerary} reviews={reviews} />;
 }

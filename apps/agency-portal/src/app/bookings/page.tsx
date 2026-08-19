@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@repo/auth";
-import { getSupabase, getMyBookings, subscribeToBookingUpdates } from "@repo/database";
+import { getSupabaseBrowserClient, getMyBookings, subscribeToBookingUpdates } from "@repo/database";
 import { LoadingPulse, Toast } from "@repo/ui";
 import type { Booking } from "@repo/types";
 import { BookingsDataTable } from "@/components/bookings/BookingsDataTable";
@@ -20,7 +20,7 @@ export default function BookingsPage() {
   const fetchBookings = useCallback(async () => {
     if (!session?.user?.id) return;
     setIsLoading(true);
-    const supabase = getSupabase();
+    const supabase = getSupabaseBrowserClient();
 
     try {
       const rows = await getMyBookings(session.user.id, "agency");
@@ -69,12 +69,12 @@ export default function BookingsPage() {
     if (!session?.user?.id) return;
     const channel = subscribeToBookingUpdates(session.user.id, "agency", () => fetchBookings());
     return () => {
-      getSupabase().removeChannel(channel);
+      getSupabaseBrowserClient().removeChannel(channel);
     };
   }, [session, fetchBookings]);
 
   const recordStatusChange = async (booking: EnrichedBooking, newStatus: Booking["status"], notes: string | null) => {
-    const supabase = getSupabase();
+    const supabase = getSupabaseBrowserClient();
 
     const { error: updateError } = await supabase
       .from("bookings")

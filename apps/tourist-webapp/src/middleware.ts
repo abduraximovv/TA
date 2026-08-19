@@ -26,8 +26,8 @@ export async function middleware(request: NextRequest) {
   // Only account-specific pages require a session -- everything else (destinations, discover,
   // service listings/details, packages, map, translator, about, contact, etc.) is public
   // browsing. Actions that actually need an account (booking, reviewing, registering) are gated
-  // inline at the component level (e.g. ServiceBookingModal checks `isLoggedIn` and prompts sign-in
-  // rather than the whole page being blocked).
+  // inline at the component level (e.g. ServiceBookingWidget/PackageBookingWidget check useAuth()
+  // and prompt sign-in via AuthModal rather than the whole page being blocked).
   const PROTECTED_PREFIXES = ["/profile", "/dashboard"];
   const isProtectedRoute = PROTECTED_PREFIXES.some(
     (p) => pathname === p || pathname.startsWith(`${p}/`)

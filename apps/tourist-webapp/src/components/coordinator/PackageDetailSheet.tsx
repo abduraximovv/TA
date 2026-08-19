@@ -5,6 +5,7 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, MapPin, Package, CheckCircle2, ExternalLink } from "lucide-react";
 import type { AIPackageSearchResult } from "@repo/types";
+import { PackageDepartureSelector } from "./PackageDepartureSelector";
 
 const FALLBACK = "https://images.unsplash.com/photo-1596484552834-6a58f850e0a1?w=800&q=80";
 
@@ -156,6 +157,17 @@ export function PackageDetailSheet({
                       </div>
                     </div>
                   ))}
+                </div>
+
+                {/* Available departures -- the actual, transactional way to book this package
+                    (real dates, real remaining seats, a 15-minute payment hold via
+                    create_package_booking). "Replace AI Plan" below only swaps it into the
+                    coordinator's own itinerary view; this is what puts real seats on hold. */}
+                <h4 style={{ fontSize: 13, fontWeight: 800, color: "#0A2320", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 16 }}>
+                  Available Departures
+                </h4>
+                <div className="mb-8">
+                  <PackageDepartureSelector packageId={pkg.id} />
                 </div>
 
                 {/* Price block */}

@@ -5,7 +5,7 @@ export interface UserProfile {
   fullName: string;
 }
 
-export type BookingStatus = 'pending' | 'accepted' | 'declined' | 'completed' | 'cancelled';
+export type BookingStatus = 'pending' | 'pending_payment' | 'accepted' | 'declined' | 'completed' | 'cancelled' | 'expired';
 export type ItineraryStatus = 'draft' | 'active' | 'completed';
 export type NotificationType = 'booking_request' | 'booking_accepted' | 'booking_declined' | 'review_received' | 'system';
 
@@ -49,6 +49,10 @@ export interface Booking {
   tourist_id: string;
   service_id: string | null;
   itinerary_id: string | null;
+  /** Which package_departures row this booking holds seats against -- only ever set by
+   *  create_package_booking (the 'pending_payment' hold flow); bookings created through
+   *  process_multi_item_booking's package_departure intents leave this null. */
+  departure_id: string | null;
   provider_id: string | null;
   status: BookingStatus;
   booking_date: string;
